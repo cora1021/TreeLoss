@@ -1,4 +1,5 @@
 from cover_tree import CoverTree
+from loss import CoverTreeLoss
 import numpy as np
 import random
 import torch
@@ -9,8 +10,9 @@ import torch.backends.cudnn as cudnn
 import torchvision
 import torchvision.transforms as transforms
 from tqdm import tqdm
+from sklearn.metrics.pairwise import cosine_similarity
 from torch.utils.tensorboard import SummaryWriter
-writer = SummaryWriter('runs/covertree')
+writer = SummaryWriter('runs/covertree2')
 
 from scipy.spatial.distance import euclidean, cityblock, chebyshev,cosine
 import os
@@ -151,7 +153,7 @@ class DLA(nn.Module):
         self.layer5 = Tree(block, 128, 256, level=2, stride=2)
         self.layer6 = Tree(block, 256, 512, level=1, stride=2)
         self.linear = nn.Linear(512, len(target_list))
-        self.loss_function = nn.CrossEntropyLoss()
+        self.loss_function = CoverTreeLoss()
 
     def forward(self, x, y):
         out = self.base(x)
@@ -164,9 +166,10 @@ class DLA(nn.Module):
         out = F.avg_pool2d(out, 4)
         out = out.view(out.size(0), -1)
         logits = self.linear(out)
+        
         prob = F.softmax(logits, dim=-1)
-        # CCE
-        loss = self.loss_function(logits, y)
+        # CoverTreeLoss
+        loss = self.loss_function(prob, y)
 
         _, pred = torch.max(prob,dim=-1)
         return loss, pred
@@ -186,7 +189,7 @@ def train(model, device, data, label,batch_size, optimizer):
 
     return loss
     
-def test(model, device, data, label, batch_size):
+def test(model, device, data, label, index,batch_size, index2label):
     model.eval()
     test_pred = []
     correct = 0
@@ -199,10 +202,20 @@ def test(model, device, data, label, batch_size):
             test_loss = loss.item()
             test_pred+=pred.detach().cpu().tolist()
 
-        for i in range(len(label)):
-            if test_pred[i] == label[i]:
+        for i in range(len(index)):
+            if test_pred[i] == index[i]:
                 correct += 1
-        accuracy = correct/len(label)
+        accuracy = correct/len(index)
+
+        # for i in range(len(index)):
+        #     pred_num = test_pred[i]
+        #     prediction = index2label[pred_num]
+        #     label_num = index[i][0]
+        #     target = index2label[label_num]
+        #     if prediction[0] == target[0]:
+        #         correct += 1
+        # accuracy = correct/len(label)
+        
         return accuracy, test_loss
 
 # Data
@@ -230,39 +243,49 @@ testloader = torch.utils.data.DataLoader(
 
 from gen_data import gen_data, gen_sim, gen_matrix
 
-for number in range(1,100):
+for number in range(2,100):
+    num_label = 10
+    num_new = number*num_label
+    m = gen_matrix(num_label, num_new)
 
-    train_data, train_label, test_data, test_label = gen_data(trainloader, testloader, number)
+    train_data, train_label, test_data, test_label, sim_matrix = gen_data(trainloader, testloader, m)
+    print(sim_matrix)
         
     label_list = []
     for ele in train_label+test_label:
-        label_list.append(tuple(ele))
-
+        label_list.append(ele)
+   
     target_list = list(set(label_list))
-    label2index, index2label = get_labels(target_list)
-
-    m = gen_matrix(label_list, label2index)
+ 
     # construct cover tree from m (distribution matrix of new labels)
     distance = cosine
-    result = CoverTree(m, distance,leafsize=number)
-    
+    result = CoverTree(m, distance, leafsize=number)
+
     new_index = _print(result)
 
+    # new label
     new2index = dict()
-    index2new = dict()
+    
     for idx, element in enumerate(new_index):
         for i in range(len(element)):
-            new2index[element[i]] = idx
-        index2new[idx] = element
+            new2index[element[i]] = element
 
     train_target = []
     for ele in train_label:
         new = label2index[tuple(ele)]
-        train_target.append(new2index[new])
+        a = new2index[new]
+        b = np.zeros((len(a), len(target_list)))
+        b[np.arange(len(a)),a] = 1
+        train_target.append(b)
     test_target = []
+    index = []
     for ele in test_label:
         new = label2index[tuple(ele)]
-        test_target.append(new2index[new])
+        a = new2index[new]
+        b = np.zeros((len(a), len(target_list)))
+        b[np.arange(len(a)),a] = 1
+        test_target.append(b)
+        index.append(a)
 
     trainset = list(zip(train_data, train_target))
     random.shuffle(trainset)
@@ -273,11 +296,11 @@ for number in range(1,100):
                         momentum=0.9, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
 
-    for epoch in range(args.epochs):
+    for epoch in tqdm(range(args.epochs)):
         train_loss = train(model, device, train_data, train_target, args.batch_size, optimizer)
         scheduler.step()
         
-    test_accuracy, test_loss = test(model, device, test_data, test_target, args.batch_size)
+    test_accuracy, test_loss = test(model, device, test_data, test_target, index, args.batch_size, index2label)
     writer.add_scalar('Accuarcy: ', test_accuracy, number)
     writer.add_scalar('Loss: ', test_loss, number)
 
