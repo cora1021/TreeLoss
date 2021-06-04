@@ -71,6 +71,7 @@
 \newcommand{\lF}[1]{{\lVert {#1} \rVert}_F}
 
 \newcommand{\dist}[2]{d_{{#1},{#2}}}
+\newcommand{\level}[1]{\texttt{level}({#1})}
 
 \newcommand{\h}{\mathcal H}
 \newcommand{\D}{\mathcal D}
@@ -109,6 +110,7 @@ the generalization error is $O(\sqrt{c/n})$.
 There are many theorems that establish this result in different contexts.
 The following is an example that relies on properties of SGD.
 \begin{theorem}
+\label{theorem:xentropy}
 Assume that for all $i\in[n]$, $\ltwo{x_i} \le \rho$,
     and that for each class $i\in[c]$, $\ltwo{\w_i}\le B$.
 Then the parameter vector $\bar W$ estimated from one epoch of SGD satisfies
@@ -213,18 +215,14 @@ where $W^* = \argmin L_D(W)$.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{The Cover Tree Loss}
+\section{The Tree Loss}
 
-Of the previous techniques, only weight matrix factorization can provably reduce the statistical complexity of a problem.
-The technique has two limitations, however:
-(1) the class labels must have a linear structure and (2) the dimensionality of that structure must be known a priori.
-The cover tree loss is able to take advantage of any metric structure and does not need to know the dimensionality in advance.
-
-Like the weight matrix factorization, the cover tree loss works by reparameterizing the weight matrix for the softmax cross entropy loss.
-The reparameterization is defined according to a tree structure that captures the similarity between labels.
-Every class is represented by a leaf node in the tree,
+Like the weight matrix factorization, the tree loss works by reparameterizing the weight matrix for the softmax cross entropy loss.
+The reparameterization is defined according to a \emph{label tree} structure that captures the similarity between labels.
+Every class is represented by a leaf node in the label tree,
 and internal nodes represent \emph{pseudo-classes} that group the existing classes into a logical hierarchy.
-The following figure shows an example tree.
+At this point, we assume that the label tree structure is given a priori, and in Section \ref{sec:bias-var} we discuss methods for generating this structure and their tradeoff and their tradeoffss.
+The following figure shows an example label tree for a classification problem with 9 classes.
 
 \begin{center}
 \begin{tikzpicture}
@@ -251,16 +249,18 @@ The following figure shows an example tree.
 \end{tikzpicture}
 \end{center}
 
-We construct the loss function from this tree as follows.
+We parameterize the weight vectors from the label tree as follows.
 For each leaf node $i$ (equivalently for each class $i$),
 we let the sequence $P_i$ denote the path from the leaf node to the root.
-Thus, in the example above, 
-\begin{align*}
-    P_{\texttt{truck}} &= (\texttt{truck}, \textit{pseudo3}, \textit{pseudo2}, \textit{pseudo1} ) \\
-    P_{\texttt{cat}} &= (\texttt{cat}, \textit{pseudo4}, \textit{pseudo1} )
-\end{align*}
-Next, we associate a vector $\vv_i$ to each node $i$ in the tree structure.
-That is, there is a vector $\vv_i$ for each class and for each pseudo-class.
+For example, using the label tree above,
+we have
+\begin{equation}
+    P_{\texttt{truck}} = (\texttt{truck}, \textit{pseudo3}, \textit{pseudo2}, \textit{pseudo1} ) \qquad\text{and}\qquad
+    P_{\texttt{cat}} = (\texttt{cat}, \textit{pseudo4}, \textit{pseudo1} )
+    .
+\end{equation}
+Next, we associate a vector $\vv_i$ to each leaf and internal node $i$ in the tree structure.
+In particular, there is a there is a vector $\vv_i$ for each class and for each pseudo-class.
 Finally, we reparameterize the weights for the softmax cross entropy loss as the sum of the vectors along the paths.
 Specifically, we set the weight vector for class $j$ to be 
 \begin{equation}
@@ -277,14 +277,102 @@ and our goal is to minimize $\ell$ with respect to $V$.
 Note that this loss can easily be computed in libraries like pytorch or tensorflow with the standard cross entropy loss functions.
 The only change needed is to define the loss in terms of the sum of vectors $V$ instead of a variable tensor $W$.
 
-\subsection{Theorems}
+\subsection{Analysis}
 
+When analyzing stochastic gradient descent using the cross entropy loss,
+it is common to assume that the parameter space is bounded.
+Under the standard parameterization, we have that the weight vector for each class satisfies $\ltwo{\w_j} \le B$.
+It immediately follows that $\lF{W} \le \sqrt{c}B$,
+and from this and convergence results of SGD it follows that the generalization error is $O(\sqrt{k}B/n)$.
+(See Theorem \ref{theorem:xentropy} above.)
+
+The key idea of the tree loss is that we can reduce the bound on the size of the parameter space,
+and this will result in the reduced sample complexity.
+Let $\level k$ denote the level of node $k$ in the label tree.
+Then we replace the constraints on the $\w_j$s with the following constraint on all $\vv_k$:
+\begin{equation}
+    \ltwo{\vv_k} \le \frac{B}{2^{\level k}}
+    .
+    \label{eq:tree-constraint}
+\end{equation}
+Notice that the original constraint \eqref{} immediately follows from the tree constraint \eqref{eq:tree-constraint} and the reparameterization \eqref{eq:covertree-reparam}.
+One way to interpret this is that we have ``factored out'' our bounds on the $\w_i$ into bounds on the smaller $\vv_k$ components,
+and because the $\vv_k$ vectors are shared between classes,
+we can reduce the overall bound.
+The following lemma bounds the Frobenius norm of the weight matrix $V$.
+
+\begin{lemma}
+    Assume that the label tree has at most $q$ nodes per level and $r$ levels.
+    Then,
+    \begin{equation}
+        \lF{V} \le \tfrac12 Bq c^{(1 - 1/\log_2 q)}
+    \end{equation}
+    In particular, if $q=2$, then
+    \begin{equation}
+        \lF{V} \le B,
+    \end{equation}
+    which is independent of the number of classes $c$.
+\end{lemma}
+\begin{proof}
+    We have the following chain of inequalities
+    \begin{align}
+        \lF{V} 
+        &\le \sum_{k\in \text{nodes of the level tree}} \ltwo{\vv_k}
+        \\
+        &= \sum_{i=0}^r \sum_{k\in \text{nodes at level $i$}} \ltwo{\vv_k}
+        \\
+        &\le \sum_{i=0}^r B\left(\frac {q} {2}\right)^i
+        \label{eq:lem:lFV:1}
+        \\
+        &=
+        B\left(\frac{1 - (q/2)^{r+1}}{1-q/2}\right)
+        \label{eq:lem:lFV:2}
+        \\
+        &\le
+        B(q/2)^{r+1}.
+        \label{eq:lem:lFV:3}
+    \end{align}
+    Line \eqref{eq:lem:lFV:1} follows from the fact that the number of nodes at level $i$ in the tree is upper bounded by $q^i$ and the the maximum L2 norm of a vector at level $i$ in the tree is $B/2^i$,so the sum of all vectors at level $i$ is bounded by $B(q/2)^i$.
+    Lines \eqref{eq:lem:lFV:2} and \eqref{eq:lem:lFV:3} are standard properties of geometric series.
+
+    Next, we show that
+    \begin{equation}
+        \left(\frac q 2\right)^r
+        =
+        \left(\frac q 2\right)^{\log_q n}
+        =
+        \frac{n}{2^{\log_q n}}
+        =
+        \frac{n}{2^{{\log_2 n}/{\log_2 q}}}
+        =
+        \frac{n}{n^{1/\log_2 q}}
+        =
+        n^{\left(1 - {1}/{\log_2 q}\right)}
+        .
+        \label{eq:lem:technical2}
+    \end{equation}
+    Substituting \eqref{eq:lem:technical2} into \eqref{eq:lem:lFV:3} gives the stated result.
+\end{proof}
+
+Substituting this Lemma into the SGD bounds gives us our main theorem: 
+
+\begin{theorem}
+\label{theorem:xentropy}
+%Assume that for all $i\in[n]$, $\ltwo{x_i} \le \rho$,
+    %and that for each class $i\in[c]$, $\ltwo{\w_i}\le B$.
+\fixme{Add assumptions.}
+Then the parameter vector $\bar W$ estimated from one epoch of SGD satisfies
+\begin{equation}
+    \E L_D(\bar W) - L_D(W^*) \le \frac {B\rho}{\sqrt n}
+    ,
+\end{equation}
+which is independent of the number of classes $c$.
+\end{theorem}
 %Let $\mathcal L$ be a metric space over the set of labels,
 %and $\ddim$ be the doubling dimension of $\mathcal L$.
 %Then we build a ``cover tree'' from the class labels that respects the metric structure.
 %This cover tree will have exactly $c$ leaf nodes, one for each class label,
 %and $O(c)$ internal nodes.
-\fixmemike{I need to add these results here}
 %Why does this small change work?
 %Intuitively, classes that have a small distance from each other should have similar weight vectors.
 
@@ -308,22 +396,8 @@ The only change needed is to define the loss in terms of the sum of vectors $V$ 
 %where $W^* = \argmin L_D(W)$.
 
 
-%\subsection{Goal}
-%
-%Some classes
-%
-%\begin{align}
-    %\Pr(Y = i | X) \approx \Pr(Y = j | X) \qquad\text{if}\qquad i \approx j
-%\end{align}
-%
-%\begin{align}
-    %&| \log\Pr(Y = a | X) -  \log\Pr(Y = b | X) |
-    %\\&= | \trans\w_a \x + \log \sum_j \exp(-\trans\w_j \x) - \trans\w_b - \log \sum_j \exp(-\trans\w_j \x) |
-    %\\&= | \trans\w_a \x - \trans\w_b \x |
-    %\\&= | (\trans\w_a - \trans\w_b ) \x |
-    %\\&\le | \trans\w_a - \trans\w_b | | \x |
-    %\\&\le \dist a b | \x |
-%\end{align}
+\subsection{Bias-variance tradeoff}
+\label{sec:bias-var}
 
 \section{Experiments}
 
