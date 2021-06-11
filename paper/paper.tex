@@ -121,6 +121,20 @@ where $W^* = \argmin L_D(W)$.
 \end{theorem}
 \begin{proof}
     \fixme{Write a proof of this result using Theorem 14.12 of Shalev-Shwartz and Ben-David and the properties of the cross entropy loss from the last set of notes.}
+    \begin{align}
+    {\| W \|^2_F}&=\sum_{i=1}^c{\| W_i\|^2}\nonumber\\
+                &\le\sum_{i=1}^c{B^2}\nonumber\\
+                &\le cB^2\nonumber\\
+   \| W \|_F  &\le \sqrt c B \nonumber
+    \end{align}
+Then we get:
+    \begin{equation}
+    l(\bar W)-l(W^*)\le\frac {\sqrt cB\rho}{\sqrt n}
+    \end{equation}
+   Take expectation of both side of equation(3):
+   \begin{equation}
+    \E L_D(\bar W) - L_D(W^*) \le \frac {\sqrt cB\rho}{\sqrt n}\nonumber
+\end{equation}
 \end{proof}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -181,6 +195,14 @@ and so our technique may be able to provide the first theoretical justification 
 \subsection{Simloss}
 
 \fixme{Write a detailed description of the sim loss}
+
+Simloss is similarity based loss function which incorporates class similarities to support the training of neural network classifiers. Cross entropy loss assumes only one class is correct and punishes every misclassification, while Simloss indicates classes have similarities and classifying a target as a similar class is better. When calculating the loss function, instead of only taking the probability vector at the target index Simloss also adds the product of similarity between target and other classes and probability vector at the corresponding class. Non zero values of similarity matrix lead to smaller losses when the network gives a high score to classes similar to the correct one. It would allow the classifier to make less severe mistakes as it learns to predict similar classes.
+\begin{align}
+    L_{Simloss}&=-\frac{1}{N}\log(\sum_{c=1}^{C}S_{y_i,c}\cdot p_i[c])\\
+    % L_{Simloss}=-\frac{1}{N}\log(\sum_{c=1}^{C}S_{y_i,c}\cdot\frac {\exp(-\trans\w_{y_i} \x)}{\sum_{j=1}^C \exp(-\trans \w_j \x)})
+    p_i&=\frac {\exp(-\trans\w_{y_i} \x)}{\sum_{j=1}^C \exp(-\trans \w_j \x)}
+\end{align}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Weight matrix factorization}
