@@ -11,8 +11,8 @@ import shutil
 
 def set_logger(name, timestamp):
     formatter=logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-    logger=logging.getLogger(f'{name}-Logger')
-    file_handler=logging.FileHandler(f'./log-{name}-{timestamp}.log')
+    logger=logging.getLogger(str(name)+'name-Logger')
+    file_handler=logging.FileHandler('./log-'+str(name)+'-'+str(timestamp)+'.log')
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
     console_handler=logging.StreamHandler(sys.stdout)
