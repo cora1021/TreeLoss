@@ -162,6 +162,9 @@ and so our technique may be able to provide the first theoretical justification 
 
 \fixme{Read 5-10 additional papers about the hierarchical softmax.  For each paper, write a paragraph describing the paper's contributions and how it relates to the cover tree loss.  For the final paper we will reference these papers.  We will have to trim down the notes that you write for this task, but it's useful when writing the paper to have detailed notes about references.}
 
+\cite{Peng2017IncrementallyLT} introduce 
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -233,6 +236,21 @@ where $W^* = \argmin L_D(W)$.
 \end{theorem}
 \begin{proof}
     \fixme{Write a proof of this result using Theorem 14.12 of Shalev-Shwartz and Ben-David.}
+    \begin{align}
+    {\| U \|^2_F}&=\sum_{i=1}^e{\| U_i\|^2}\nonumber\\
+                &\le\sum_{i=1}^e{B^2}\nonumber\\
+                &\le eB^2\nonumber\\
+   \| U \|_F  &\le \sqrt e B \nonumber \\
+   \| W \|_F  &\le \sqrt e B \nonumber
+    \end{align}
+    Then we get:
+    \begin{equation}
+    l(\bar W)-l(W^*)\le\frac {\sqrt eB\rho}{\sqrt n}
+    \end{equation}
+   Take expectation of both side of equation(8):
+   \begin{equation}
+    \E L_D(\bar W) - L_D(W^*) \le \frac {\sqrt eB\rho}{\sqrt n}\nonumber
+\end{equation}
 \end{proof}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -380,9 +398,11 @@ Substituting this Lemma into the SGD bounds gives us our main theorem:
 
 \begin{theorem}
 \label{theorem:xentropy}
-%Assume that for all $i\in[n]$, $\ltwo{x_i} \le \rho$,
-    %and that for each class $i\in[c]$, $\ltwo{\w_i}\le B$.
+% Assume that for all $i\in[n]$, $\ltwo{x_i} \le \rho$,
+%     and that for each class $i\in[c]$, $\ltwo{\w_i}\le B$.
 \fixme{Add assumptions.}
+Assume that for all $i\in[n]$, $\ltwo{x_i} \le \rho$,
+    and that for each class $i\in[c]$, $\ltwo{\w_i}\le \frac{B}{\sqrt k}$.
 Then the parameter vector $\bar W$ estimated from one epoch of SGD satisfies
 \begin{equation}
     \E L_D(\bar W) - L_D(W^*) \le \frac {B\rho}{\sqrt n}
@@ -486,6 +506,10 @@ We should adapt the $\w*_i$ vectors to sit on a manifold instead of a hyperplane
 In a pseudo-synthetic dataset, we take a non-synthetic dataset and modify it.
 \fixme{describe your procedure for generating pseudo-synthetic data and all the experiments that you plan to run}
 
+For non-synthetic datasets which we cannot obtain specific similarities directly, we would build similarities manually by following procedures. We generate a sampling matrix which each row represents the probability distribution of a new label. We would sample new labels from the sampling matrix and view each row as embedding of each new label and then get similarities from embeddings. Next, we are able to construct a cover tree structure from the new labels and take each leaf node represents a new label and replace all parent nodes with pseudo labels. 
+
+For non-synthetic datasets which we are able to get similarities directly, we construct the cover tree structure from the similarities and apply cover tree loss to compare with classic cross entropy loss.
+
 \begin{table}[h]
     \centering
     \input{fig/datasets.tex}
@@ -493,6 +517,14 @@ In a pseudo-synthetic dataset, we take a non-synthetic dataset and modify it.
 
 \subsection{Real world twitter data}
 \fixme{Write a description of the experiment.}
+
+We apply cover tree loss on emoji prediction in twitter dataset. Emojis are popular to express emotions in text messages and tweets are a wildely used social media over the world. We trained the multilingual BERT model on tweets to predict which emoji corresponds to a piece of text is best for measuring the emotional content in the text. Our 1660 target emojis are defined by emo2vec.
+
+\subsubsection{Data processing}
+We collect all tweets in any languages sent from anywhere in the world and filter the tweets with target emojis. For each tweet, we replace all user mentions with a special token \texttt{\text{<}mention\text{>}} and all URLS with a special token \texttt{\text{<}url\text{>}} and delete all emojis. We keep all hashtags and duplicate the tweet once for each emoji if a tweet has multiple emojis. Then we split the dataset into training validadtion and testing sets by user id to ensure each user appears in only one set in order to prevent data leakage.
+
+\subsubsection{Experiments}
+We apply the multilingual BERT model trained on data from 109 distinct languages which achieves state-of-the-art performance on a wide variety of natural language tasks. We get the embeddings of 1660 target emojis defined by emo2vec and construct a cover tree structure from these emojis. In this cover tree structure, every leaf node represents each real target emoji and we replace all parent nodes with pseudo labels. Then we would adopt cover tree loss and compare the performance with classic cross entropy loss.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \bibliographystyle{plainnat}

@@ -184,6 +184,7 @@ class ResNet_Cifar(nn.Module):
         self.fc = nn.Linear(64 * block.expansion, num_classes)
         self.softmax = nn.Softmax(dim=-1)
         self.criterion = criterion
+        self.dropout = nn.Dropout(p=0.5)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -216,6 +217,7 @@ class ResNet_Cifar(nn.Module):
 
         x = self.layer1(x)
         x = self.layer2(x)
+        x = self.dropout(x)
         x = self.layer3(x)
 
         x = self.avgpool(x)
@@ -245,6 +247,7 @@ class PreAct_ResNet_Cifar(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.avgpool = nn.AvgPool2d(8, stride=1)
         self.fc = nn.Linear(64*block.expansion, num_classes)
+        self.dropout = nn.Dropout(p=0.5)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -280,7 +283,7 @@ class PreAct_ResNet_Cifar(nn.Module):
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
-
+        
         return x
 
 

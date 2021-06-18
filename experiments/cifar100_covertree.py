@@ -1,3 +1,13 @@
+import argparse
+parser = argparse.ArgumentParser(description='PyTorch CiFar100 Example')
+parser.add_argument('--batch_size', type=int, default=256)                      
+parser.add_argument('--epochs', type=int, default=200)
+parser.add_argument('--lr', type=float, default=0.15, metavar='LR')
+parser.add_argument('--weight_decay', type=float, default=8e-4)
+parser.add_argument('--seed', type=int, default=666)
+parser.add_argument('--dimension', type=int, default=64)
+args = parser.parse_args()
+
 from cover_tree import CoverTree
 from loss import CoverTreeLoss
 import numpy as np
@@ -12,24 +22,9 @@ import torch.backends.cudnn as cudnn
 import torchvision
 import torchvision.transforms as transforms
 from tqdm import tqdm
-from sklearn.metrics.pairwise import cosine_similarity
 from resnet import *
 from torch.utils.tensorboard import SummaryWriter
-writer = SummaryWriter('runs/cifar100/covertree')
-
-from scipy.spatial.distance import euclidean, cityblock, chebyshev,cosine
-import os
-import argparse
-import numpy as np
-import random
-
-import argparse
-parser = argparse.ArgumentParser(description='PyTorch CiFar100 Example')
-parser.add_argument('--batch_size', type=int, default=256)                      
-parser.add_argument('--epochs', type=int, default=100)
-parser.add_argument('--lr', type=float, default=0.1, metavar='LR')
-parser.add_argument('--seed', type=int, default=666)
-args = parser.parse_args()
+writer = SummaryWriter('runs/cifar100_50/covertree/lr0.15-dropout0.5')
 
 device = torch.device("cuda")
 from utilities import gen_data, gen_matrix, set_logger, set_seed, _print, path, norm
@@ -99,12 +94,10 @@ test_dataset = torchvision.datasets.CIFAR100(
 testloader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=False)
 
 timestamp = str(time.time())
-# covertree_cifar100_logger = set_logger('covertree_cifar100', timestamp)
 
-for number in range(1, 101):
-    num_label = 100
-    num_new = num_label
-    m = gen_matrix(num_label, num_new, number)
+for number in range(50, 101):
+    c = 100
+    m = gen_matrix(c, number)
     credit = norm(m)
 
     train_data, train_label, train_original, test_data, test_label, test_original, sim_matrix = gen_data(trainloader, testloader, m)
@@ -113,36 +106,12 @@ for number in range(1, 101):
         label_list.append(ele)
     target_list = list(set(label_list))
 
-    # construct cover tree from m (distribution matrix of new labels)
-    distance = cosine
-    tree = CoverTree(m, distance, leafsize=1)
-    _print(tree)
-    new_index = path(tree)
-    
-    # new label
-    start_index = len(target_list)
-    index_map = dict()
-    inverse_index = dict()
-    for p in new_index:
-        for node in p[:-1]:   ## do not include leaf node
-            if node not in index_map:
-                index_map[node] = start_index
-                inverse_index[start_index] = node
-                start_index+=1
-    for p in new_index:
-        for i in range(len(p[:-1])):
-            p[i] = index_map[p[i]]
-
-    length = max(index_map.values()) + 1
-    new2index = dict()
-    for i in range(len(new_index)):
-        new2index[new_index[i][len(new_index[i])-1]] = new_index[i]
-
-    criterion = CoverTreeLoss(100, length, new2index, 64)
+    new2index, length = CoverTreeLoss.tree_structure(c,m)
+    criterion = CoverTreeLoss(c, length, args.dimension, new2index)
     model = resnet20_cifar(criterion, num_classes=length).to(device)
     optimizer = optim.SGD(model.parameters(), lr=args.lr,
-                        momentum=0.9, weight_decay=8e-4)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=100)
+                        momentum=0.9, weight_decay=args.weight_decay)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
     train_data = np.array(train_data)
     train_label = np.array(train_label)
 
@@ -158,9 +127,9 @@ for number in range(1, 101):
         print(test_accuracy)
         writer.add_scalar('Accuarcy: ', test_accuracy, epoch)
         writer.add_scalar('Loss: ', test_loss, epoch)
-        # covertree50_cifar100_logger.info('Accuracy: \t {0:2.4f}  Loss: \t {1:2.4f} \n'.format(test_accuracy, test_loss))
     
     # test_accuracy, test_loss = test(model, device, test_data, test_label, test_original, credit, args.batch_size, criterion)
     # writer.add_scalar('Accuarcy: ', test_accuracy, number)
     # writer.add_scalar('Loss: ', test_loss, number)
     # print(test_accuracy, test_loss, number)
+    exit(0)

@@ -62,6 +62,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+from torch.utils.tensorboard import SummaryWriter
 
 # set the seed
 def set_seed(seed):
@@ -111,7 +112,7 @@ for i in range(args.n):
     X.append(x_i)
 X = np.array(X)
 
-Y = torch.Tensor(Y)
+Y = torch.LongTensor(Y)
 X = torch.Tensor(X)
 logging.debug("Y.shape="+str(Y.shape))
 logging.debug("X.shape="+str(X.shape))
@@ -133,7 +134,7 @@ logging.debug('create SummaryWriter')
 # FIXME: uncomment
 #experiment_name=f'a={args.a},c={args.c},d={args.d},n={args.n},sigma={args.sigma},lr={args.lr},loss={args.loss},seed={args.seed}'
 #logging.info(f'experiment_name={experiment_name}')
-experiment_name='test'
+experiment_name=f'lossvsn{args.n}'
 writer = SummaryWriter(os.path.join(args.logdir, experiment_name))
 
 logging.debug('create optimizer')
@@ -146,27 +147,32 @@ optimizer = optim.SGD(
 
 logging.debug('training loop')
 for training_iter in range(args.max_iter):
-
     logging.debug('training_iter='+str(training_iter))
-
+    
     # i is the current data point
-    i = training_iter%args.n
-
-    # calculate the loss
-    logits = model(X[i])
-    loss = criterion(logits, Y[i]) # FIXME: notation is incorrect
-
-    # backprop
-    loss.backward()
-    optimizer.step()
-    optimizer.zero_grad()
-
-    # log to tensorboard
-    W_err = 0 # FIXME: should be |W-W*|
-    accuracy = 0 # FIXME
-    writer.add_scalar('losses/loss', loss, i)
-    writer.add_scalar('losses/W_err', W_err, i)
-    writer.add_scalar('losses/accuracy', accuracy, i)
+    # i = training_iter%args.n
+    i = 0
+    correct = 0
+    while i < args.n - 1:
+        # calculate the loss
+        logits = model(X[i].view(1,args.d))
+        W = model.weight
+        loss = criterion(logits, Y[i].view(1)) # FIXME: notation is incorrect
+        # backprop
+        loss.backward()
+        optimizer.step()
+        optimizer.zero_grad()
+        i += 1
+        # log to tensorboard
+        W_err = torch.norm(torch.abs(W - torch.Tensor(W_star))) # FIXME: should be |W-W*|
+        prob = F.softmax(logits, dim=-1)
+        _, pred = torch.max(prob, dim=-1)
+        if pred == Y[i]:
+            correct += 1
+        accuracy = correct/(i+1) # FIXME
+        writer.add_scalar('losses/loss', loss, i)
+        writer.add_scalar('losses/W_err', W_err, i)
+        writer.add_scalar('losses/accuracy', accuracy, i)
 
 ################################################################################
 # save the results
