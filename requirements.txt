@@ -1,0 +1,5 @@
+torch >= 1.7
+tqdm
+scipy >= 1.5
+sklearn
+operator
