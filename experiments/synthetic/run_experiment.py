@@ -148,12 +148,10 @@ optimizer = optim.SGD(
 logging.debug('training loop')
 for training_iter in range(args.max_iter):
     logging.debug('training_iter='+str(training_iter))
-    
     # i is the current data point
     # i = training_iter%args.n
-    i = 0
     correct = 0
-    while i < args.n - 1:
+    for i in range(args.n):
         # calculate the loss
         logits = model(X[i].view(1,args.d))
         W = model.weight
@@ -162,7 +160,6 @@ for training_iter in range(args.max_iter):
         loss.backward()
         optimizer.step()
         optimizer.zero_grad()
-        i += 1
         # log to tensorboard
         W_err = torch.norm(torch.abs(W - torch.Tensor(W_star))) # FIXME: should be |W-W*|
         prob = F.softmax(logits, dim=-1)
@@ -170,9 +167,10 @@ for training_iter in range(args.max_iter):
         if pred == Y[i]:
             correct += 1
         accuracy = correct/(i+1) # FIXME
-        writer.add_scalar('losses/loss', loss, i)
-        writer.add_scalar('losses/W_err', W_err, i)
-        writer.add_scalar('losses/accuracy', accuracy, i)
+        print(args.n*training_iter+i)
+        writer.add_scalar('losses/loss', loss, args.n*training_iter+i)
+        writer.add_scalar('losses/W_err', W_err, args.n*training_iter+i)
+        writer.add_scalar('losses/accuracy', accuracy, args.n*training_iter+i)
 
 ################################################################################
 # save the results
