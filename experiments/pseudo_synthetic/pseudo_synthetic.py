@@ -30,7 +30,7 @@ from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter(f'runs/{args.data}/{args.loss}')
 
 device = torch.device("cuda")
-from TreeLoss.loss import CoverTreeLoss
+from TreeLoss.loss import CoverTreeLoss, SimLoss
 from TreeLoss.utilities import gen_data, gen_matrix, set_logger, set_seed, _print, path, norm
 set_seed(args.seed)
 
