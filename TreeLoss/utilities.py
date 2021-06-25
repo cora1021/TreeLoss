@@ -6,13 +6,12 @@ import random
 import os
 import torch
 from sklearn.metrics.pairwise import cosine_similarity
-from cover_tree import CoverTree
-import shutil
+from .cover_tree import CoverTree
 
 def set_logger(name, timestamp):
     formatter=logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-    logger=logging.getLogger(str(name)+'name-Logger')
-    file_handler=logging.FileHandler('./log-'+str(name)+'-'+str(timestamp)+'.log')
+    logger=logging.getLogger(f'{name}-Logger')
+    file_handler=logging.FileHandler(f'./log-{name}-{timestamp}.log')
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
     console_handler=logging.StreamHandler(sys.stdout)
@@ -21,12 +20,12 @@ def set_logger(name, timestamp):
     logger.setLevel(logging.INFO)
     return logger
 
-def set_seed(args):
-    random.seed(args.seed) 
-    np.random.seed(args.seed) 
-    torch.manual_seed(args.seed) 
+def set_seed(seed):
+    random.seed(seed) 
+    np.random.seed(seed) 
+    torch.manual_seed(seed) 
     if torch.cuda.is_available(): 
-        torch.cuda.manual_seed_all(args.seed) 
+        torch.cuda.manual_seed_all(seed) 
 
 def gen_data(trainloader, testloader, m):
     """
@@ -68,15 +67,10 @@ def gen_data(trainloader, testloader, m):
 
     return train_data, train_label, train_original, test_data, test_label, original_label, sim
 
-def gen_matrix(num_label, num_new, n):
-    """
-    This function get distribution of new labels.
-    The input are number of original labels and number of new labels we want to create.
-    It returns a matrix of shape ba (where a is the number of classes in the original dataset and b is the number of new classes we're creating;
-    """
-    m = np.zeros((num_new, num_label))
+def gen_matrix(c, n):
+    m = np.zeros((c, c))
     p = np.random.dirichlet(np.ones(n),size=1)
-    for i in range(num_label):
+    for i in range(c):
         for j in range(n):
             m[i,i+j-n-1] = p[0][j]
     return m
@@ -185,10 +179,10 @@ def accuracy(output, target, topk=(1,)):
     return res
 
 
-def save_checkpoint(state, is_best, filename='alex_checkpoint.pth'):
-    torch.save(state, filename)
-    if is_best:
-        shutil.copyfile(filename, 'alex_model_best.pth')
+# def save_checkpoint(state, is_best, filename='alex_checkpoint.pth'):
+#     torch.save(state, filename)
+#     if is_best:
+#         shutil.copyfile(filename, 'alex_model_best.pth')
 
 
 def adjust_learning_rate(optimizer, epoch, init_lr):

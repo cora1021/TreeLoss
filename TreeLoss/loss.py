@@ -1,12 +1,11 @@
 import typing
 import torch
-from torch._C import FloatStorageBase
 import torch.nn as nn
 import numpy as np
 import torch.nn.functional as F
-from cover_tree import CoverTree
+from .cover_tree import CoverTree
 from scipy.spatial.distance import cosine
-from utilities import path
+from .utilities import path
 
 class SimLoss(torch.nn.Module):
     def __init__(self,
@@ -31,16 +30,16 @@ class SimLoss(torch.nn.Module):
     #     return "SimCE"
 
 class CoverTreeLoss(torch.nn.Module):
-    def __init__(self, c, length, dimension, new2index) -> None:
+    def __init__(self, c, length, d, new2index) -> None:
         '''
         c: number of existed classes
         length: number of existed classes and pseudo classes
-        dimension: dimension of parameter matrix W(c,dimension)
+        d: dimension of parameter matrix W(c,d)
         new2index: a dictionary which we can get a a path of a existed class
         '''
         super().__init__()
         self.c = c
-        self.linear = nn.Linear(dimension, length, bias=False)
+        self.linear = nn.Linear(d, length, bias=False)
         self.criterion = nn.CrossEntropyLoss()
         self.new2index = new2index
 
@@ -100,16 +99,15 @@ class CoverTreeLoss(torch.nn.Module):
         loss = self.criterion(logits, y)
         return loss, logits
 
-    def predict(self, x):
-        '''
-        x: logits
-        This function computes the prediction of model.
-        '''
+    # def predict(self, x):
+    #     '''
+    #     x: logits
+    #     This function computes the prediction of model.
+    #     '''
 
-        prob = F.softmax(x, dim=-1)
+    #     prob = F.softmax(x, dim=-1)
 
-        _, pred = torch.max(prob, dim=-1)
-        _pred = pred.detach().cpu().tolist()
+    #     _, pred = torch.max(prob, dim=-1)
+    #     _pred = pred.detach().cpu().tolist()
 
-        return _pred
-        
+    #     return _pred

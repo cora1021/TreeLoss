@@ -45,10 +45,11 @@ parser_model.add_argument('--lr', type=float, default=1e-4, metavar='LR')
 parser_model.add_argument('--max_iter', type=int, default=int(1e1))
 parser_model.add_argument('--momentum', type=float, default=0.9)
 parser_model.add_argument('--weight_decay', type=float, default=3e-4)
-parser_model.add_argument('--loss', choices=['tree','xentropy'], required=True)
+parser_model.add_argument('--loss', choices=['tree','xentropy'], default='xentropy')
 
 parser_debug = parser.add_argument_group(title='debug')
 parser_model.add_argument('--logdir', default='log')
+parser_model.add_argument('--experiment', choices=['loss_vs_n','loss_vs_d', 'loss_vs_sigma'], required=True)
 args = parser.parse_args()
 
 # load imports;
@@ -63,15 +64,12 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
+# from TreeLoss.utilities import set_seed
+from utilities import set_seed
+import pickle as pkl
 
 # set the seed
-def set_seed(seed):
-    logging.debug('set_seed('+str(args.seed)+')')
-    random.seed(seed) 
-    np.random.seed(seed) 
-    torch.manual_seed(seed) 
-    if torch.cuda.is_available(): 
-        torch.cuda.manual_seed_all(seed) 
+logging.debug('set_seed('+str(args.seed)+')')
 set_seed(args.seed)
 
 # FIXME:
@@ -79,10 +77,6 @@ set_seed(args.seed)
 # add the required libraries to requirements.txt
 # FIXME:
 # your set_seed function should take an int as a parameter and not args; see above
-'''
-from TreeLoss.utilities import set_seed
-set_seed(args.seed)
-'''
 
 ################################################################################
 # generate the data
@@ -134,7 +128,7 @@ logging.debug('create SummaryWriter')
 # FIXME: uncomment
 #experiment_name=f'a={args.a},c={args.c},d={args.d},n={args.n},sigma={args.sigma},lr={args.lr},loss={args.loss},seed={args.seed}'
 #logging.info(f'experiment_name={experiment_name}')
-experiment_name=f'lossvsn{args.n}'
+experiment_name='test'
 writer = SummaryWriter(os.path.join(args.logdir, experiment_name))
 
 logging.debug('create optimizer')
@@ -167,7 +161,7 @@ for training_iter in range(args.max_iter):
         if pred == Y[i]:
             correct += 1
         accuracy = correct/(i+1) # FIXME
-        print(args.n*training_iter+i)
+
         writer.add_scalar('losses/loss', loss, args.n*training_iter+i)
         writer.add_scalar('losses/W_err', W_err, args.n*training_iter+i)
         writer.add_scalar('losses/accuracy', accuracy, args.n*training_iter+i)
@@ -179,3 +173,5 @@ logging.info('saving results')
 
 # FIXME:
 # save the W_err to a file
+with open(f'{args.experiment}.txt', 'a') as f:
+    f.write(f'Loss: {loss} \t W_err: {W_err} \t Accuracy: {accuracy} \n')
