@@ -2,7 +2,7 @@
 
 # this is a temporary hack to allow importing the files in the TreeLoss folder when the library is not yet installed
 import sys
-sys.path.append('.')
+sys.path.append('../..')
 
 # setup logging using an environment variable;
 # by calling python with an invocation like
@@ -42,7 +42,6 @@ parser_model = parser.add_argument_group(
         description="it's recommended to always use scientific notation for hyperparameter values since we really care about the order of magnitude",
         )
 parser_model.add_argument('--lr', type=float, default=1e-4, metavar='LR') 
-parser_model.add_argument('--max_iter', type=int, default=int(1e1))
 parser_model.add_argument('--momentum', type=float, default=0.9)
 parser_model.add_argument('--weight_decay', type=float, default=3e-4)
 parser_model.add_argument('--loss', choices=['tree','xentropy'], default='xentropy')
@@ -64,9 +63,8 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
-# from TreeLoss.utilities import set_seed
-from utilities import set_seed
-import pickle as pkl
+from TreeLoss.utilities import set_seed
+from TreeLoss.loss import CoverTreeLoss
 
 # set the seed
 logging.debug('set_seed('+str(args.seed)+')')
@@ -126,9 +124,8 @@ logging.info('training the model')
 
 logging.debug('create SummaryWriter')
 # FIXME: uncomment
-#experiment_name=f'a={args.a},c={args.c},d={args.d},n={args.n},sigma={args.sigma},lr={args.lr},loss={args.loss},seed={args.seed}'
-#logging.info(f'experiment_name={experiment_name}')
-experiment_name='test'
+experiment_name=f'a={args.a},c={args.c},d={args.d},n={args.n},sigma={args.sigma},lr={args.lr},loss={args.loss},seed={args.seed}'
+logging.info(f'experiment_name={experiment_name}')
 writer = SummaryWriter(os.path.join(args.logdir, experiment_name))
 
 logging.debug('create optimizer')
@@ -138,40 +135,37 @@ optimizer = optim.SGD(
     momentum=args.momentum,
     weight_decay=args.weight_decay,
     )
-
+scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.n)
 logging.debug('training loop')
-for training_iter in range(args.max_iter):
-    logging.debug('training_iter='+str(training_iter))
-    # i is the current data point
-    # i = training_iter%args.n
-    correct = 0
-    for i in range(args.n):
-        # calculate the loss
-        logits = model(X[i].view(1,args.d))
-        W = model.weight
-        loss = criterion(logits, Y[i].view(1)) # FIXME: notation is incorrect
-        # backprop
-        loss.backward()
-        optimizer.step()
-        optimizer.zero_grad()
-        # log to tensorboard
-        W_err = torch.norm(torch.abs(W - torch.Tensor(W_star))) # FIXME: should be |W-W*|
-        prob = F.softmax(logits, dim=-1)
-        _, pred = torch.max(prob, dim=-1)
-        if pred == Y[i]:
-            correct += 1
-        accuracy = correct/(i+1) # FIXME
 
-        writer.add_scalar('losses/loss', loss, args.n*training_iter+i)
-        writer.add_scalar('losses/W_err', W_err, args.n*training_iter+i)
-        writer.add_scalar('losses/accuracy', accuracy, args.n*training_iter+i)
+correct = 0
+for i in range(args.n):
+    # calculate the loss
+    logits = model(X[i].view(1,args.d))
+    W = model.weight
+    loss = criterion(logits, Y[i].view(1)) # FIXME: notation is incorrect
+    # backprop
+    loss.backward()
+    optimizer.step()
+    optimizer.zero_grad()
+    # log to tensorboard
+    W_err = torch.norm(torch.abs(W - torch.Tensor(W_star))) # FIXME: should be |W-W*|
+    prob = F.softmax(logits, dim=-1)
+    _, pred = torch.max(prob, dim=-1)
+    if pred == Y[i]:
+        correct += 1
+    accuracy = correct/(i+1) # FIXME
+
+    writer.add_scalar('losses/loss', loss, i)
+    writer.add_scalar('losses/W_err', W_err, i)
+    writer.add_scalar('losses/accuracy', accuracy, i)
 
 ################################################################################
 # save the results
 ################################################################################
 logging.info('saving results')
 
-# FIXME:
-# save the W_err to a file
+# # FIXME:
+# # save the W_err to a file
 with open(f'{args.experiment}.txt', 'a') as f:
     f.write(f'Loss: {loss} \t W_err: {W_err} \t Accuracy: {accuracy} \n')
