@@ -199,7 +199,11 @@ and so our technique may be able to provide the first theoretical justification 
 
 \fixme{Write a detailed description of the sim loss}
 
-Simloss is similarity based loss function which incorporates class similarities to support the training of neural network classifiers. Cross entropy loss assumes only one class is correct and punishes every misclassification, while Simloss indicates classes have similarities and classifying a target as a similar class is better. When calculating the loss function, instead of only taking the probability vector at the target index Simloss also adds the product of similarity between target and other classes and probability vector at the corresponding class. Non zero values of similarity matrix lead to smaller losses when the network gives a high score to classes similar to the correct one. It would allow the classifier to make less severe mistakes as it learns to predict similar classes.
+Simloss\cite{Kobs2020SimLossCS} is similarity based loss function which incorporates class similarities to support the training of neural network classifiers.
+Cross entropy loss assumes only one class is correct and punishes every misclassification, while Simloss indicates classes have similarities and classifying a target as a similar class is better.
+When calculating the loss function, instead of only taking the probability vector at the target index Simloss also adds the product of similarity between target and other classes and probability vector at the corresponding class. 
+Non zero values of similarity matrix lead to smaller losses when the network gives a high score to classes similar to the correct one. 
+It would allow the classifier to make less severe mistakes as it learns to predict similar classes.
 \begin{align}
     L_{Simloss}&=-\frac{1}{N}\log(\sum_{c=1}^{C}S_{y_i,c}\cdot p_i[c])\\
     % L_{Simloss}=-\frac{1}{N}\log(\sum_{c=1}^{C}S_{y_i,c}\cdot\frac {\exp(-\trans\w_{y_i} \x)}{\sum_{j=1}^C \exp(-\trans \w_j \x)})
@@ -506,8 +510,23 @@ We should adapt the $\w*_i$ vectors to sit on a manifold instead of a hyperplane
 In a pseudo-synthetic dataset, we take a non-synthetic dataset and modify it.
 \fixme{describe your procedure for generating pseudo-synthetic data and all the experiments that you plan to run}
 
-For non-synthetic datasets which we cannot obtain specific similarities directly, we would build similarities manually by following procedures. We generate a sampling matrix which each row represents the probability distribution of a new label. We would sample new labels from the sampling matrix and view each row as embedding of each new label and then get similarities from embeddings. Next, we are able to construct a cover tree structure from the new labels and take each leaf node represents a new label and replace all parent nodes with pseudo labels. 
-
+For non-synthetic datasets which do not have specific similarities, we would build pseudo-synthetic datasets with similarities manually by following procedures. 
+\begin{itemize}
+  \item [1)] 
+  For $o% original classes, we want to generate a sampling matrix $m$ for c new classes which each row represents the probability distribution of a new class. 
+  i.e. If a new class is mixed by $k$ original labels, we sample a probability distribution $p$ of size $k$ and sum to 1. 
+  So the sampling matrix is as below:
+\begin{align}
+    row &= (i+j) \bmod c\nonumber \\
+    m[row,i] &= p[j]  \nonumber
+\end{align}
+where $i$=1,\dots,$o$ $j$=1,\dots,$k$ 
+  
+  \item [2)]
+  We would sample new labels from the sampling matrix and view each row as embedding of each new label and then get similarities from embeddings.
+  \item [3)]
+  Next, we are able to construct a cover tree structure from the new labels and take each leaf node represents a new label and replace all parent nodes with pseudo labels. 
+\end{itemize}
 For non-synthetic datasets which we are able to get similarities directly, we construct the cover tree structure from the similarities and apply cover tree loss to compare with classic cross entropy loss.
 
 \begin{table}[h]
@@ -518,13 +537,22 @@ For non-synthetic datasets which we are able to get similarities directly, we co
 \subsection{Real world twitter data}
 \fixme{Write a description of the experiment.}
 
-We apply cover tree loss on emoji prediction in twitter dataset. Emojis are popular to express emotions in text messages and tweets are a wildely used social media over the world. We trained the multilingual BERT model on tweets to predict which emoji corresponds to a piece of text is best for measuring the emotional content in the text. Our 1660 target emojis are defined by emo2vec.
+We apply cover tree loss on emoji prediction in twitter dataset. 
+Emojis are popular to express emotions in text messages and tweets are a wildely used social media over the world. 
+We trained the multilingual BERT model on tweets to predict which emoji corresponds to a piece of text is best for measuring the emotional content in the text. 
+Our 1660 target emojis are defined by emo2vec\cite{Eisner2016emoji2vecLE}.
 
 \subsubsection{Data processing}
-We collect all tweets in any languages sent from anywhere in the world and filter the tweets with target emojis. For each tweet, we replace all user mentions with a special token \texttt{\text{<}mention\text{>}} and all URLS with a special token \texttt{\text{<}url\text{>}} and delete all emojis. We keep all hashtags and duplicate the tweet once for each emoji if a tweet has multiple emojis. Then we split the dataset into training validadtion and testing sets by user id to ensure each user appears in only one set in order to prevent data leakage.
+We collect all tweets\cite{Izbicki2019GeolocatingTI} in any languages sent from anywhere in the world and filter the tweets with target emojis. 
+For each tweet, we replace all user mentions with a special token \texttt{\text{<}mention\text{>}} and all URLS with a special token \texttt{\text{<}url\text{>}} and delete all emojis. 
+We keep all hashtags and duplicate the tweet once for each emoji if a tweet has multiple emojis. 
+Then we split the dataset into training validadtion and testing sets by user id to ensure each user appears in only one set in order to prevent data leakage.
 
 \subsubsection{Experiments}
-We apply the multilingual BERT model trained on data from 109 distinct languages which achieves state-of-the-art performance on a wide variety of natural language tasks. We get the embeddings of 1660 target emojis defined by emo2vec and construct a cover tree structure from these emojis. In this cover tree structure, every leaf node represents each real target emoji and we replace all parent nodes with pseudo labels. Then we would adopt cover tree loss and compare the performance with classic cross entropy loss.
+We apply the multilingual BERT model\cite{Feng2020LanguageagnosticBS} trained on data from 109 distinct languages which achieves state-of-the-art performance on a wide variety of natural language tasks. 
+We get the embeddings of 1660 target emojis defined by emo2vec and construct a cover tree structure from these emojis. 
+In this cover tree structure, every leaf node represents each real target emoji and we replace all parent nodes with pseudo labels. 
+Then we would adopt cover tree loss and compare the performance with classic cross entropy loss.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \bibliographystyle{plainnat}
