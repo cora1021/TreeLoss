@@ -6,7 +6,9 @@ import random
 import os
 import torch
 from sklearn.metrics.pairwise import cosine_similarity
-from .cover_tree import CoverTree
+from cover_tree import CoverTree
+import math
+# import shutil
 
 def set_logger(name, timestamp):
     formatter=logging.Formatter('%(asctime)s %(levelname)s %(message)s')
@@ -36,45 +38,80 @@ def gen_data(trainloader, testloader, m):
     examples = enumerate(trainloader)
 
     train_data = []
-    train_label = []
     train_original = []
     while True:
         try:
             batch_idx, (example_data, example_targets) = next(examples)
-            label = example_targets.numpy()
             train_original.append(example_targets)
-            new_train = np.random.choice(np.arange(0,m.shape[0]), p = np.transpose(m[:,label]).flatten())
-            train_label.append(new_train)
             train_data.append(example_data.squeeze(0).numpy())
         except:
             break
+    train_dataset = list(zip(train_data, train_original))
+    random.shuffle(train_dataset)
+    train_data, train_original = zip(*train_dataset)
+    train_data = np.array(train_data)
+    train_original = np.array(train_original)
+    train_label = np.copy(train_original)
+    
+    # sampling
+    c, o = m.shape
+    for i in range(o):
+        p = np.nonzero(m[:,i])
+        position = np.where(train_original==i)
+        length = np.sum(train_original==i)
+        t = 0
+        for j in range(p[0].shape[0]):
+            index = position[0][math.ceil(t*length):math.ceil((t+m[p[0][j],i])*length)]
+            train_label[index] = p[0][j]
+            t += m[p[0][j],i]
 
     instances = enumerate(testloader)
 
     test_data = []
-    test_label = []
-    original_label = []
+    test_original = []
     while True:
         try:
             batch_index, (instances_data, instances_targets) = next(instances)
-            label = instances_targets.numpy()
-            original_label.append(instances_targets)
-            new_test = np.random.choice(np.arange(0,m.shape[0]), p = np.transpose(m[:,label]).flatten())
-            test_label.append(new_test)
+            test_original.append(instances_targets)
             test_data.append(instances_data.squeeze(0).numpy())
         except:
             break
+    test_data = np.array(test_data)
+    test_original = np.array(test_original)
+    test_label = np.copy(test_original)
+    
+    for i in range(o):
+        p = np.nonzero(m[:,i])
+        position = np.where(test_original==i)
+        length = np.sum(test_original==i)
+        t = 0
+        for j in range(p[0].shape[0]):
+            index = position[0][math.ceil(t*length):math.ceil((t+m[p[0][j],i])*length)]
+            test_label[index] = p[0][j]
+            t += m[p[0][j],i]
 
-    return train_data, train_label, train_original, test_data, test_label, original_label, sim
+    return train_data, train_label, train_original, test_data, test_label, test_original, sim
 
-def gen_matrix(c, n):
-    m = np.zeros((c, c))
-    p = np.random.dirichlet(np.ones(n),size=1)
-    for i in range(c):
-        for j in range(n):
-            m[i,i+j-n-1] = p[0][j]
+
+def gen_matrix(o, c, k):
+    """
+    o is number of original classes
+    c is number of new classes
+    k is number of mixings
+    output a sampling matrix m
+    """
+    m = np.zeros((c, o))
+    p = np.full((1,k), 1)
+    for i in range(0, c, o):
+        for col in range(o):
+            for j in range(k):
+                row = (col + j) % c
+                if i+row < c:
+                    m[i+row,col] = p[0][j]
+    for i in range(o):
+        num = np.count_nonzero(m[:,i])
+        m[:,i] = m[:,i]/num
     return m
-
 
 def gen_sim(m):
     """
@@ -90,12 +127,6 @@ def gen_sim(m):
     sim_matrix = torch.from_numpy(cosine_dist)
 
     return sim_matrix
-
-# def gen_sim(m):
-#     I = np.identity(m.shape[0])
-#     sim = np.maximum(I, np.dot(m, np.transpose(m)))
-#     sim_matrix = torch.from_numpy(sim)
-#     return sim_matrix
 
 def get_labels(label):
   
@@ -125,10 +156,12 @@ def path(self):
     def _path(node, path_tmp):
         
         if isinstance(node, CoverTree._LeafNode):
+            path_tmp.append(node.ctr_idx) # all leaf node add a ctr_idx
             for number in node.idx:
                 path_tmp.append(number)
                 pathes.append(list(path_tmp))
                 path_tmp.pop()
+            path_tmp.pop() # all leaf add a ctr_idx
         else:
             path_tmp.append(node.ctr_idx)
             for child in node.children:
@@ -144,49 +177,3 @@ def norm(x):
     n = np.min(x)
     x = (x-n) / (m-n)
     return x
-
-class AverageMeter(object):
-    """Computes and stores the average and current value"""
-
-    def __init__(self):
-        self.reset()
-
-    def reset(self):
-        self.val = 0
-        self.avg = 0
-        self.sum = 0
-        self.count = 0
-
-    def update(self, val, n=1):
-        self.val = val
-        self.sum += val * n
-        self.count += n
-        self.avg = self.sum / self.count
-
-
-def accuracy(output, target, topk=(1,)):
-    """Computes the precision@k for the specified values of k"""
-    maxk = max(topk)
-    batch_size = target.size(0)
-    _, pred = output.topk(maxk, 1, largest=True, sorted=True)
-    pred = pred.t()
-    correct = pred.eq(target.view(1, -1).expand_as(pred))
-
-    res = []
-    for k in topk:
-        correct_k = correct[:k].view(-1).float().sum(0, keepdim=True)
-        res.append(correct_k.mul_(100.0 / batch_size))
-    return res
-
-
-# def save_checkpoint(state, is_best, filename='alex_checkpoint.pth'):
-#     torch.save(state, filename)
-#     if is_best:
-#         shutil.copyfile(filename, 'alex_model_best.pth')
-
-
-def adjust_learning_rate(optimizer, epoch, init_lr):
-    """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
-    lr = init_lr * (0.1 ** (epoch // 30))
-    for param_group in optimizer.param_groups:
-        param_group['lr'] = lr

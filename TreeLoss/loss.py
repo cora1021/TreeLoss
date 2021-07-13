@@ -26,8 +26,6 @@ class SimLoss(torch.nn.Module):
         w = self.w[y, :]
         return torch.mean(-torch.log(torch.sum(w * x, dim=1) + self.epsilon))
 
-    # def __repr__(self) -> str:
-    #     return "SimCE"
 
 class CoverTreeLoss(torch.nn.Module):
     def __init__(self, c, length, d, new2index) -> None:
@@ -98,16 +96,3 @@ class CoverTreeLoss(torch.nn.Module):
         
         loss = self.criterion(logits, y)
         return loss, logits
-
-    # def predict(self, x):
-    #     '''
-    #     x: logits
-    #     This function computes the prediction of model.
-    #     '''
-
-    #     prob = F.softmax(x, dim=-1)
-
-    #     _, pred = torch.max(prob, dim=-1)
-    #     _pred = pred.detach().cpu().tolist()
-
-    #     return _pred
