@@ -1,14 +1,13 @@
 import sys
 import time
 import logging
-import numpy as np, numpy.random
+import numpy as np
 import random
 import os
 import torch
 from sklearn.metrics.pairwise import cosine_similarity
-from cover_tree import CoverTree
+from .cover_tree import CoverTree
 import math
-# import shutil
 
 def set_logger(name, timestamp):
     formatter=logging.Formatter('%(asctime)s %(levelname)s %(message)s')

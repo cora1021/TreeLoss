@@ -113,10 +113,13 @@ logging.debug("X.shape="+str(X.shape))
 # define the model
 ################################################################################
 logging.info('defining the model')
-
-model = nn.Linear(args.d, args.c)
-criterion = nn.CrossEntropyLoss()
-
+if args.loss == 'xentropy':
+    model = nn.Linear(args.d, args.c)
+    criterion = nn.CrossEntropyLoss()
+if args.loss == 'tree':
+    new2index, length = CoverTreeLoss.tree_structure(args.c,U)
+    criterion = CoverTreeLoss(args.c, length, args.d, new2index)
+    model = nn.Linear(args.d, length)
 ################################################################################
 # train the model
 ################################################################################
@@ -126,7 +129,7 @@ logging.debug('create SummaryWriter')
 # FIXME: uncomment
 experiment_name=f'a={args.a},c={args.c},d={args.d},n={args.n},sigma={args.sigma},lr={args.lr},loss={args.loss},seed={args.seed}'
 logging.info(f'experiment_name={experiment_name}')
-writer = SummaryWriter(os.path.join(args.logdir, experiment_name))
+# writer = SummaryWriter(os.path.join(args.logdir, experiment_name))
 
 logging.debug('create optimizer')
 optimizer = optim.SGD(
@@ -141,9 +144,14 @@ logging.debug('training loop')
 correct = 0
 for i in range(args.n):
     # calculate the loss
-    logits = model(X[i].view(1,args.d))
-    W = model.weight
-    loss = criterion(logits, Y[i].view(1)) # FIXME: notation is incorrect
+    if args.loss == 'xentropy':
+        W = model.weight
+        logits = model(X[i].view(1,args.d))
+        loss = criterion(logits, Y[i].view(1)) # FIXME: notation is incorrect
+    if args.loss == 'tree':
+        W_ = model.weight
+        loss, logits, W = criterion(W_, X[i].view(1,args.d), Y[i].view(1))
+
     # backprop
     loss.backward()
     optimizer.step()
@@ -156,9 +164,9 @@ for i in range(args.n):
         correct += 1
     accuracy = correct/(i+1) # FIXME
 
-    writer.add_scalar('losses/loss', loss, i)
-    writer.add_scalar('losses/W_err', W_err, i)
-    writer.add_scalar('losses/accuracy', accuracy, i)
+    # writer.add_scalar('losses/loss', loss, i)
+    # writer.add_scalar('losses/W_err', W_err, i)
+    # writer.add_scalar('losses/accuracy', accuracy, i)
 
 ################################################################################
 # save the results
@@ -167,5 +175,5 @@ logging.info('saving results')
 
 # # FIXME:
 # # save the W_err to a file
-with open(f'{args.experiment}.txt', 'a') as f:
+with open(f'{args.experiment}_{args.loss}.txt', 'a') as f:
     f.write(f'Loss: {loss} \t W_err: {W_err} \t Accuracy: {accuracy} \n')

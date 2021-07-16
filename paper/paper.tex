@@ -10,6 +10,7 @@
 \usepackage[inline]{enumitem}
 \usepackage{tikz}
 \usepackage{booktabs}
+\usepackage{subfigure}
 
 \usepackage{color}
 \usepackage{colortbl}
@@ -122,10 +123,10 @@ where $W^* = \argmin L_D(W)$.
 \begin{proof}
     \fixme{Write a proof of this result using Theorem 14.12 of Shalev-Shwartz and Ben-David and the properties of the cross entropy loss from the last set of notes.}
     \begin{align}
-    {\| W \|^2_F}&=\sum_{i=1}^c{\| W_i\|^2}\nonumber\\
-                &\le\sum_{i=1}^c{B^2}\nonumber\\
-                &\le cB^2\nonumber\\
-   \| W \|_F  &\le \sqrt c B \nonumber
+    {\| W \|^2_F}&=\sum_{i=1}^c{\| W_i\|^2}\\
+                &\le\sum_{i=1}^c{B^2}\\
+                &\le cB^2\\
+   \| W \|_F  &\le \sqrt c B 
     \end{align}
 Then we get:
     \begin{equation}
@@ -133,7 +134,7 @@ Then we get:
     \end{equation}
    Take expectation of both side of equation(3):
    \begin{equation}
-    \E L_D(\bar W) - L_D(W^*) \le \frac {\sqrt cB\rho}{\sqrt n}\nonumber
+    \E L_D(\bar W) - L_D(W^*) \le \frac {\sqrt cB\rho}{\sqrt n}
 \end{equation}
 \end{proof}
 
@@ -162,7 +163,16 @@ and so our technique may be able to provide the first theoretical justification 
 
 \fixme{Read 5-10 additional papers about the hierarchical softmax.  For each paper, write a paragraph describing the paper's contributions and how it relates to the cover tree loss.  For the final paper we will reference these papers.  We will have to trim down the notes that you write for this task, but it's useful when writing the paper to have detailed notes about references.}
 
-\cite{Peng2017IncrementallyLT} introduce 
+\cite{Peng2017IncrementallyLT} introduce a training method incrementally train the hierarchical softmax function for neural network language models. 
+To be specific, the incremental training split the cost function to model old and update corpora separately and factorize the objective function for the hierarchical softmax. 
+They also provide a new stochastic gradient based method to update all the word vectors and parameters and their theoretical analysis shows the mean square error of the parameter vectors can be bounded by a function of the number of changed words related to the parameter node which is similar to our idea of cover tree loss.
+Their experimental results show the incremental training can save a lot of time.
+
+\cite{Mohammed2018EffectivenessOH} compare the performance of normal softmax and hierarchical softmax in large scale classification tasks. 
+Normal softmax is computationally expensive for large scale datasets with large number of possible outputs.
+Their experimental results show that normal softmax and hierarchical softmax underperforms on datasets with large number of labels.
+That is also one of our motivations of cover tree loss function. 
+Compared to classic cross entropy loss function, cover tree loss function performs better on datasets with large number of labels.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -241,11 +251,11 @@ where $W^* = \argmin L_D(W)$.
 \begin{proof}
     \fixme{Write a proof of this result using Theorem 14.12 of Shalev-Shwartz and Ben-David.}
     \begin{align}
-    {\| U \|^2_F}&=\sum_{i=1}^e{\| U_i\|^2}\nonumber\\
-                &\le\sum_{i=1}^e{B^2}\nonumber\\
-                &\le eB^2\nonumber\\
-   \| U \|_F  &\le \sqrt e B \nonumber \\
-   \| W \|_F  &\le \sqrt e B \nonumber
+    {\| U \|^2_F}&=\sum_{i=1}^e{\| U_i\|^2}\\
+                &\le\sum_{i=1}^e{B^2}\\
+                &\le eB^2\\
+   \| U \|_F  &\le \sqrt e B  \\
+   \| W \|_F  &\le \sqrt e B
     \end{align}
     Then we get:
     \begin{equation}
@@ -253,7 +263,7 @@ where $W^* = \argmin L_D(W)$.
     \end{equation}
    Take expectation of both side of equation(8):
    \begin{equation}
-    \E L_D(\bar W) - L_D(W^*) \le \frac {\sqrt eB\rho}{\sqrt n}\nonumber
+    \E L_D(\bar W) - L_D(W^*) \le \frac {\sqrt eB\rho}{\sqrt n}
 \end{equation}
 \end{proof}
 
@@ -488,9 +498,42 @@ Figure \ref{fig:synthetic-results} shows that the cover tree loss converges at a
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.3\textwidth]{example-image-a}
-    \includegraphics[width=0.3\textwidth]{example-image-b}
-    \includegraphics[width=0.3\textwidth]{example-image-c}
+    \subfigure{
+        \label{Fig.sub.1}
+        \includegraphics[width=0.3\textwidth]{fig/images/loss_vs_n.png}}
+    \subfigure{
+        \label{Fig.sub.2}
+        \includegraphics[width=0.3\textwidth]{fig/images/error_vs_n.png}}
+    \subfigure{
+        \label{Fig.sub.3}
+        \includegraphics[width=0.3\textwidth]{fig/images/accuracy_vs_n.png}}
+    \caption{Loss value, parameter matrix error, accuracy versus number of data points}
+    \label{Fig.1}
+    
+    \subfigure{
+        \label{Fig.sub.1}
+        \includegraphics[width=0.3\textwidth]{fig/images/loss_vs_d.png}}
+    \subfigure{
+        \label{Fig.sub.2}
+        \includegraphics[width=0.3\textwidth]{fig/images/error_vs_d.png}}
+    \subfigure{
+        \label{Fig.sub.3}
+        \includegraphics[width=0.3\textwidth]{fig/images/accuracy_vs_d.png}}
+    \caption{Loss value, parameter matrix error, accuracy versus dimension of parameter matrix}
+    \label{Fig.2}
+    
+    \subfigure{
+        \label{Fig.sub.1}
+        \includegraphics[width=0.3\textwidth]{fig/images/loss_vs_sigma.png}}
+    \subfigure{
+        \label{Fig.sub.2}
+        \includegraphics[width=0.3\textwidth]{fig/images/error_vs_sigma.png}}
+    \subfigure{
+        \label{Fig.sub.3}
+        \includegraphics[width=0.3\textwidth]{fig/images/accuracy_vs_sigma.png}}
+    \caption{Loss value, parameter matrix error, accuracy versus randomness}
+    \label{Fig.3}
+    
     \caption{
         \fixme{We need a plot of loss vs number of data points ($n$), vs dimension ($d$), and vs randomness ($sigma$). These plots should all be log-log plots.  For each of these experiments, you should write to shell scripts: the first to generate the data and the second to plot the data.  These shell scripts should be easy to run in order to easily replicate your experiments.}}
     \label{fig:synthetic-results}
@@ -510,24 +553,31 @@ We should adapt the $\w*_i$ vectors to sit on a manifold instead of a hyperplane
 In a pseudo-synthetic dataset, we take a non-synthetic dataset and modify it.
 \fixme{describe your procedure for generating pseudo-synthetic data and all the experiments that you plan to run}
 
-For non-synthetic datasets which do not have specific similarities, we would build pseudo-synthetic datasets with similarities manually by following procedures. 
+In order to compare the performance between classic cross entropy loss function and cover tree loss function, we need datasets which the classes have clear similarities.
+Besides, we would like to construct pseudo-synthetic datasets which we can control the similarities.
+The idea is we can sample the new classes from the original classes of datasets. We get the similarities of new classes from probability distribution and control the complexity of similarities by changing probability distribution. 
+
+For non-synthetic datasets that do not have specific similarities, we would build pseudo-synthetic datasets with similarities manually by following procedures. 
 \begin{itemize}
-  \item [1)] 
-  For $o% original classes, we want to generate a sampling matrix $m$ for c new classes which each row represents the probability distribution of a new class. 
-  i.e. If a new class is mixed by $k$ original labels, we sample a probability distribution $p$ of size $k$ and sum to 1. 
+  \item
+  For $o$ original classes, we want to generate a sampling matrix $m$ for c new classes which each row represents the probability distribution of a new class. 
+  Each new class is uniformly sampled from $k$ original class.
   So the sampling matrix is as below:
 \begin{align}
-    row &= (i+j) \bmod c\nonumber \\
-    m[row,i] &= p[j]  \nonumber
+    row &= (j+col) \bmod c \\
+    m[i+row,col] &= \frac{o}{c \times n}  
 \end{align}
-where $i$=1,\dots,$o$ $j$=1,\dots,$k$ 
+where $i \in [c]$ $col \in [o]$ $j \in [k]$ 
   
-  \item [2)]
-  We would sample new labels from the sampling matrix and view each row as embedding of each new label and then get similarities from embeddings.
-  \item [3)]
-  Next, we are able to construct a cover tree structure from the new labels and take each leaf node represents a new label and replace all parent nodes with pseudo labels. 
+  \item
+  We would sample new classes from the sampling matrix and view each row as vector representation of each new class and then get similarities from vector representations.
+  The new class is defined as below:
+ \begin{align}
+    c[i] = o[j] \cdot m[i,j] 
+\end{align}
+  \item
+  Next, we are able to construct a cover tree structure from the new labels and take each leaf node represents a new class and replace all parent nodes with pseudo classes. 
 \end{itemize}
-For non-synthetic datasets which we are able to get similarities directly, we construct the cover tree structure from the similarities and apply cover tree loss to compare with classic cross entropy loss.
 
 \begin{table}[h]
     \centering
@@ -559,5 +609,3 @@ Then we would adopt cover tree loss and compare the performance with classic cro
 \bibliography{paper}
 
 \end{document}
-
-

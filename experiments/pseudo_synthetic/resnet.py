@@ -215,7 +215,6 @@ class ResNet_Cifar(nn.Module):
 
         x = self.layer1(x)
         x = self.layer2(x)
-        x = self.dropout(x)
         x = self.layer3(x)
 
         x = self.avgpool(x)

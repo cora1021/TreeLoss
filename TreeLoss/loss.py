@@ -72,6 +72,7 @@ class CoverTreeLoss(torch.nn.Module):
         return new2index, length
 
     def forward(self,
+                weights: torch.Tensor,
                 x: torch.Tensor, #(batch_size, hidden_size)
                 y: torch.Tensor) -> torch.Tensor:
         '''
@@ -80,7 +81,7 @@ class CoverTreeLoss(torch.nn.Module):
         This function computes the cover tree loss.
         '''
 
-        weights = self.linear.weight #(class_num, hidden_size)
+        # weights = self.linear.weight #(class_num, hidden_size)
         
         added_weights = []
         for j in range(self.c):
@@ -95,4 +96,4 @@ class CoverTreeLoss(torch.nn.Module):
         logits = torch.matmul(x, added_weights.transpose(0, 1)) # (batch_size, true_class_num)
         
         loss = self.criterion(logits, y)
-        return loss, logits
+        return loss, logits, added_weights
