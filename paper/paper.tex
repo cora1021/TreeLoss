@@ -174,6 +174,21 @@ Their experimental results show that normal softmax and hierarchical softmax und
 That is also one of our motivations of cover tree loss function. 
 Compared to classic cross entropy loss function, cover tree loss function performs better on datasets with large number of labels.
 
+Extreme multi-label classification is difficult, but organizing labels as a tree can handle this problem. 
+Hierarchical softmax approach commonly used for multi-class problems.
+\cite{Wydmuch2018ANG} investigate probabilistic label trees that have been recently devised for tackling extreme multi-label classification and show that probabilistic label trees are a no-regret multi-label generation of hierarchical softmax when precision $@k$ is used as a model evaluation metric.
+They also show that their implementation of probabilistic label trees obtains significantly better results than hierarchical softmax with the pick-one-label heuristic.
+
+Neural networks are widely used for computational linguistics.
+These neural models leverage knowledge from massive corpora but they are extremely slow.
+\cite{Jiang2017ExplorationOT} explore the tree-based hierarchical softmax method and reform its architecture, making it compatible
+with modern GPUs and introducing a compact tree-based loss function.
+Their tree-based loss function is the negative log-likelihood of the joint product of the probability of the route taken from the root to the corresponding leaf node. 
+It is different from our cover tree loss function which parameterize the weight vectors. 
+
+\cite{Yang2017OptimizeHS} gives a theoretic analysis on how should organize the hierarchical tree by treating the tree structure as a parameter of the training objective function.
+They propose SemHuff, a new tree constructing scheme based on adjusting the Huffman tree with word similarity knowledge.
+Their experiments results also show that word embeddings trained with optimized hierarchical tree can give better results in various tasks.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -507,7 +522,7 @@ Figure \ref{fig:synthetic-results} shows that the cover tree loss converges at a
     \subfigure{
         \label{Fig.sub.3}
         \includegraphics[width=0.3\textwidth]{fig/images/accuracy_vs_n.png}}
-    \caption{Loss value, parameter matrix error, accuracy versus number of data points}
+    \caption{Loss value, parameter matrix error, accuracy versus number of data points(Dimension: 64, Randomness: 1.0, Number of Classes: 10)}
     \label{Fig.1}
     
     \subfigure{
@@ -519,7 +534,7 @@ Figure \ref{fig:synthetic-results} shows that the cover tree loss converges at a
     \subfigure{
         \label{Fig.sub.3}
         \includegraphics[width=0.3\textwidth]{fig/images/accuracy_vs_d.png}}
-    \caption{Loss value, parameter matrix error, accuracy versus dimension of parameter matrix}
+    \caption{Loss value, parameter matrix error, accuracy versus dimension of parameter matrix(Number of Data Points: 100, Randomness: 1.0, Number of Classes: 10)}
     \label{Fig.2}
     
     \subfigure{
@@ -531,8 +546,20 @@ Figure \ref{fig:synthetic-results} shows that the cover tree loss converges at a
     \subfigure{
         \label{Fig.sub.3}
         \includegraphics[width=0.3\textwidth]{fig/images/accuracy_vs_sigma.png}}
-    \caption{Loss value, parameter matrix error, accuracy versus randomness}
+    \caption{Loss value, parameter matrix error, accuracy versus randomness(Number of Data Points: 100, Dimension: 64, Number of classes: 10)}
     \label{Fig.3}
+
+    \subfigure{
+        \label{Fig.sub.1}
+        \includegraphics[width=0.3\textwidth]{fig/images/loss_vs_class.png}}
+    \subfigure{
+        \label{Fig.sub.2}
+        \includegraphics[width=0.3\textwidth]{fig/images/error_vs_class.png}}
+    \subfigure{
+        \label{Fig.sub.3}
+        \includegraphics[width=0.3\textwidth]{fig/images/accuracy_vs_class.png}}
+    \caption{Loss value, parameter matrix error, accuracy versus number of classes(Number of Data Points: 100, Dimension: 64, Randomness: 1.0)}
+    \label{Fig.4}
     
     \caption{
         \fixme{We need a plot of loss vs number of data points ($n$), vs dimension ($d$), and vs randomness ($sigma$). These plots should all be log-log plots.  For each of these experiments, you should write to shell scripts: the first to generate the data and the second to plot the data.  These shell scripts should be easy to run in order to easily replicate your experiments.}}
@@ -549,35 +576,60 @@ and a geometric distribution is a likely good alternative.
 The covertree loss can work well even when the weight matrix has non-linear intrinsic structure.
 We should adapt the $\w*_i$ vectors to sit on a manifold instead of a hyperplane to demonstrate this fact.
 
+
 \subsection{Pseudo-synthetic data}
 In a pseudo-synthetic dataset, we take a non-synthetic dataset and modify it.
 \fixme{describe your procedure for generating pseudo-synthetic data and all the experiments that you plan to run}
-
+\subsubsection{Constructing Pseudo-synthetic datasets}
+\label{sec:pseu-syn}
 In order to compare the performance between classic cross entropy loss function and cover tree loss function, we need datasets which the classes have clear similarities.
 Besides, we would like to construct pseudo-synthetic datasets which we can control the similarities.
-The idea is we can sample the new classes from the original classes of datasets. We get the similarities of new classes from probability distribution and control the complexity of similarities by changing probability distribution. 
+The idea is we can generate the new classes from the original classes of datasets.
+It means only the labels are synthetic and the features are real.
+We get the similarities of new classes from probability distribution and control the complexity of similarities by changing probability distribution. 
 
 For non-synthetic datasets that do not have specific similarities, we would build pseudo-synthetic datasets with similarities manually by following procedures. 
 \begin{itemize}
   \item
-  For $o$ original classes, we want to generate a sampling matrix $m$ for c new classes which each row represents the probability distribution of a new class. 
-  Each new class is uniformly sampled from $k$ original class.
-  So the sampling matrix is as below:
+  For $o$ original classes, we want to generate a matrix $M : \R^{c\times o}$ for c new classes which each row represents the probability distribution of a new class. 
+  Each new class is uniformly generated from $k$ original classes.
+  So $M$ is as below:
 \begin{align}
-    row &= (j+col) \bmod c \\
-    m[i+row,col] &= \frac{o}{c \times n}  
+    r &= (j+l) \bmod c \\
+    M_{i+r,l} &= \frac{o}{ck}  
 \end{align}
-where $i \in [c]$ $col \in [o]$ $j \in [k]$ 
+where $i \in [c]$ $l \in [o]$ $j \in [k]$ 
   
   \item
-  We would sample new classes from the sampling matrix and view each row as vector representation of each new class and then get similarities from vector representations.
-  The new class is defined as below:
- \begin{align}
-    c[i] = o[j] \cdot m[i,j] 
+  We generate new classes by the matrix $M$.
+  To be specific, each column of $M$ represents the probability distribution of each original class.
+  For each original class, we generate new classes by corresponding column of $M$.
+  For example, we have $100$ data points with original class $1$ and $M_{1,1}=0.5$ $M_{2,1}=0.5$, all other elements of the first column of $M$ are $0$.
+  From the first column of $M$, we generate $50$ data points with new class $1$ and $50$ data points with new class $2$.
+  If so, we can generate a pseudo-synthetic datasets with new classes $c$.
+  
+  For each data point $i\in[n]$, 
+  $y$ are new classes and $Y$ are original classes,
+  we sample the data point according to the following rules:
+\begin{align}
+    y_i &\sim \text{Uniform}([r_1, r_2,...,r_j,...])
 \end{align}
+where $r_j$ is row number of $M$ and $M_{r_j,Y_i} \ne 0$
+  
+  We view each row of $M$ as vector representation of each new class and then get similarities from the vector representations.
+
   \item
-  Next, we are able to construct a cover tree structure from the new labels and take each leaf node represents a new class and replace all parent nodes with pseudo classes. 
+  Next, we are able to construct a cover tree structure from the new classes and take each leaf node represents a new class and replace all parent nodes with pseudo classes. 
 \end{itemize}
+
+\subsubsection{Pseudo-synthetic experiments}
+As for pseudo-synthetic experiments, we select three datasets: MNIST, CIFAR10 and CIFAR100. 
+Table 1 shows the parameters of three datasets. We modify the three non-synthetic datasets to pseudo-synthetic datasets. 
+The point is we want to construct pseudo-synthetic datasets with $c=10o$ classes as described in Section~\ref{sec:pseu-syn}.
+We would like to run experiments with different complexity of similarities by changing $k$.
+To start with $k=1$, the elements of similarity is $0$ or $1$.
+Then we take image classification task on pseudo-synthetic datasets.
+
 
 \begin{table}[h]
     \centering
