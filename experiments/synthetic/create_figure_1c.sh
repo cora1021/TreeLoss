@@ -1,3 +1,8 @@
-for sigma in 1.0 1.25 1.5 1.75 2.0 2.25 2.5 2.75 3.0 3.25; do
-    python3 run_experiment.py --sigma=$sigma --experiment=loss_vs_sigma
+#!/bin/bash
+
+for num in {1..50};
+do
+    for sigma in 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0; do
+        python3 run_experiment.py --exp_num=$num --sigma=$sigma --loss=simloss --experiment=loss_vs_sigma
+    done
 done

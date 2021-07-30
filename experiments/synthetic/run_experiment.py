@@ -30,6 +30,7 @@ parser_data = parser.add_argument_group(
         title='data generation',
         description='the variable names for these arguments match exactly the variable names used in the paper'
         )
+parser_data.add_argument('--exp_num', type=int, default=1)
 parser_data.add_argument('--a', type=int, default=5)
 parser_data.add_argument('--c', type=int, default=10)
 parser_data.add_argument('--n', type=int, default=100)
@@ -44,11 +45,12 @@ parser_model = parser.add_argument_group(
 parser_model.add_argument('--lr', type=float, default=1e-4, metavar='LR') 
 parser_model.add_argument('--momentum', type=float, default=0.9)
 parser_model.add_argument('--weight_decay', type=float, default=3e-4)
-parser_model.add_argument('--loss', choices=['tree','xentropy'], default='xentropy')
+parser_model.add_argument('--loss', choices=['tree','xentropy','simloss'], default='xentropy')
+parser.add_argument('--lower_bound', type=float, default=0.5)
 
 parser_debug = parser.add_argument_group(title='debug')
 parser_model.add_argument('--logdir', default='log')
-parser_model.add_argument('--experiment', choices=['loss_vs_n','loss_vs_d', 'loss_vs_sigma'], required=True)
+parser_model.add_argument('--experiment', choices=['loss_vs_n','loss_vs_d', 'loss_vs_sigma', 'loss_vs_c'], required=True)
 args = parser.parse_args()
 
 # load imports;
@@ -57,18 +59,19 @@ args = parser.parse_args()
 logging.info('load imports')
 import random
 import numpy as np
+import math
 import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
-from TreeLoss.utilities import set_seed
-from TreeLoss.loss import CoverTreeLoss
+from TreeLoss.utilities import set_seed, gen_sim
+from TreeLoss.loss import CoverTreeLoss, SimLoss
 
 # set the seed
 logging.debug('set_seed('+str(args.seed)+')')
-set_seed(args.seed)
+set_seed(args.exp_num*10)
 
 # FIXME:
 # the code below doesn't work because I can't import cover_tree;
@@ -120,6 +123,12 @@ if args.loss == 'tree':
     new2index, length = CoverTreeLoss.tree_structure(args.c,U)
     criterion = CoverTreeLoss(args.c, length, args.d, new2index)
     model = nn.Linear(args.d, length)
+if args.loss == 'simloss':
+    sim_matrix = gen_sim(U)
+    sim_matrix = (sim_matrix - args.lower_bound) / (1 - args.lower_bound)
+    sim_matrix[sim_matrix < 0.0] = 0.0
+    model = nn.Linear(args.d, args.c)
+    criterion = SimLoss(w=sim_matrix)
 ################################################################################
 # train the model
 ################################################################################
@@ -141,7 +150,7 @@ optimizer = optim.SGD(
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.n)
 logging.debug('training loop')
 
-correct = 0
+correct = 1e-10
 for i in range(args.n):
     # calculate the loss
     if args.loss == 'xentropy':
@@ -151,6 +160,11 @@ for i in range(args.n):
     if args.loss == 'tree':
         W_ = model.weight
         loss, logits, W = criterion(W_, X[i].view(1,args.d), Y[i].view(1))
+    if args.loss == 'simloss':
+        W = model.weight
+        logits = model(X[i].view(1,args.d))
+        prob = F.softmax(logits, dim=-1)
+        loss = criterion(prob, Y[i].view(1))
 
     # backprop
     loss.backward()
@@ -175,5 +189,8 @@ logging.info('saving results')
 
 # # FIXME:
 # # save the W_err to a file
+loss_log = math.log(loss+1e-10)
+W_err_log = math.log(W_err)
+accuracy_log = math.log(accuracy)
 with open(f'{args.experiment}_{args.loss}.txt', 'a') as f:
-    f.write(f'Loss: {loss} \t W_err: {W_err} \t Accuracy: {accuracy} \n')
+    f.write(f'Loss: {loss_log} \t W_err: {W_err_log} \t Accuracy: {accuracy_log} \n')
