@@ -91,6 +91,17 @@
 The Cover Tree Loss
 \end{center}
 
+\section{Abstract}
+Softmax Cross Entropy loss function is widely used in neural network multi-class classification tasks. 
+It treats every class equally while classes often have an inherent structure. We introduce cover tree loss function that build a cover tree structure between all classes by their similarities and provide the theoretical justification. 
+We reparameterize the weight matrix by the cover tree structure of classes.
+We compare cover tree loss with softmax cross entropy loss function on fully synthetic dataset and pseudo-synthetic dataset and real word dataset for multi-class classification tasks. 
+The cover tree loss outperforms than softmax cross entropy loss function on metrics.  
+
+\section{Introduction}
+When people do a standard multi-class classification task, the standard loss function is softmax cross entropy loss function.
+The softmax cross entropy loss function 
+
 \section{Notation}
 
 Assume we are solving a standard multi-class classification problem with $c$ classes and $d$ input feature dimensions.
@@ -522,7 +533,7 @@ Figure \ref{fig:synthetic-results} shows that the cover tree loss converges at a
     \subfigure{
         \label{Fig.sub.3}
         \includegraphics[width=0.3\textwidth]{fig/images/accuracy_vs_n.png}}
-    \caption{Loss value, parameter matrix error, accuracy versus number of data points(Dimension: 64, Randomness: 1.0, Number of Classes: 10)}
+    \caption{Loss value, parameter matrix error, accuracy versus number of data points($d=64, \sigma=1.0, c=10$)}
     \label{Fig.1}
     
     \subfigure{
@@ -534,7 +545,7 @@ Figure \ref{fig:synthetic-results} shows that the cover tree loss converges at a
     \subfigure{
         \label{Fig.sub.3}
         \includegraphics[width=0.3\textwidth]{fig/images/accuracy_vs_d.png}}
-    \caption{Loss value, parameter matrix error, accuracy versus dimension of parameter matrix(Number of Data Points: 100, Randomness: 1.0, Number of Classes: 10)}
+    \caption{Loss value, parameter matrix error, accuracy versus dimension of parameter matrix($n=100, \sigma=1.0, c=10$)}
     \label{Fig.2}
     
     \subfigure{
@@ -546,7 +557,7 @@ Figure \ref{fig:synthetic-results} shows that the cover tree loss converges at a
     \subfigure{
         \label{Fig.sub.3}
         \includegraphics[width=0.3\textwidth]{fig/images/accuracy_vs_sigma.png}}
-    \caption{Loss value, parameter matrix error, accuracy versus randomness(Number of Data Points: 100, Dimension: 64, Number of classes: 10)}
+    \caption{Loss value, parameter matrix error, accuracy versus randomness($n=100, d=64, c=10$)}
     \label{Fig.3}
 
     \subfigure{
@@ -558,7 +569,7 @@ Figure \ref{fig:synthetic-results} shows that the cover tree loss converges at a
     \subfigure{
         \label{Fig.sub.3}
         \includegraphics[width=0.3\textwidth]{fig/images/accuracy_vs_class.png}}
-    \caption{Loss value, parameter matrix error, accuracy versus number of classes(Number of Data Points: 100, Dimension: 64, Randomness: 1.0)}
+    \caption{Loss value, parameter matrix error, accuracy versus number of classes($n=100, d=64, \sigma=1.0$)}
     \label{Fig.4}
     
     \caption{
@@ -585,7 +596,7 @@ In a pseudo-synthetic dataset, we take a non-synthetic dataset and modify it.
 In order to compare the performance between classic cross entropy loss function and cover tree loss function, we need datasets which the classes have clear similarities.
 Besides, we would like to construct pseudo-synthetic datasets which we can control the similarities.
 The idea is we can generate the new classes from the original classes of datasets.
-It means only the labels are synthetic and the features are real.
+This impilies only the labels are synthetic and the features are real.
 We get the similarities of new classes from probability distribution and control the complexity of similarities by changing probability distribution. 
 
 For non-synthetic datasets that do not have specific similarities, we would build pseudo-synthetic datasets with similarities manually by following procedures. 
