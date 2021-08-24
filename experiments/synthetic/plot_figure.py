@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 
-f_tree = open(f'{args.experiment}_tree.txt', 'r')
-f_xentropy = open(f'{args.experiment}_xentropy.txt', 'r')
-f_simloss = open(f'{args.experiment}_simloss.txt', 'r')
+f_tree = open(f'{args.experiment}_tree_original.txt', 'r')
+f_xentropy = open(f'{args.experiment}_xentropy_original.txt', 'r')
+f_simloss = open(f'{args.experiment}_simloss_original.txt', 'r')
 
 loss_tree_all = []
 W_err_tree_all = []
@@ -48,6 +48,10 @@ for num in range(10):
     loss_tree.append(np.mean(loss_mid))
     W_err_tree.append(np.mean(W_err_mid))
     accuracy_tree.append(np.mean(accuracy_mid))
+loss_tree = [math.log(y) for y in loss_tree]
+W_err_tree = [math.log(y) for y in W_err_tree]
+accuracy_tree = [math.log(y) for y in accuracy_tree]
+
 
 loss_xentropy_all = []
 W_err_xentropy_all = []
@@ -86,6 +90,9 @@ for num in range(10):
     loss_xentropy.append(np.mean(loss_mid))
     W_err_xentropy.append(np.mean(W_err_mid))
     accuracy_xentropy.append(np.mean(accuracy_mid))
+loss_xentropy = [math.log(y) for y in loss_xentropy]
+W_err_xentropy = [math.log(y) for y in W_err_xentropy]
+accuracy_xentropy = [math.log(y) for y in accuracy_xentropy]
 
 loss_simloss_all = []
 W_err_simloss_all = []
@@ -124,6 +131,9 @@ for num in range(10):
     loss_simloss.append(np.mean(loss_mid))
     W_err_simloss.append(np.mean(W_err_mid))
     accuracy_simloss.append(np.mean(accuracy_mid))
+loss_simloss = [math.log(y) for y in loss_simloss]
+W_err_simloss = [math.log(y) for y in W_err_simloss]
+accuracy_simloss = [math.log(y) for y in accuracy_simloss]
 
 if args.experiment == 'loss_vs_n' :
     x = [math.log(16), math.log(32), math.log(64), math.log(128), math.log(256), math.log(512), math.log(1024),
