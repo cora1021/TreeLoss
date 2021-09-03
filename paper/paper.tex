@@ -170,6 +170,13 @@ They do not provide any theoretical justification for why their technique should
 but their technique is computationally very similar to the cover tree loss,
 and so our technique may be able to provide the first theoretical justification for their work.
 
+HSM:
+\begin{equation}
+    \label{eq:xentropy}
+    \ell(W;(\x,y)) = - \log \prod_{k\in P_y}\frac {\exp(-\trans\w_k \x)}{\sum_{j=1}^c \exp(-\trans \w_j \x)}
+\end{equation}
+where $P_y$ is path from root to node of Huffman Tree
+
 \fixme{Read the papers mentioned above.  Verify that you agree with the things I wrote.  Then, write a detailed mathematical description of the HSM loss and contrast it with the cover tree loss.}
 
 \fixme{Read 5-10 additional papers about the hierarchical softmax.  For each paper, write a paragraph describing the paper's contributions and how it relates to the cover tree loss.  For the final paper we will reference these papers.  We will have to trim down the notes that you write for this task, but it's useful when writing the paper to have detailed notes about references.}
@@ -526,49 +533,49 @@ Figure \ref{fig:synthetic-results} shows that the cover tree loss converges at a
     \centering
     \subfigure{
         \label{Fig.sub.1}
-        \includegraphics[width=0.3\textwidth]{fig/images/loss_vs_n.png}}
+        \includegraphics[width=0.3\textwidth]{fig/log_images/loss_vs_n.png}}
     \subfigure{
         \label{Fig.sub.2}
-        \includegraphics[width=0.3\textwidth]{fig/images/error_vs_n.png}}
+        \includegraphics[width=0.3\textwidth]{fig/log_images/error_vs_n.png}}
     \subfigure{
         \label{Fig.sub.3}
-        \includegraphics[width=0.3\textwidth]{fig/images/accuracy_vs_n.png}}
+        \includegraphics[width=0.3\textwidth]{fig/log_images/accuracy_vs_n.png}}
     \caption{Loss value, parameter matrix error, accuracy versus number of data points($d=64, \sigma=1.0, c=10$)}
     \label{Fig.1}
     
     \subfigure{
         \label{Fig.sub.1}
-        \includegraphics[width=0.3\textwidth]{fig/images/loss_vs_d.png}}
+        \includegraphics[width=0.3\textwidth]{fig/log_images/loss_vs_d.png}}
     \subfigure{
         \label{Fig.sub.2}
-        \includegraphics[width=0.3\textwidth]{fig/images/error_vs_d.png}}
+        \includegraphics[width=0.3\textwidth]{fig/log_images/error_vs_d.png}}
     \subfigure{
         \label{Fig.sub.3}
-        \includegraphics[width=0.3\textwidth]{fig/images/accuracy_vs_d.png}}
+        \includegraphics[width=0.3\textwidth]{fig/log_images/accuracy_vs_d.png}}
     \caption{Loss value, parameter matrix error, accuracy versus dimension of parameter matrix($n=100, \sigma=1.0, c=10$)}
     \label{Fig.2}
     
     \subfigure{
         \label{Fig.sub.1}
-        \includegraphics[width=0.3\textwidth]{fig/images/loss_vs_sigma.png}}
+        \includegraphics[width=0.3\textwidth]{fig/log_images/loss_vs_sigma.png}}
     \subfigure{
         \label{Fig.sub.2}
-        \includegraphics[width=0.3\textwidth]{fig/images/error_vs_sigma.png}}
+        \includegraphics[width=0.3\textwidth]{fig/log_images/error_vs_sigma.png}}
     \subfigure{
         \label{Fig.sub.3}
-        \includegraphics[width=0.3\textwidth]{fig/images/accuracy_vs_sigma.png}}
+        \includegraphics[width=0.3\textwidth]{fig/log_images/accuracy_vs_sigma.png}}
     \caption{Loss value, parameter matrix error, accuracy versus randomness($n=100, d=64, c=10$)}
     \label{Fig.3}
 
     \subfigure{
         \label{Fig.sub.1}
-        \includegraphics[width=0.3\textwidth]{fig/images/loss_vs_class.png}}
+        \includegraphics[width=0.3\textwidth]{fig/log_images/loss_vs_class.png}}
     \subfigure{
         \label{Fig.sub.2}
-        \includegraphics[width=0.3\textwidth]{fig/images/error_vs_class.png}}
+        \includegraphics[width=0.3\textwidth]{fig/log_images/error_vs_class.png}}
     \subfigure{
         \label{Fig.sub.3}
-        \includegraphics[width=0.3\textwidth]{fig/images/accuracy_vs_class.png}}
+        \includegraphics[width=0.3\textwidth]{fig/log_images/accuracy_vs_class.png}}
     \caption{Loss value, parameter matrix error, accuracy versus number of classes($n=100, d=64, \sigma=1.0$)}
     \label{Fig.4}
     
@@ -576,6 +583,25 @@ Figure \ref{fig:synthetic-results} shows that the cover tree loss converges at a
         \fixme{We need a plot of loss vs number of data points ($n$), vs dimension ($d$), and vs randomness ($sigma$). These plots should all be log-log plots.  For each of these experiments, you should write to shell scripts: the first to generate the data and the second to plot the data.  These shell scripts should be easy to run in order to easily replicate your experiments.}}
     \label{fig:synthetic-results}
 \end{figure}
+
+\subsubsection{Analysis of Synthetic Experiment results}
+
+From \ref{Fig.1}, as number of data points increases loss value and parameter matrix error decrease while accuracy increases. 
+We compare the performance of cover tree loss, softmax cross entropy loss and simloss, it is clear that cover tree loss converges faster than the other two loss functions.
+Besides, cover tree loss achieves lower loss value and parameter matrix error over number of data points.
+
+As shown in \ref{Fig.2}, loss value decreases and accuracy increases over dimension. 
+Similar to \ref{Fig.1}, cover tree loss converges faster and achieve lower loss value.
+We take the line of parameter matrix error of cover tree loss as a benchmark and draw the difference of parameter matrix error between cover tree loss and the other two loss functions.
+The middle sub-figure indicates that cover tree loss has lower parameter matrix error with dimension than cross entropy and simloss.
+
+According to \ref{Fig.3}, if we increase the randomness and fix the other parameters, loss value increases and accuracy decreases.
+Cover tree loss performs similarly with cross entropy loss and simloss in terms of loss value and accuracy.
+The middle sub-figure implies that parameter matrix error of cover tree loss decreases even though the randomness increases.
+
+\ref{Fig.4} indicates that, as number of classes increases, the loss value and parameter matrix error also increases and accuracy certainly decrease.
+From middle sub-figure, the parameter matrix error of cover tree loss is lower than the other two loss functions.
+The right sub-figure shows that the accuracy of cover tree loss decreases slower and can keep higher value than the other two loss functions.
 
 \subsubsection{Alternative synthetic experiments}
 
@@ -596,7 +622,7 @@ In a pseudo-synthetic dataset, we take a non-synthetic dataset and modify it.
 In order to compare the performance between classic cross entropy loss function and cover tree loss function, we need datasets which the classes have clear similarities.
 Besides, we would like to construct pseudo-synthetic datasets which we can control the similarities.
 The idea is we can generate the new classes from the original classes of datasets.
-This impilies only the labels are synthetic and the features are real.
+This implies that only the labels are synthetic and the features are real.
 We get the similarities of new classes from probability distribution and control the complexity of similarities by changing probability distribution. 
 
 For non-synthetic datasets that do not have specific similarities, we would build pseudo-synthetic datasets with similarities manually by following procedures. 

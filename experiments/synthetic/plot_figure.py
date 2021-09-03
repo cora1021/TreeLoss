@@ -48,9 +48,6 @@ for num in range(10):
     loss_tree.append(np.mean(loss_mid))
     W_err_tree.append(np.mean(W_err_mid))
     accuracy_tree.append(np.mean(accuracy_mid))
-loss_tree = [math.log(y) for y in loss_tree]
-W_err_tree = [math.log(y) for y in W_err_tree]
-accuracy_tree = [math.log(y) for y in accuracy_tree]
 
 
 loss_xentropy_all = []
@@ -90,9 +87,6 @@ for num in range(10):
     loss_xentropy.append(np.mean(loss_mid))
     W_err_xentropy.append(np.mean(W_err_mid))
     accuracy_xentropy.append(np.mean(accuracy_mid))
-loss_xentropy = [math.log(y) for y in loss_xentropy]
-W_err_xentropy = [math.log(y) for y in W_err_xentropy]
-accuracy_xentropy = [math.log(y) for y in accuracy_xentropy]
 
 loss_simloss_all = []
 W_err_simloss_all = []
@@ -131,35 +125,53 @@ for num in range(10):
     loss_simloss.append(np.mean(loss_mid))
     W_err_simloss.append(np.mean(W_err_mid))
     accuracy_simloss.append(np.mean(accuracy_mid))
-loss_simloss = [math.log(y) for y in loss_simloss]
-W_err_simloss = [math.log(y) for y in W_err_simloss]
-accuracy_simloss = [math.log(y) for y in accuracy_simloss]
+
+W_diff_xentropy = np.array(W_err_xentropy) - np.array(W_err_tree)
+W_diff_simloss = np.array(W_err_simloss) - np.array(W_err_tree) 
+W_diff_tree = np.array(W_err_tree) - np.array(W_err_tree)
+
+# W_diff_xentropy = [math.log(y+1e-5) for y in W_diff_xentropy]
+# W_diff_simloss = [math.log(y+1e-5) for y in W_diff_simloss]
+# W_diff_tree = [math.log(y+1e-5) for y in W_diff_tree]
+
+# loss_tree = [math.log(y) for y in loss_tree]
+# W_err_tree = [math.log(y) for y in W_err_tree]
+# accuracy_tree = [math.log(y) for y in accuracy_tree]
+
+# loss_xentropy = [math.log(y) for y in loss_xentropy]
+# W_err_xentropy = [math.log(y) for y in W_err_xentropy]
+# accuracy_xentropy = [math.log(y) for y in accuracy_xentropy]
+
+# loss_simloss = [math.log(y) for y in loss_simloss]
+# W_err_simloss = [math.log(y) for y in W_err_simloss]
+# accuracy_simloss = [math.log(y) for y in accuracy_simloss]
 
 if args.experiment == 'loss_vs_n' :
-    x = [math.log(16), math.log(32), math.log(64), math.log(128), math.log(256), math.log(512), math.log(1024),
-         math.log(2048), math.log(4096), math.log(8192)]
+    # x = [math.log(16), math.log(32), math.log(64), math.log(128), math.log(256), math.log(512), math.log(1024),
+    #      math.log(2048), math.log(4096), math.log(8192)]
+    x = [16,32,64,128,256,512,1024,2048,4096,8192]
     plt.figure(0)
-    l1, = plt.plot(x, loss_tree)
-    l2, = plt.plot(x, loss_xentropy, linestyle="-.")
-    l3, = plt.plot(x, loss_simloss, linestyle="--")
+    l1, = plt.loglog(x, loss_tree)
+    l2, = plt.loglog(x, loss_xentropy, linestyle="-.")
+    l3, = plt.loglog(x, loss_simloss, linestyle="--")
     plt.legend(handles=[l1,l2,l3],labels=['Cover Tree Loss','Cross Entropy Loss', 'SimLoss'])
     plt.xlabel('Log(Number of Data Points)')
     plt.ylabel('Log(Loss)')
     plt.savefig('loss_vs_n.png', dpi=300)
 
     plt.figure(1)
-    l1, = plt.plot(x, W_err_tree)
-    l2, = plt.plot(x, W_err_xentropy, linestyle="-.")
-    l3, = plt.plot(x, W_err_simloss, linestyle="--")
+    l1, = plt.loglog(x, W_err_tree)
+    l2, = plt.loglog(x, W_err_xentropy, linestyle="-.")
+    l3, = plt.loglog(x, W_err_simloss, linestyle="--")
     plt.legend(handles=[l1,l2,l3],labels=['Cover Tree Loss','Cross Entropy Loss', 'SimLoss'])
     plt.xlabel('Log(Number of Data Points)')
     plt.ylabel('Log|W_error|')
     plt.savefig('error_vs_n.png', dpi=300)
 
     plt.figure(2)
-    l1, = plt.plot(x, accuracy_tree)
-    l2, = plt.plot(x, accuracy_xentropy, linestyle="-.")
-    l3, = plt.plot(x, accuracy_simloss, linestyle="--")
+    l1, = plt.loglog(x, accuracy_tree)
+    l2, = plt.loglog(x, accuracy_xentropy, linestyle="-.")
+    l3, = plt.loglog(x, accuracy_simloss, linestyle="--")
     plt.legend(handles=[l1,l2,l3],labels=['Cover Tree Loss','Cross Entropy Loss', 'SimLoss'])
     plt.xlabel('Log(Number of Data Points)')
     plt.ylabel('Log(Accuracy)')
@@ -167,100 +179,97 @@ if args.experiment == 'loss_vs_n' :
 
 
 if args.experiment == 'loss_vs_d':
-    x = [math.log(2), math.log(4), math.log(8), math.log(16), math.log(32), math.log(64), math.log(128), 
-        math.log(256), math.log(512), math.log(1024)]
+    # x = [math.log(2), math.log(4), math.log(8), math.log(16), math.log(32), math.log(64), math.log(128), 
+    #     math.log(256), math.log(512), math.log(1024)]
+    x = [2,4,8,16,32,64,128,256,512,1024]
     plt.figure(0)
-    l1, = plt.plot(x, loss_tree)
-    l2,= plt.plot(x, loss_xentropy, linestyle="-.")
-    l3, = plt.plot(x, loss_simloss, linestyle="--")
+    l1, = plt.loglog(x, loss_tree)
+    l2,= plt.loglog(x, loss_xentropy, linestyle="-.")
+    l3, = plt.loglog(x, loss_simloss, linestyle="--")
     plt.legend(handles=[l1,l2,l3],labels=['Cover Tree Loss','Cross Entropy Loss', 'SimLoss'])
     plt.xlabel('Log(Dimension)')
     plt.ylabel('Log(Loss)')
     plt.savefig('loss_vs_d.png', dpi=300)
 
-    diff_xentropy = np.array(W_err_xentropy) - np.array(W_err_tree)
-    diff_simloss = np.array(W_err_simloss) - np.array(W_err_tree) 
-    diff_tree = np.array(W_err_tree) - np.array(W_err_tree) 
-    print(diff_xentropy)
-    print(diff_simloss)
+    print(W_diff_xentropy)
+    print(W_diff_simloss)
     plt.figure(1)
-    l1, = plt.plot(x, diff_tree)
-    l2, = plt.plot(x, diff_xentropy, linestyle="-.")
-    l3, = plt.plot(x, diff_simloss, linestyle="--")
+    l1, = plt.loglog(x, W_diff_tree)
+    l2, = plt.loglog(x, W_diff_xentropy, linestyle="-.")
+    l3, = plt.loglog(x, W_diff_simloss, linestyle="--")
     plt.legend(handles=[l1,l2,l3],labels=['Cover Tree Loss','Cross Entropy Loss', 'SimLoss'])
     plt.xlabel('Log(Dimension)')
     plt.ylabel('Log|W_error|')
     plt.savefig('error_vs_d.png', dpi=300)
 
     plt.figure(2)
-    l1, = plt.plot(x, accuracy_tree)
-    l2, = plt.plot(x, accuracy_xentropy, linestyle="-.")
-    l3, = plt.plot(x, accuracy_simloss, linestyle="--")
+    l1, = plt.loglog(x, accuracy_tree)
+    l2, = plt.loglog(x, accuracy_xentropy, linestyle="-.")
+    l3, = plt.loglog(x, accuracy_simloss, linestyle="--")
     plt.legend(handles=[l1,l2,l3],labels=['Cover Tree Loss','Cross Entropy Loss', 'SimLoss'])
     plt.xlabel('Log(Number of Data Points)')
     plt.ylabel('Log(Accuracy)')
     plt.savefig('accuracy_vs_d.png', dpi=300)
 
 if args.experiment == 'loss_vs_sigma':
-    x = [math.log(1.0), math.log(1.25), math.log(1.5), math.log(1.75), math.log(2.0), math.log(2.25), 
-        math.log(2.5), math.log(2.75), math.log(3.0), math.log(3.25)]
+    # x = [math.log(1.0), math.log(1.25), math.log(1.5), math.log(1.75), math.log(2.0), math.log(2.25), 
+    #     math.log(2.5), math.log(2.75), math.log(3.0), math.log(3.25)]
+    x = [1.0,1.25,1.5,1.75,2.0,2.25,2.5,2.75,3.0,3.25]
     plt.figure(0)
-    l1, = plt.plot(x, loss_tree)
-    l2, = plt.plot(x, loss_xentropy, linestyle="-.")
-    l3, = plt.plot(x, loss_simloss, linestyle="--")
+    l1, = plt.loglog(x, loss_tree)
+    l2, = plt.loglog(x, loss_xentropy, linestyle="-.")
+    l3, = plt.loglog(x, loss_simloss, linestyle="--")
     plt.legend(handles=[l1,l2,l3],labels=['Cover Tree Loss','Cross Entropy Loss', 'SimLoss'])
     plt.xlabel('Log(Randomness)')
     plt.ylabel('Log(Loss)')
     plt.savefig('loss_vs_sigma.png', dpi=300)
 
     plt.figure(1)
-    l1, = plt.plot(x, W_err_tree)
-    l2, = plt.plot(x, W_err_xentropy, linestyle="-.")
-    l3, = plt.plot(x, W_err_simloss, linestyle="--")
+    l1, = plt.loglog(x, W_err_tree)
+    l2, = plt.loglog(x, W_err_xentropy, linestyle="-.")
+    l3, = plt.loglog(x, W_err_simloss, linestyle="--")
     plt.legend(handles=[l1,l2,l3],labels=['Cover Tree Loss','Cross Entropy Loss', 'SimLoss'])
     plt.xlabel('Log(Randomness)')
     plt.ylabel('Log|W_error|')
     plt.savefig('error_vs_sigma.png', dpi=300)
 
     plt.figure(2)
-    l1, = plt.plot(x, accuracy_tree)
-    l2, = plt.plot(x, accuracy_xentropy, linestyle="-.")
-    l3, = plt.plot(x, accuracy_simloss, linestyle="--")
+    l1, = plt.loglog(x, accuracy_tree)
+    l2, = plt.loglog(x, accuracy_xentropy, linestyle="-.")
+    l3, = plt.loglog(x, accuracy_simloss, linestyle="--")
     plt.legend(handles=[l1,l2,l3],labels=['Cover Tree Loss','Cross Entropy Loss', 'SimLoss'])
     plt.xlabel('Log(Randomness)')
     plt.ylabel('Log(Accuracy)')
     plt.savefig('accuracy_vs_sigma.png', dpi=300)
 
 if args.experiment == 'loss_vs_c':
-    x = [math.log(10), math.log(20), math.log(30), math.log(40), math.log(50), math.log(60), math.log(70), 
-        math.log(80), math.log(90), math.log(100)]
+    # x = [math.log(10), math.log(20), math.log(30), math.log(40), math.log(50), math.log(60), math.log(70), 
+    #     math.log(80), math.log(90), math.log(100)]
+    x = [10,20,30,40,50,60,70,80,90,100]
     plt.figure(0)
-    l1, = plt.plot(x, loss_tree)
-    l2, = plt.plot(x, loss_xentropy, linestyle="-.")
-    l3, = plt.plot(x, loss_simloss, linestyle="--")
+    l1, = plt.loglog(x, loss_tree)
+    l2, = plt.loglog(x, loss_xentropy, linestyle="-.")
+    l3, = plt.loglog(x, loss_simloss, linestyle="--")
     plt.legend(handles=[l1,l2,l3],labels=['Cover Tree Loss','Cross Entropy Loss', 'SimLoss'])
     plt.xlabel('Log(Number of Classes)')
     plt.ylabel('Log(Loss)')
     plt.savefig('loss_vs_class.png', dpi=300)
 
-    diff_xentropy = np.array(W_err_xentropy) - np.array(W_err_tree)
-    diff_simloss = np.array(W_err_simloss) - np.array(W_err_tree)
-    diff_tree = np.array(W_err_tree) - np.array(W_err_tree)
-    print(diff_xentropy)
-    print(diff_simloss)
+    print(W_diff_xentropy)
+    print(W_diff_simloss)
     plt.figure(1)
-    l1, = plt.plot(x, diff_tree)
-    l2, = plt.plot(x, diff_xentropy, linestyle="-.")
-    l3, = plt.plot(x, diff_simloss, linestyle="--")
+    l1, = plt.loglog(x, W_diff_tree)
+    l2, = plt.loglog(x, W_diff_xentropy, linestyle="-.")
+    l3, = plt.loglog(x, W_diff_simloss, linestyle="--")
     plt.legend(handles=[l1,l2,l3],labels=['Cover Tree Loss','Cross Entropy Loss', 'SimLoss'])
     plt.xlabel('Log(Number of Classes)')
     plt.ylabel('Log|W_error|')
     plt.savefig('error_vs_class.png', dpi=300)
 
     plt.figure(2)
-    l1, = plt.plot(x, accuracy_tree)
-    l2, = plt.plot(x, accuracy_xentropy, linestyle="-.")
-    l3, = plt.plot(x, accuracy_simloss, linestyle="--")
+    l1, = plt.loglog(x, accuracy_tree)
+    l2, = plt.loglog(x, accuracy_xentropy, linestyle="-.")
+    l3, = plt.loglog(x, accuracy_simloss, linestyle="--")
     plt.legend(handles=[l1,l2,l3],labels=['Cover Tree Loss','Cross Entropy Loss', 'SimLoss'])
     plt.xlabel('Log(Number of Classes)')
     plt.ylabel('Log(Accuracy)')
