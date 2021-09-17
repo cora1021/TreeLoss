@@ -192,5 +192,5 @@ logging.info('saving results')
 loss_log = math.log(loss+1e-10)
 W_err_log = math.log(W_err)
 accuracy_log = math.log(accuracy)
-with open(f'{args.experiment}_{args.loss}_original.txt', 'a') as f:
+with open(f'{args.experiment}_{args.loss}_original_{args.lower_bound}.txt', 'a') as f:
     f.write(f'Loss: {loss} \t W_err: {W_err} \t Accuracy: {accuracy} \n')
