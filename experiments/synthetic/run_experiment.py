@@ -32,11 +32,13 @@ parser_data = parser.add_argument_group(
         )
 parser_data.add_argument('--exp_num', type=int, default=1)
 parser_data.add_argument('--a', type=int, default=5)
-parser_data.add_argument('--c', type=int, default=10)
-parser_data.add_argument('--n', type=int, default=100)
+parser_data.add_argument('--c', type=int, default=100)
+parser_data.add_argument('--n', type=int, default=1000)
 parser_data.add_argument('--d', type=int, default=64)
 parser_data.add_argument('--sigma', type=float, default=1.0)
+parser_data.add_argument('--random', type=float, default=0.0)
 parser_data.add_argument('--seed', type=int, default=666)
+
 
 parser_model = parser.add_argument_group(
         title='model hyperparameters',
@@ -45,12 +47,12 @@ parser_model = parser.add_argument_group(
 parser_model.add_argument('--lr', type=float, default=1e-4, metavar='LR') 
 parser_model.add_argument('--momentum', type=float, default=0.9)
 parser_model.add_argument('--weight_decay', type=float, default=3e-4)
-parser_model.add_argument('--loss', choices=['tree','xentropy','simloss'], default='xentropy')
+parser_model.add_argument('--loss', choices=['tree','xentropy','simloss', 'HSM'], default='xentropy')
 parser.add_argument('--lower_bound', type=float, default=0.5)
 
 parser_debug = parser.add_argument_group(title='debug')
 parser_model.add_argument('--logdir', default='log')
-parser_model.add_argument('--experiment', choices=['loss_vs_n','loss_vs_d', 'loss_vs_sigma', 'loss_vs_c'], required=True)
+parser_model.add_argument('--experiment', choices=['loss_vs_n','loss_vs_d', 'loss_vs_sigma', 'loss_vs_c', 'loss_vs_structure'], required=True)
 args = parser.parse_args()
 
 # load imports;
@@ -67,7 +69,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 from TreeLoss.utilities import set_seed, gen_sim
-from TreeLoss.loss import CoverTreeLoss, SimLoss
+from TreeLoss.loss import CoverTreeLoss, SimLoss, HSM
 
 # set the seed
 logging.debug('set_seed('+str(args.seed)+')')
@@ -89,6 +91,12 @@ logging.info('generating the data')
 U = np.random.normal(size=[args.c, args.a])
 V = np.random.normal(size=[args.a, args.d])
 W_star = U @ V
+
+factor = np.random.normal(0,args.random)
+# U_ = U + factor
+U_random = np.random.normal(size=[args.c, args.a])
+U_ = (1-args.random)*U + args.random*U_random
+# U_ = np.random.normal(100.0, 1.0, size=[args.c, args.a])
 
 logging.debug("U.shape="+str(U.shape))
 logging.debug("V.shape="+str(V.shape))
@@ -120,7 +128,7 @@ if args.loss == 'xentropy':
     model = nn.Linear(args.d, args.c)
     criterion = nn.CrossEntropyLoss()
 if args.loss == 'tree':
-    new2index, length = CoverTreeLoss.tree_structure(args.c,U)
+    new2index, length, tree = CoverTreeLoss.tree_structure(args.c,U_, base=2)
     criterion = CoverTreeLoss(args.c, length, args.d, new2index)
     model = nn.Linear(args.d, length)
 if args.loss == 'simloss':
@@ -129,6 +137,10 @@ if args.loss == 'simloss':
     sim_matrix[sim_matrix < 0.0] = 0.0
     model = nn.Linear(args.d, args.c)
     criterion = SimLoss(w=sim_matrix)
+if args.loss == 'HSM':
+    new2index, index2brother, length = HSM.tree_structure(args.c,U)
+    model = nn.Linear(args.d, args.c)
+    criterion = HSM(args.c, args.d, new2index, index2brother, length)
 ################################################################################
 # train the model
 ################################################################################
@@ -165,6 +177,10 @@ for i in range(args.n):
         logits = model(X[i].view(1,args.d))
         prob = F.softmax(logits, dim=-1)
         loss = criterion(prob, Y[i].view(1))
+    if args.loss == 'HSM':
+        W = model.weight
+        logits = model(X[i].view(1,args.d))
+        loss = criterion(logits, Y[i].view(1))
 
     # backprop
     loss.backward()
@@ -189,8 +205,7 @@ logging.info('saving results')
 
 # # FIXME:
 # # save the W_err to a file
-loss_log = math.log(loss+1e-10)
-W_err_log = math.log(W_err)
-accuracy_log = math.log(accuracy)
-with open(f'{args.experiment}_{args.loss}_original_{args.lower_bound}.txt', 'a') as f:
+loss = loss+1e-10
+# print(accuracy)
+with open(f'{args.experiment}_{args.loss}.txt', 'a') as f:
     f.write(f'Loss: {loss} \t W_err: {W_err} \t Accuracy: {accuracy} \n')

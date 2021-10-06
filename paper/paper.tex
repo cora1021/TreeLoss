@@ -33,7 +33,9 @@
 \usepackage{tikz}
 \usepackage{booktabs}
 \usepackage{multirow}
-\usepackage{subfigure}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{mwe}
 
 \usepackage{color}
 \usepackage{colortbl}
@@ -131,17 +133,38 @@
 \aistatsaddress{ Claremont Graduate University \And  Claremont McKenna College } ]
 
 \begin{abstract}
-Softmax Cross Entropy loss function is widely used in neural network multi-class classification tasks. 
-It treats every class equally while classes often have an internal structure. 
+Softmax Cross Entropy loss function treats every class equally while classes often have an internal structure. 
 We introduce cover tree loss function which takes advantage of this internal class structure.
+The cover tree loss works by reparameterizing the weight matrix for the softmax cross entropy loss.
 Compare to softmax cross entropy which has generalization error $O(\sqrt{c/n})$, the generalization error of cover tree loss is $O(\sqrt{1/n})$ which is independent of the number of classes. 
 We provide the theoretical justification and conduct extensive experiments on fully synthetic data and real world data. 
-The cover tree loss outperforms than softmax cross entropy loss function on metrics.  
+For real world data, we take CIFAR100 dataset, IMAGENET dataset and TWITTER dataset.
+The cover tree loss outperforms than softmax cross entropy loss function on metrics.
 \end{abstract}
 
 \section{Introduction}
-When people do a standard multi-class classification task, the standard loss function is softmax cross entropy loss function.
-The softmax cross entropy loss function 
+When people do a multi-class classification task, the standard loss function is softmax cross entropy.
+The mechanism of softmax cross entropy loss function is to maximize the assigned target class probability and punishes every misclassification equally, independent of some other information about the predicted class.
+However, classes often have an internal structure. 
+For example, dog and cat belong to same 'parent': animal and many transportations have same 'parent' while they have different brothers. Take the internal structure in the training procedure would allow the classifier to make less sever mistakes as it learns to predict similar classes.
+In terms of theoretical result, the parameter matrix of softmax cross entropy loss is bounded by $\sqrt{c}B$ (where $c$ is the number of classes) and for $n$ data points, the generalization error is $O(\sqrt{c/n})$ which is dependent on $c$.
+
+In this paper, we introduce cover tree loss which works by reparameterizing the weight matrix for the softmax cross entropy loss. 
+The reparameterization is defined by a cover tree structure that constructed by similarity between all classes. 
+Every class is represented by a leaf node in the cover tree and all other internal nodes represent pseudo-classes. 
+Our cover tree loss is based on softmax cross entropy and easily implement.
+The idea of cover tree is that we use tree structure to reduce the bound of the size of the parameter space and then the generalization error of cover tree loss is $O(\sqrt{1/n})$ which is independent of $c$.
+
+Our contributions are as below:
+\begin{itemize}
+    \item [1] 
+    We introduce cover tree loss which take advantage of internal structure between all classes.
+    \item [2] 
+    We provide theoretical justification that the generalization error of cover tree loss is independent of the number of classes.
+    \item [3]
+    We evaluate our cover tree loss on experiments. One is experiment on fully synthetic data which is designed to be convex. The another one is on real world data: CIFAR100, IMAGENET and TWITTER dataset. 
+    
+\end{itemize}
 
 \section{Notation}
 
@@ -212,9 +235,10 @@ and so our technique may be able to provide the first theoretical justification 
 HSM:
 \begin{equation}
     \label{eq:xentropy}
-    \ell(W;(\x,y)) = - \log \prod_{k\in P_y}\frac {\exp(-\trans\w_k \x)}{\sum_{j=1}^c \exp(-\trans \w_j \x)}
+    \ell(W;(\x,y)) = - \log \prod_{k\in P_y}\frac {\exp(-\trans\w_k \x)}{j\in L_k \exp(-\trans \w_j \x)}
 \end{equation}
-where $P_y$ is path from root to node of Huffman Tree
+where $P_y$ is path from root to node of Huffman Tree,
+$L_k$ are nodes on the level where $k$ are
 
 
 % \fixme{Read the papers mentioned above.  Verify that you agree with the things I wrote.  Then, write a detailed mathematical description of the HSM loss and contrast it with the cover tree loss.}
@@ -341,6 +365,7 @@ where $W^* = \argmin L_D(W)$.
 % \end{proof}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \section{The Tree Loss}
 
 Like the weight matrix factorization, the tree loss works by reparameterizing the weight matrix for the softmax cross entropy loss.
@@ -351,7 +376,6 @@ At this point, we assume that the label tree structure is given a priori, and in
 The following figure shows an example label tree for a classification problem with 9 classes.
 
 \begin{center}
-\small
 \begin{tikzpicture}
     [ level distance=1.5cm
     , level 1/.style={sibling distance=3cm}
@@ -494,9 +518,9 @@ Substituting this Lemma into the SGD bounds gives us our main theorem:
 \label{theorem:xentropy}
 % Assume that for all $i\in[n]$, $\ltwo{x_i} \le \rho$,
 %     and that for each class $i\in[c]$, $\ltwo{\w_i}\le B$.
-% \fixme{Add assumptions.}
+\fixme{Add assumptions.}
 Assume that for all $i\in[n]$, $\ltwo{x_i} \le \rho$,
-    and that for each class $i\in[c]$, $\ltwo{\w_i}\le \frac{B}{2^{\level k}}$.
+    and that for each class $i\in[c]$,  $\ltwo{\w _i} \le \frac{B}{2^{\level i}}$.
 Then the parameter vector $\bar W$ estimated from one epoch of SGD satisfies
 \begin{equation}
     \E L_D(\bar W) - L_D(W^*) \le \frac {B\rho}{\sqrt n}
@@ -573,61 +597,89 @@ With our problem defined in this way, it is clear that
     \argmin_{W} \tfrac 1 n \ell(W; \x_i, y_i)
 \end{equation}
 converges to $W^*$ using the standard cross entropy loss and both the matrix factorization and cover tree reparameterizations.
+% \fixme{You should prove this for yourself.}
+% Figure \ref{fig:synthetic-results} shows that the cover tree loss converges at a faster rate.
+
+\begin{figure*}
+        \centering
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{fig/images/accuracy_vs_n.png}
+            % \caption[Accuracy versus number of data points($d=64, \sigma=1.0, c=10$)]%
+            {{\small Accuracy versus number of data points($d=64, \sigma=1.0, c=10$)}}  
+            \label{subfig.1}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.45\textwidth}  
+            \centering 
+            \includegraphics[width=\textwidth]{fig/images/accuracy_vs_d.png}
+            % \caption[Accuracy versus dimension of parameter matrix($n=100, \sigma=1.0, c=10$)]%
+            {{\small Accuracy versus dimension of parameter matrix($n=100, \sigma=1.0, c=10$)}}
+            \label{subfig.2}
+        \end{subfigure}
+        \vskip\baselineskip
+        \begin{subfigure}[b]{0.45\textwidth}   
+            \centering 
+            \includegraphics[width=\textwidth]{fig/images/accuracy_vs_sigma.png}
+            % \caption[Accuracy versus randomness($n=100, d=64, c=10$)]%
+            {{\small Accuracy versus randomness($n=100, d=64, c=10$)}}
+            \label{subfig.3}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.45\textwidth}   
+            \centering 
+            \includegraphics[width=\textwidth]{fig/images/accuracy_vs_class.png}
+            % \caption[Accuracy versus number of classes($n=100, d=64, \sigma=1.0$)]%
+            {{\small Accuracy versus number of classes($n=100, d=64, \sigma=1.0$)}}   
+            \label{subfig.4}
+        \end{subfigure}
+        % \caption[ Figures of Synthetic Data Experiment ]
+        % {{\small Figures of Synthetic Data Experiment}}
+        \label{fig.1}
+    \end{figure*}
+    
+
+\begin{figure*}
+        \centering
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{fig/new_img/loss_vs_structure.png}
+            % \caption[Accuracy versus number of data points($d=64, \sigma=1.0, c=10$)]%
+            {{\small Accuracy versus cover tree structure($n=1000, d=64, \sigma=1.0, c=100$)}}   
+            \label{subfig.1}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.45\textwidth}  
+            \centering 
+            \includegraphics[width=\textwidth]{fig/new_img/accuracy_vs_base.png}
+            % \caption[Accuracy versus dimension of parameter matrix($n=100, \sigma=1.0, c=10$)]%
+            {{\small Accuracy versus base of cover tree($n=1000, d=10, \sigma=1.0, c=100$)}}    
+            \label{subfig.2}
+        \end{subfigure}
+        \vskip\baselineskip
+        \begin{subfigure}[b]{0.45\textwidth}   
+            \centering 
+            \includegraphics[width=\textwidth]{fig/new_img/height_vs_base.png}
+            % \caption[Accuracy versus randomness($n=100, d=64, c=10$)]%
+            {{\small Height versus base of cover tree($n=1000, d=10, \sigma=1.0, c=100$)}}  
+            \label{subfig.3}
+        \end{subfigure}
+        \hfill
+        % \begin{subfigure}[b]{0.45\textwidth}   
+        %     \centering 
+        %     \includegraphics[width=\textwidth]{fig/new_img/loss_vs_base.png}
+        %     % \caption[Accuracy versus number of classes($n=100, d=64, \sigma=1.0$)]%
+        %     {{\small Loss versus base of cover tree($n=1000, d=10, \sigma=1.0, c=100$)}}    
+        %     \label{subfig.4}
+        % \end{subfigure}
+        % \caption[ Figures of Synthetic Data Experiment ]
+        % {{\small Figures of Synthetic Data Experiment}} 
+        \label{fig.2}
+    \end{figure*}
 
 
-\begin{figure}[h]
-\vspace{.3in}
-\centering
-\includegraphics[width=0.3\textwidth]{fig/images/accuracy_vs_n.png}
-\vspace{.3in}
-\caption{Accuracy versus number of data points($d=64, \sigma=1.0, c=10$)}
-\label{Fig.1}
-\end{figure}
+\subsubsection{Analysis of Synthetic Experiment results}
 
-\begin{figure}[h]
-\vspace{.3in}
-\centering
-\includegraphics[width=0.3\textwidth]{fig/images/accuracy_vs_d.png}
-\vspace{.3in}
-\caption{Accuracy versus dimension of parameter matrix($n=100, \sigma=1.0, c=10$)}
-\label{Fig.2}
-\end{figure}
-
-\begin{figure}[h]
-\vspace{.3in}
-\centering
-\includegraphics[width=0.3\textwidth]{fig/images/accuracy_vs_sigma.png}
-\vspace{.3in}
-\caption{Accuracy versus randomness($n=100, d=64, c=10$)}
-\label{Fig.3}
-\end{figure}
-
-\begin{figure}[h]
-\vspace{.3in}
-\centering
-\includegraphics[width=0.3\textwidth]{fig/images/accuracy_vs_class.png}
-\vspace{.3in}
-\caption{Accuracy versus number of classes($n=100, d=64, \sigma=1.0$)}
-\label{Fig.4}
-\end{figure}
-
-% \subsubsection{Analysis of Synthetic Experiment results}
-% From \ref{Fig.1}, as number of data points increases loss value and parameter matrix error decrease while accuracy increases. 
-% We compare the performance of cover tree loss, softmax cross entropy loss and simloss, it is clear that cover tree loss converges faster than the other two loss functions.
-% Besides, cover tree loss achieves lower loss value and parameter matrix error over number of data points.
-
-% As shown in \ref{Fig.2}, loss value decreases and accuracy increases over dimension. 
-% Similar to \ref{Fig.1}, cover tree loss converges faster and achieve lower loss value.
-% We take the line of parameter matrix error of cover tree loss as a benchmark and draw the difference of parameter matrix error between cover tree loss and the other two loss functions.
-% The middle sub-figure indicates that cover tree loss has lower parameter matrix error with dimension than cross entropy and simloss.
-
-% According to \ref{Fig.3}, if we increase the randomness and fix the other parameters, loss value increases and accuracy decreases.
-% Cover tree loss performs similarly with cross entropy loss and simloss in terms of loss value and accuracy.
-% The middle sub-figure implies that parameter matrix error of cover tree loss decreases even though the randomness increases.
-
-% \ref{Fig.4} indicates that, as number of classes increases, the loss value and parameter matrix error also increases and accuracy certainly decrease.
-% From middle sub-figure, the parameter matrix error of cover tree loss is lower than the other two loss functions.
-% The right sub-figure shows that the accuracy of cover tree loss decreases slower and can keep higher value than the other two loss functions.
 
 \subsubsection{Alternative synthetic experiments}
 
@@ -638,6 +690,7 @@ and a geometric distribution is a likely good alternative.
 
 The cover tree loss can work well even when the weight matrix has non-linear intrinsic structure.
 We should adapt the $\w*_i$ vectors to sit on a manifold instead of a hyperplane to demonstrate this fact.
+
 
 \subsection{Real world data}
 % \fixme{Write a description of the experiment.}
@@ -650,55 +703,57 @@ These three tasks and datasets are typical examples for using softmax cross entr
 \subsubsection{CIFAR-100 Data}
 We use CIFAR-100 dataset which has 100 classes for image classification.
 We also get word embeddings from a word2vec model pretrained on Google News \cite{Mikolov2013EfficientEO} of class names and construct cover tree structure and calculate similarity between classes from word embeddings.
-If the class name include more than one word, we take a sum of the embedding of each word.
+Four class names do not yield a word embedding and are therefore eliminated.
 
-To evaluate our cover tree loss, we rely on two metrics: accuracy (Acc.) which focus on correct predictions and similarity accuracy (SA) which focus on the similarity of predicted and target class.
+To evaluate our cover tree loss, we rely on three metrics: accuracy (Acc.) which focus on correct predictions and similarity accuracy (Similarity Acc.) which focus on the similarity of predicted and target class and superclass accuracy (SA). Every example in CIFAR-100 dataset has a main class and a superclass. Superclass accuracy is the fraction of examples that are correctly put into the corresponding superclass.
 We take ResNet20 model \cite{He2016DeepRL} and SGD optimizer with a learning rate 0.1 and a batch size of 1021. 
 We stop early to get the highest accuracy on validation set.
 
-\begin{table}[h]
-\small
+
+\begin{table}[]
 \caption{Validation and test results with early stopping on CIFAR-100 dataset. Best values are written in bold.} \label{cifar100}
 \begin{center}
-\begin{tabular}{@{}lcccc@{}}
+\begin{tabular}{@{}cccc@{}}
 \toprule
-\multicolumn{1}{c}{\multirow{2}{*}{Loss}} & \multicolumn{2}{c}{VALIDATION} & \multicolumn{2}{c}{TEST}       \\ \cmidrule(l){2-5} 
-\multicolumn{1}{c}{}                      & Acc.       & SA            & Acc.      & SA             \\ \cmidrule(r){1-1}
-Cover Tree Loss                           & \textbf{53.44} & \textbf{66.7} & \textbf{53.5} & \textbf{65.89} \\
-Cross Entropy                             & 52.08          & 65.46         & 51.87         & 65.58          \\
-SimLoss                                   & 52.50           & 65.76         & 52.43         & 65.82          \\ \bottomrule
+\multirow{2}{*}{Loss} & \multicolumn{3}{c}{Test}    \\ \cmidrule(l){2-4} 
+                      & Acc. & Similarity Acc. & SA \\ \cmidrule(r){1-1}
+Cover Tree Loss       & \textbf{52.78}     &  \textbf{65.90}               &  \textbf{62.55}  \\
+Cross Entropy         &  51.87    &   65.58              &  62.14  \\
+SimLoss               &    52.43  &    65.82             & 62.34  \\\bottomrule
 \end{tabular}
 \end{center}
 \end{table}
+
 
 \subsubsection{ImageNet Data}
 ImageNet dataset \cite{Russakovsky2015ImageNetLS} has 1000 classes and many of the classes are similar and related, we consider the internal class structure has a impact on performance of loss function.
-We use class names to get class representations from a pretrained BERT model \cite{Devlin2019BERTPO}.
-We take ResNet50 model \cite{He2016DeepRL} and SGD optimizer with a learning rate 0.01.
-Our metrics are top 1 accuracy and top 5 accuracy.
+We use class names to get class representations from a pretrained FastText model.
+We take ResNet50 model \cite{He2016DeepRL} trained on 1.28 mollion training images and evaluated on the 50k validation images and SGD optimizer with a learning rate 0.01.
+We use top1 accuracy and top5 accuracy to evaluate our loss functions.
 
 
-\begin{table}[h]
-\small
-\caption{Validation and test results on ImageNet dataset. Best values are written in bold.} \label{imagenet}
+
+\begin{table}[]
+\caption{Validation results on ImageNet dataset. Best values are written in bold.} \label{imagenet}
 \begin{center}
-\begin{tabular}{@{}lll@{}}
+\begin{tabular}{@{}ccc@{}}
 \toprule
-\multicolumn{1}{c}{\multirow{2}{*}{Loss}} & \multicolumn{2}{c}{VALIDATION} \\ \cmidrule(l){2-3} 
-\multicolumn{1}{c}{}                      & Top1 Acc.      & Top5 Acc.     \\ \cmidrule(r){1-1}
-Cover Tree Loss                           &                &               \\
-Cross Entropy                             &                &               \\
-SimLoss                                   &                &               \\ \bottomrule
+\multirow{2}{*}{Loss} & \multicolumn{2}{c}{Validation} \\ \cmidrule(l){2-3} 
+                      & Top1 Acc.      & Top5 Acc.     \\ \cmidrule(r){1-1}
+Cover Tree Loss       & \textbf{76.52} & \textbf{92.92} \\
+Cross Entropy         & 75.30          & 92.36         \\
+SimLoss               & 76.24          & 92.83         \\ \bottomrule
 \end{tabular}
 \end{center}
 \end{table}
+
 
 \subsubsection{Twitter Data}
 
 We apply cover tree loss on emoji prediction in twitter dataset. 
 Emojis are popular to express emotions in text messages and tweets are a wildely used social media over the world. 
 We trained the multilingual BERT model on tweets to predict which emoji corresponds to a piece of text is best for measuring the emotional content in the text. 
-Our 1661 target emojis are defined by emo2vec \cite{Eisner2016emoji2vecLE}.
+Our 1660 target emojis are defined by emo2vec \cite{Eisner2016emoji2vecLE}.
 
 We collect all tweets \cite{Izbicki2019GeolocatingTI} in any languages sent from anywhere in the world and filter the tweets with target emojis. 
 For each tweet, we replace all user mentions with a special token \texttt{\text{<}mention\text{>}} and all URLS with a special token \texttt{\text{<}url\text{>}} and delete all emojis. 
@@ -706,7 +761,7 @@ We keep all hashtags and duplicate the tweet once for each emoji if a tweet has 
 Then we split the dataset into training validadtion and testing sets by user id to ensure each user appears in only one set in order to prevent data leakage.
 
 We take the multilingual BERT model \cite{Feng2020LanguageagnosticBS} pretrained on data from 109 distinct languages which achieves state-of-the-art performance on a wide variety of natural language tasks. 
-We get the embeddings of 1661 target emojis defined by emo2vec and construct a cover tree structure from these emojis. 
+We get the embeddings of 1660 target emojis defined by emo2vec and construct a cover tree structure from these emojis. 
 In this cover tree structure, every leaf node represents each real target emoji and we replace all parent nodes with pseudo labels. 
 Then we would adopt cover tree loss and compare the performance with softmax cross entropy loss and SimLoss.
 
@@ -727,9 +782,261 @@ SimLoss                                   &   19.91    &   48.25  &  19.96    & 
 
 \subsubsection{Analysis}
 
+
 \section{Conclusion}
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \bibliographystyle{plainnat}
 \bibliography{paper}
+% \begin{abstract}
+%   The Abstract paragraph should be indented 0.25 inch (1.5 picas) on
+%   both left and right-hand margins. Use 10~point type, with a vertical
+%   spacing of 11~points. The \textbf{Abstract} heading must be centered,
+%   bold, and in point size 12. Two line spaces precede the
+%   Abstract. The Abstract must be limited to one paragraph.
+% \end{abstract}
+
+% \section{GENERAL FORMATTING INSTRUCTIONS}
+
+% The camera-ready versions of the accepted papers are 8 pages,
+% plus any additional pages needed for references.
+
+% Papers are in 2 columns with the overall line width of 6.75~inches (41~picas).
+% Each column is 3.25~inches wide (19.5~picas).  The space
+% between the columns is .25~inches wide (1.5~picas).  The left margin is 0.88~inches (5.28~picas).
+% Use 10~point type with a vertical spacing of
+% 11~points. Please use US Letter size paper instead of A4.
+
+% Paper title is 16~point, caps/lc, bold, centered between 2~horizontal rules.
+% Top rule is 4~points thick and bottom rule is 1~point thick.
+% Allow 1/4~inch space above and below title to rules.
+
+% Author descriptions are center-justified, initial caps.  The lead
+% author is to be listed first (left-most), and the Co-authors are set
+% to follow.  If up to three authors, use a single row of author
+% descriptions, each one center-justified, and all set side by side;
+% with more authors or unusually long names or institutions, use more
+% rows.
+
+% Use one-half line space between paragraphs, with no indent.
+
+% \section{FIRST LEVEL HEADINGS}
+
+% First level headings are all caps, flush left, bold, and in point size
+% 12. Use one line space before the first level heading and one-half line space
+% after the first level heading.
+
+% \subsection{Second Level Heading}
+
+% Second level headings are initial caps, flush left, bold, and in point
+% size 10. Use one line space before the second level heading and one-half line
+% space after the second level heading.
+
+% \subsubsection{Third Level Heading}
+
+% Third level headings are flush left, initial caps, bold, and in point
+% size 10. Use one line space before the third level heading and one-half line
+% space after the third level heading.
+
+% \paragraph{Fourth Level Heading}
+
+% Fourth level headings must be flush left, initial caps, bold, and
+% Roman type.  Use one line space before the fourth level heading, and
+% place the section text immediately after the heading with no line
+% break, but an 11 point horizontal space.
+
+% %%%
+% \subsection{Citations, Figure, References}
+
+
+% \subsubsection{Citations in Text}
+
+% Citations within the text should include the author's last name and
+% year, e.g., (Cheesman, 1985). 
+% %Apart from including the author's last name and year, citations can follow any style, as long as the style is consistent throughout the paper.  
+% Be sure that the sentence reads
+% correctly if the citation is deleted: e.g., instead of ``As described
+% by (Cheesman, 1985), we first frobulate the widgets,'' write ``As
+% described by Cheesman (1985), we first frobulate the widgets.''
+
+
+% The references listed at the end of the paper can follow any style as long as it is used consistently.
+
+% %Be sure to avoid
+% %accidentally disclosing author identities through citations.
+
+% \subsubsection{Footnotes}
+
+% Indicate footnotes with a number\footnote{Sample of the first
+%   footnote.} in the text. Use 8 point type for footnotes. Place the
+% footnotes at the bottom of the column in which their markers appear,
+% continuing to the next column if required. Precede the footnote
+% section of a column with a 0.5 point horizontal rule 1~inch (6~picas)
+% long.\footnote{Sample of the second footnote.}
+
+% \subsubsection{Figures}
+
+% All artwork must be centered, neat, clean, and legible.  All lines
+% should be very dark for purposes of reproduction, and art work should
+% not be hand-drawn.  Figures may appear at the top of a column, at the
+% top of a page spanning multiple columns, inline within a column, or
+% with text wrapped around them, but the figure number and caption
+% always appear immediately below the figure.  Leave 2 line spaces
+% between the figure and the caption. The figure caption is initial caps
+% and each figure should be numbered consecutively.
+
+% Make sure that the figure caption does not get separated from the
+% figure. Leave extra white space at the bottom of the page rather than
+% splitting the figure and figure caption.
+% \begin{figure}[h]
+% \vspace{.3in}
+% \centerline{\fbox{This figure intentionally left non-blank}}
+% \vspace{.3in}
+% \caption{Sample Figure Caption}
+% \end{figure}
+
+% \subsubsection{Tables}
+
+% All tables must be centered, neat, clean, and legible. Do not use hand-drawn tables.
+% Table number and title always appear above the table.
+% See Table~\ref{sample-table}.
+
+% Use one line space before the table title, one line space after the table title,
+% and one line space after the table. The table title must be
+% initial caps and each table numbered consecutively.
+
+% \begin{table}[h]
+% \caption{Sample Table Title} \label{sample-table}
+% \begin{center}
+% \begin{tabular}{ll}
+% \textbf{PART}  &\textbf{DESCRIPTION} \\
+% \hline \\
+% Dendrite         &Input terminal \\
+% Axon             &Output terminal \\
+% Soma             &Cell body (contains cell nucleus) \\
+% \end{tabular}
+% \end{center}
+% \end{table}
+
+% \section{SUPPLEMENTARY MATERIAL}
+
+% If you need to include additional appendices during submission, you can include them in the supplementary material file.
+% You can submit a single file of additional supplementary material which may be either a pdf file (such as proof details) or a zip file for other formats/more files (such as code or videos). 
+% Note that reviewers are under no obligation to examine your supplementary material. 
+% If you have only one supplementary pdf file, please upload it as is; otherwise gather everything to the single zip file.
+
+% You must use \texttt{aistats2022.sty} as a style file for your supplementary pdf file and follow the same formatting instructions as in the main paper. 
+% The only difference is that it must be in a \emph{single-column} format.
+% You can use \texttt{supplement.tex} in our starter pack as a starting point.
+% Alternatively, you may append the supplementary content to the main paper and split the final PDF into two separate files.
+
+% \section{SUBMISSION INSTRUCTIONS}
+
+% To submit your paper to AISTATS 2022, please follow these instructions.
+
+% \begin{enumerate}
+%     \item Download \texttt{aistats2022.sty}, \texttt{fancyhdr.sty}, and \texttt{sample\_paper.tex} provided in our starter pack. 
+%     Please, do not modify the style files as this might result in a formatting violation.
+    
+%     \item Use \texttt{sample\_paper.tex} as a starting point.
+%     \item Begin your document with
+%     \begin{flushleft}
+%     \texttt{\textbackslash documentclass[twoside]\{article\}}\\
+%     \texttt{\textbackslash usepackage\{aistats2022\}}
+%     \end{flushleft}
+%     The \texttt{twoside} option for the class article allows the
+%     package \texttt{fancyhdr.sty} to include headings for even and odd
+%     numbered pages.
+%     \item When you are ready to submit the manuscript, compile the latex file to obtain the pdf file.
+%     \item Check that the content of your submission, \emph{excluding} references, is limited to \textbf{8 pages}. The number of pages containing references alone is not limited.
+%     \item Upload the PDF file along with other supplementary material files to the CMT website.
+% \end{enumerate}
+
+% \subsection{Camera-ready Papers}
+
+% %For the camera-ready paper, if you are using \LaTeX, please make sure
+% %that you follow these instructions.  
+% % (If you are not using \LaTeX,
+% %please make sure to achieve the same effect using your chosen
+% %typesetting package.)
+
+% If your papers are accepted, you will need to submit the camera-ready version. Please make sure that you follow these instructions:
+% \begin{enumerate}
+%     %\item Download \texttt{fancyhdr.sty} -- the
+%     %\texttt{aistats2022.sty} file will make use of it.
+%     \item Change the beginning of your document to
+%     \begin{flushleft}
+%     \texttt{\textbackslash documentclass[twoside]\{article\}}\\
+%     \texttt{\textbackslash usepackage[accepted]\{aistats2022\}}
+%     \end{flushleft}
+%     The option \texttt{accepted} for the package
+%     \texttt{aistats2022.sty} will write a copyright notice at the end of
+%     the first column of the first page. This option will also print
+%     headings for the paper.  For the \emph{even} pages, the title of
+%     the paper will be used as heading and for \emph{odd} pages the
+%     author names will be used as heading.  If the title of the paper
+%     is too long or the number of authors is too large, the style will
+%     print a warning message as heading. If this happens additional
+%     commands can be used to place as headings shorter versions of the
+%     title and the author names. This is explained in the next point.
+%     \item  If you get warning messages as described above, then
+%     immediately after $\texttt{\textbackslash
+%     begin\{document\}}$, write
+%     \begin{flushleft}
+%     \texttt{\textbackslash runningtitle\{Provide here an alternative
+%     shorter version of the title of your paper\}}\\
+%     \texttt{\textbackslash runningauthor\{Provide here the surnames of
+%     the authors of your paper, all separated by commas\}}
+%     \end{flushleft}
+%     Note that the text that appears as argument in \texttt{\textbackslash
+%       runningtitle} will be printed as a heading in the \emph{even}
+%     pages. The text that appears as argument in \texttt{\textbackslash
+%       runningauthor} will be printed as a heading in the \emph{odd}
+%     pages.  If even the author surnames do not fit, it is acceptable
+%     to give a subset of author names followed by ``et al.''
+
+%     %\item Use the file sample\_paper.tex as an example.
+
+%     \item The camera-ready versions of the accepted papers are 8
+%       pages, plus any additional pages needed for references.
+
+%     \item If you need to include additional appendices,
+%       you can include them in the supplementary
+%       material file.
+
+%     \item Please, do not change the layout given by the above
+%       instructions and by the style file.
+
+% \end{enumerate}
+
+% \subsubsection*{Acknowledgements}
+% All acknowledgments go at the end of the paper, including thanks to reviewers who gave useful comments, to colleagues who contributed to the ideas, and to funding agencies and corporate sponsors that provided financial support. 
+% To preserve the anonymity, please include acknowledgments \emph{only} in the camera-ready papers.
+
+
+% \subsubsection*{References}
+
+% References follow the acknowledgements.  Use an unnumbered third level
+% heading for the references section.  Please use the same font
+% size for references as for the body of the paper---remember that
+% references do not count against your page length total.
+
+% \begin{thebibliography}{}
+% \setlength{\itemindent}{-\leftmargin}
+% \makeatletter\renewcommand{\@biblabel}[1]{}\makeatother
+% \bibitem{} J.~Alspector, B.~Gupta, and R.~B.~Allen (1989).
+%     \newblock Performance of a stochastic learning microchip.
+%     \newblock In D. S. Touretzky (ed.),
+%     \textit{Advances in Neural Information Processing Systems 1}, 748--760.
+%     San Mateo, Calif.: Morgan Kaufmann.
+
+% \bibitem{} F.~Rosenblatt (1962).
+%     \newblock \textit{Principles of Neurodynamics.}
+%     \newblock Washington, D.C.: Spartan Books.
+
+% \bibitem{} G.~Tesauro (1989).
+%     \newblock Neurogammon wins computer Olympiad.
+%     \newblock \textit{Neural Computation} \textbf{1}(3):321--323.
+% \end{thebibliography}
+
 \end{document}

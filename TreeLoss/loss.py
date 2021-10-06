@@ -5,7 +5,7 @@ import numpy as np
 import torch.nn.functional as F
 from .cover_tree import CoverTree
 from scipy.spatial.distance import cosine
-from .utilities import path
+from .utilities import path, _print, get_brothernode
 
 class SimLoss(torch.nn.Module):
     def __init__(self,
@@ -42,13 +42,14 @@ class CoverTreeLoss(torch.nn.Module):
         self.new2index = new2index
 
     @staticmethod
-    def tree_structure(c, m):
+    def tree_structure(c, m, base):
         '''
         m: embeddings of existed classes
         This function constructs cover tree structure.
         '''
         distance = cosine
-        tree = CoverTree(m, distance, leafsize=1)
+        tree = CoverTree(m, distance, leafsize=1, base=base)
+        # _print(tree)
         new_index = path(tree)
 
         # new label
@@ -69,7 +70,7 @@ class CoverTreeLoss(torch.nn.Module):
         new2index = dict()
         for i in range(len(new_index)):
             new2index[new_index[i][len(new_index[i])-1]] = new_index[i]
-        return new2index, length
+        return new2index, length, tree
 
     def forward(self,
                 weights: torch.Tensor,
@@ -97,3 +98,67 @@ class CoverTreeLoss(torch.nn.Module):
         
         loss = self.criterion(logits, y)
         return loss, logits, added_weights
+
+class HSM(torch.nn.Module):
+    def __init__(self, c, d, new2index, index2brother, length, epsilon: float = 1e-8) -> None:
+        '''
+        c: number of existed classes
+        length: number of existed classes and pseudo classes
+        d: dimension of parameter matrix W(c,d)
+        new2index: a dictionary which we can get a a path of a existed class
+        '''
+        super().__init__()
+        self.c = c
+        self.linear = nn.Linear(d, c, bias=False)
+        self.criterion = nn.CrossEntropyLoss()
+        self.new2index = new2index
+        self.epsilon = epsilon
+        self.softmax = nn.Softmax(dim=-1)
+        self.length = length
+        self.index2brother = index2brother
+
+    @staticmethod
+    def tree_structure(c, m):
+        '''
+        m: embeddings of existed classes
+        This function constructs cover tree structure.
+        '''
+
+        distance = cosine
+        tree = CoverTree(m, distance, leafsize=1)
+        _print(tree)
+        new_index_ = path(tree)
+        new_index = get_brothernode(tree)  
+        length = len(max(new_index_, key=len))
+
+        new2index = dict()
+        index2brother = dict()
+        for i in range(len(new_index_)):
+            new2index[new_index_[i][len(new_index_[i])-1]] = new_index_[i][1:]
+            index2brother[new_index_[i][len(new_index_[i])-1]] = new_index[i]
+            
+        return new2index, index2brother, length
+
+    def forward(self,
+                x: torch.Tensor,
+                y: torch.Tensor) -> torch.Tensor:
+        batch = y.size()[0]
+        # one_hot = torch.from_numpy(np.identity(self.c)).cuda()
+        p_y = []
+        brother = []
+        for i in range(batch):
+            p_y.append(self.new2index[int(y[i])])
+            brother.append(self.index2brother[int(y[i])])
+        # brother = torch.LongTensor(brother).cuda()
+        p_y = torch.LongTensor(p_y)
+        # added_logits = torch.from_numpy(np.zeros((batch,1))).cuda()
+        # logits = torch.cat([added_logits, x], dim=-1)
+
+        loss = 0
+        for i in range(len(p_y[0])):
+            brother[0][i] = torch.LongTensor(brother[0][i])
+            label = (brother[0][i] == p_y[0][i]).nonzero(as_tuple=True)[0]
+            loss += self.criterion(x[:, brother[0][i]], label)
+        # logits_ = logits[:, 1:]
+
+        return loss
