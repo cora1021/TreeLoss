@@ -126,23 +126,44 @@
 
 \twocolumn[
 
-\aistatstitle{The Cover Tree Loss}
+\aistatstitle{The Tree Loss: Improving Generalization with Many Classes}
 
 \aistatsauthor{ Yujie Wang \And Michael Izbicki  }
 
 \aistatsaddress{ Claremont Graduate University \And  Claremont McKenna College } ]
 
 \begin{abstract}
-Softmax Cross Entropy loss function treats every class equally while classes often have an internal structure. 
-We introduce cover tree loss function which takes advantage of this internal class structure.
-The cover tree loss works by reparameterizing the weight matrix for the softmax cross entropy loss.
-Compare to softmax cross entropy which has generalization error $O(\sqrt{c/n})$, the generalization error of cover tree loss is $O(\sqrt{1/n})$ which is independent of the number of classes. 
-We provide the theoretical justification and conduct extensive experiments on fully synthetic data and real world data. 
-For real world data, we take CIFAR100 dataset, IMAGENET dataset and TWITTER dataset.
-The cover tree loss outperforms than softmax cross entropy loss function on metrics.
+    %Multiclass logistic regression has generalization error $O(\sqrt{c/n})$, where $c$ is the number of classes and $n$ the number of data points.
+
+    Multiclass classification problems often have many semantically similar classes.
+    For example, 90 of ImageNet's 1000 classes are for different breeds of dog.
+    We should expect that these semantically similar classes will have similar parameter vectors,
+    but the standard cross entropy loss does not enforce this constraint.
+    %These classes are semantically similar to each other,
+    %and so we expect their learned parameter vectors to also be similar.
+    %Unfortunately, the standard cross entropy loss function does not enforce this constraint.
+    %It has generalization error $O(\sqrt{c/n})$, where $c$ is the number of classes and $n$ the number of data points.
+
+    We introduce the tree loss as a drop-in replacement for the cross entropy loss.
+    The tree loss re-parameterizes the parameter matrix in order to guarantee that semantically similar classes will have similar parameter vectors.
+    Using simple properties of stochastic gradient descent,
+    we show that the tree loss's generalization error is asymptotically better than the cross entropy loss's.
+    We then validate these theoretical results on synthetic data, image data (CIFAR100, ImageNet), and text data (Twitter).
+
+    %Whereas The standard softmax cross entropy loss function has generalization error $O(\sqrt{c/n})$,
+    %where $c$ is the number of classes and $n$ the number of data points.
+
+%Softmax Cross Entropy loss function treats every class equally while classes often have an internal structure. 
+%We introduce cover tree loss function which takes advantage of this internal class structure.
+%The cover tree loss works by reparameterizing the weight matrix for the softmax cross entropy loss.
+%Compare to softmax cross entropy which has generalization error $O(\sqrt{c/n})$, the generalization error of cover tree loss is $O(\sqrt{1/n})$ which is independent of the number of classes. 
+%We provide the theoretical justification and conduct extensive experiments on fully synthetic data and real world data. 
+%For real world data, we take CIFAR100 dataset, IMAGENET dataset and TWITTER dataset.
+%The cover tree loss outperforms than softmax cross entropy loss function on metrics.
 \end{abstract}
 
 \section{Introduction}
+
 When people do a multi-class classification task, the standard loss function is softmax cross entropy.
 The mechanism of softmax cross entropy loss function is to maximize the assigned target class probability and punishes every misclassification equally, independent of some other information about the predicted class.
 However, classes often have an internal structure. 
