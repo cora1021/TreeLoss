@@ -143,8 +143,8 @@ optimizer = optim.SGD(
     momentum=args.momentum,
     weight_decay=args.weight_decay,
     )
-# scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.n)
-scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.n)
+# scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
 for ep in range(args.epoch):
     loss_sum = 0
@@ -211,6 +211,6 @@ test_accuracy = correct/len(Y_)
 
 loss_ = loss_sum
 test_loss_ = test_loss_sum/10
-with open(f'base_experiment_{args.loss}_loss_{args.epoch}.txt', 'a') as f:
+with open(f'base_experiment_{args.loss}_50.txt', 'a') as f:
     f.write(f'Loss: {loss_} \t Accuracy: {accuracy} \t Generlization Loss: {test_loss_} \t Test Accuracy: {test_accuracy}\n')
 # # # Height: {height} \t Training Loss: {training loss} Generlization Loss: {genarlization loss}

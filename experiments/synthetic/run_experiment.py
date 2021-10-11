@@ -206,6 +206,9 @@ logging.info('saving results')
 # # FIXME:
 # # save the W_err to a file
 loss = loss+1e-10
+for i in range(args.c):
+    print(torch.norm(W[i,:]).item())
+
 # print(accuracy)
-with open(f'{args.experiment}_{args.loss}.txt', 'a') as f:
-    f.write(f'Loss: {loss} \t W_err: {W_err} \t Accuracy: {accuracy} \n')
+# with open(f'{args.experiment}_{args.loss}.txt', 'a') as f:
+#     f.write(f'Loss: {loss} \t W_err: {W_err} \t Accuracy: {accuracy} \n')

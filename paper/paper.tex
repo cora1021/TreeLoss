@@ -170,11 +170,16 @@ However, classes often have an internal structure.
 For example, dog and cat belong to same 'parent': animal and many transportations have same 'parent' while they have different brothers. Take the internal structure in the training procedure would allow the classifier to make less sever mistakes as it learns to predict similar classes.
 In terms of theoretical result, the parameter matrix of softmax cross entropy loss is bounded by $\sqrt{c}B$ (where $c$ is the number of classes) and for $n$ data points, the generalization error is $O(\sqrt{c/n})$ which is dependent on $c$.
 
-In this paper, we introduce cover tree loss which works by reparameterizing the weight matrix for the softmax cross entropy loss. 
-The reparameterization is defined by a cover tree structure that constructed by similarity between all classes. 
-Every class is represented by a leaf node in the cover tree and all other internal nodes represent pseudo-classes. 
-Our cover tree loss is based on softmax cross entropy and easily implement.
-The idea of cover tree is that we use tree structure to reduce the bound of the size of the parameter space and then the generalization error of cover tree loss is $O(\sqrt{1/n})$ which is independent of $c$.
+In this paper, we introduce the tree loss which take advantage of the internal structure bewtween classes.
+The idea of the tree loss is that we use tree structure to reduce the bound of the size of the parameter space and then the generalization error of the tree loss is $O(\sqrt{1/n})$ which is independent of $c$.
+In the tree loss, we take a tree structure which defined by similarity between classes to re-parameterize the weight matrix for the softmax cross entropy loss.
+We incorporate class similarities with loss function to make the model learn more information about classes.
+It can benefit the tasks on unbalanced datasets.
+Take a emoji prediction task as an example, people often use emojis in tweets.
+However, some emojis are popular and some emojis are rarely used.
+This leads to an unbalanced tweets data and there is not enough training data for unpopular emojis.
+The tree loss can learn more information and work well for unbalanced data.
+
 
 Our contributions are as below:
 \begin{itemize}
@@ -234,23 +239,21 @@ where $W^* = \argmin L_D(W)$.
 % \end{equation}
 % \end{proof}
 
-\section{Alternatives to the softmax cross entropy}
-
 There are many other loss functions that have been proposed for multilabel classification.
-In this section, we review these alternatives before presenting our proposed cover tree loss.
+In this section, we review these alternatives before presenting our proposed the tree loss.
 
 \subsection{Hierarchical Softmax}
 
-The cover tree loss is superficially related to the hierarchical softmax (HSM) because both losses are defined based on tree structures.
+The tree loss is superficially related to the hierarchical softmax (HSM) because both losses are defined based on tree structures.
 \cite{morin2005hierarchical} introduced the HSM to speed up the computational time of neural network training,
-but the cover tree loss is used to improve sample efficiency rather than computational efficiency.
+but the tree loss is used to improve sample efficiency rather than computational efficiency.
 \cite{mikolov2013distributed} introduce the word2vec model and experiment with using both the hierarchical softmax and cross entropy with negative sampling.
 They conclude that negative sampling has the best performance both computationally and statistically.
-Since the cover tree loss is a simple extension of the cross entropy loss,
+Since the tree loss is a simple extension of the cross entropy loss,
 negative sampling can be used to speed up the cross entropy loss as well.
 \cite{bojanowski2017enriching} introduce the fastText extension of the word2vec model, which uses sub-word information to improve sample efficiency.
 They do not provide any theoretical justification for why their technique should improve sample efficiency,
-but their technique is computationally very similar to the cover tree loss,
+but their technique is computationally very similar to the tree loss,
 and so our technique may be able to provide the first theoretical justification for their work.
 
 HSM:
@@ -266,33 +269,49 @@ $L_k$ are nodes on the level where $k$ are
 
 % \fixme{Read 5-10 additional papers about the hierarchical softmax.  For each paper, write a paragraph describing the paper's contributions and how it relates to the cover tree loss.  For the final paper we will reference these papers.  We will have to trim down the notes that you write for this task, but it's useful when writing the paper to have detailed notes about references.}
 
-\cite{Peng2017IncrementallyLT} introduce a training method incrementally train the hierarchical softmax function for neural network language models. 
-To be specific, the incremental training split the cost function to model old and update corpora separately and factorize the objective function for the hierarchical softmax. 
-They also provide a new stochastic gradient based method to update all the word vectors and parameters and their theoretical analysis shows the mean square error of the parameter vectors can be bounded by a function of the number of changed words related to the parameter node which is similar to our idea of cover tree loss.
-Their experimental results show the incremental training can save a lot of time.
-
-\cite{Mohammed2018EffectivenessOH} compare the performance of normal softmax and hierarchical softmax in large scale classification tasks. 
-Normal softmax is computationally expensive for large scale datasets with large number of possible outputs.
-Their experimental results show that normal softmax and hierarchical softmax underperforms on datasets with large number of labels.
-That is also one of our motivations of cover tree loss function. 
-Compared to classic cross entropy loss function, cover tree loss function performs better on datasets with large number of labels.
-
-Extreme multi-label classification is difficult, but organizing labels as a tree can handle this problem. 
-Hierarchical softmax approach commonly used for multi-class problems.
-\cite{Wydmuch2018ANG} investigate probabilistic label trees that have been recently devised for tackling extreme multi-label classification and show that probabilistic label trees are a no-regret multi-label generation of hierarchical softmax when precision $@k$ is used as a model evaluation metric.
-They also show that their implementation of probabilistic label trees obtains significantly better results than hierarchical softmax with the pick-one-label heuristic.
-
-Neural networks are widely used for computational linguistics.
-These neural models leverage knowledge from massive corpora but they are extremely slow.
-\cite{Jiang2017ExplorationOT} explore the tree-based hierarchical softmax method and reform its architecture, making it compatible
-with modern GPUs and introducing a compact tree-based loss function.
-Their tree-based loss function is the negative log-likelihood of the joint product of the probability of the route taken from the root to the corresponding leaf node. 
-It is different from our cover tree loss function which parameterize the weight vectors. 
-
+The hierarchical softmax loss aims to improve computation efficiency. 
+\cite{Peng2017IncrementallyLT} introduce a training method incrementally train the hierarchical softmax function for neural network language models.
+They also provide a new stochastic gradient based method to update all the word vectors and their experimental results show the incremental training can save a lot of time.
+\cite{Jiang2017ExplorationOT} explore the tree-based hierarchical softmax method and reform its architecture, making it compatible with modern GPUs.
 \cite{Yang2017OptimizeHS} gives a theoretic analysis on how should organize the hierarchical tree by treating the tree structure as a parameter of the training objective function.
 They propose SemHuff, a new tree constructing scheme based on adjusting the Huffman tree with word similarity knowledge.
 Their experiments results also show that word embeddings trained with optimized hierarchical tree can give better results in various tasks.
 
+\cite{Mohammed2018EffectivenessOH} compare the performance of normal softmax and hierarchical softmax in large scale classification tasks. 
+Normal softmax is computationally expensive for large scale datasets with large number of possible outputs.
+Their experimental results show that normal softmax and hierarchical softmax underperforms on datasets with large number of labels.
+That is also one of our motivations of the tree loss function. 
+Compared to classic cross entropy loss function, the tree loss function performs better on datasets with large number of labels.
+Extreme multi-label classification is difficult, but organizing labels as a tree can handle this problem. 
+
+
+
+% \cite{Peng2017IncrementallyLT} introduce a training method incrementally train the hierarchical softmax function for neural network language models. 
+% To be specific, the incremental training split the cost function to model old and update corpora separately and factorize the objective function for the hierarchical softmax. 
+% They also provide a new stochastic gradient based method to update all the word vectors and parameters and their theoretical analysis shows the mean square error of the parameter vectors can be bounded by a function of the number of changed words related to the parameter node which is similar to our idea of cover tree loss.
+% Their experimental results show the incremental training can save a lot of time.
+
+% \cite{Mohammed2018EffectivenessOH} compare the performance of normal softmax and hierarchical softmax in large scale classification tasks. 
+% Normal softmax is computationally expensive for large scale datasets with large number of possible outputs.
+% Their experimental results show that normal softmax and hierarchical softmax underperforms on datasets with large number of labels.
+% That is also one of our motivations of cover tree loss function. 
+% Compared to classic cross entropy loss function, cover tree loss function performs better on datasets with large number of labels.
+
+% Extreme multi-label classification is difficult, but organizing labels as a tree can handle this problem. 
+% Hierarchical softmax approach commonly used for multi-class problems.
+% \cite{Wydmuch2018ANG} investigate probabilistic label trees that have been recently devised for tackling extreme multi-label classification and show that probabilistic label trees are a no-regret multi-label generation of hierarchical softmax when precision $@k$ is used as a model evaluation metric.
+% They also show that their implementation of probabilistic label trees obtains significantly better results than hierarchical softmax with the pick-one-label heuristic.
+
+% Neural networks are widely used for computational linguistics.
+% These neural models leverage knowledge from massive corpora but they are extremely slow.
+% \cite{Jiang2017ExplorationOT} explore the tree-based hierarchical softmax method and reform its architecture, making it compatible
+% with modern GPUs and introducing a compact tree-based loss function.
+% Their tree-based loss function is the negative log-likelihood of the joint product of the probability of the route taken from the root to the corresponding leaf node. 
+% It is different from our cover tree loss function which parameterize the weight vectors. 
+
+% \cite{Yang2017OptimizeHS} gives a theoretic analysis on how should organize the hierarchical tree by treating the tree structure as a parameter of the training objective function.
+% They propose SemHuff, a new tree constructing scheme based on adjusting the Huffman tree with word similarity knowledge.
+% Their experiments results also show that word embeddings trained with optimized hierarchical tree can give better results in various tasks.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -327,11 +346,16 @@ Their experiments results also show that word embeddings trained with optimized 
 
 % \fixme{Write a detailed description of the sim loss}
 
-Simloss \cite{Kobs2020SimLossCS} is similarity based loss function which incorporates class similarities to support the training of neural network classifiers.
+SimLoss \cite{Kobs2020SimLossCS} is similarity based loss function which incorporates class similarities to support the training of neural network classifiers.
 Cross entropy loss assumes only one class is correct and punishes every misclassification, while Simloss indicates classes have similarities and classifying a target as a similar class is better.
 When calculating the loss function, instead of only taking the probability vector at the target index Simloss also adds the product of similarity between target and other classes and probability vector at the corresponding class. 
 Non zero values of similarity matrix lead to smaller losses when the network gives a high score to classes similar to the correct one. 
 It would allow the classifier to make less severe mistakes as it learns to predict similar classes.
+However, SimLoss does not have any theoretical justification to prove why it can outperform softmax cross entropy.
+SimLoss has a hyperparameter lower bound that controls the minimal class similarity that should have an impact on the network punishment.
+Any similarities below lower bound will be all zeros.
+It implies SimLoss would cost more time to fine tune.
+Our tree loss define a tree structure which can be obtained automatically and it is time-saving.
 \begin{align}
     L_{Simloss}&=-\frac{1}{N}\log(\sum_{c=1}^{C}S_{y_i,c}\cdot p_i[c])\\
     % L_{Simloss}=-\frac{1}{N}\log(\sum_{c=1}^{C}S_{y_i,c}\cdot\frac {\exp(-\trans\w_{y_i} \x)}{\sum_{j=1}^C \exp(-\trans \w_j \x)})
@@ -340,50 +364,50 @@ It would allow the classifier to make less severe mistakes as it learns to predi
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Weight matrix factorization}
+% \subsection{Weight matrix factorization}
 
-A simple way to reduce sample complexity when $c$ is large is to factor the parameter matrix as $W = VU$,
-where $V : \R ^ {c \times e}$, $U : \R^{e \times d}$, and $e<\!<\!c$.
-Then, each $\w_i = \vv_i U$, and the cross entropy softmax loss is
-\begin{equation}
-    \ell(VU;(\x,y)) = - \log \frac {\exp(-\trans\vv_y U \x)}{\sum_{j=1}^c \exp(-\trans \vv_j U \x)}
-    .
-\end{equation}
-Unfortunately, this new parameterization is not simultaneously convex in both $V$ and $U$;
-therefore, to analyze this formulation, we will assume that $V$ is fixed and only $U$ is a learned parameter.
-In practice, it is fine to set $V$ to be a random matrix (and there is good theory to justify this),
-or to simultaneously learn both $V$ and $U$ despite the nonconvexity.
+% A simple way to reduce sample complexity when $c$ is large is to factor the parameter matrix as $W = VU$,
+% where $V : \R ^ {c \times e}$, $U : \R^{e \times d}$, and $e<\!<\!c$.
+% Then, each $\w_i = \vv_i U$, and the cross entropy softmax loss is
+% \begin{equation}
+%     \ell(VU;(\x,y)) = - \log \frac {\exp(-\trans\vv_y U \x)}{\sum_{j=1}^c \exp(-\trans \vv_j U \x)}
+%     .
+% \end{equation}
+% Unfortunately, this new parameterization is not simultaneously convex in both $V$ and $U$;
+% therefore, to analyze this formulation, we will assume that $V$ is fixed and only $U$ is a learned parameter.
+% In practice, it is fine to set $V$ to be a random matrix (and there is good theory to justify this),
+% or to simultaneously learn both $V$ and $U$ despite the nonconvexity.
 
-This factorization decreases the statistical complexity of the problem from $O(\sqrt{c/n})$ to $O(\sqrt{e/n})$.
-Recall that $e$ is a hyperparameter that is selected to be much less than $c$ and should represent the "intrinsic" dimensionality of the weight matrix.
-The following theorem proves this result formally.
-\begin{theorem}
-Assume that for all $i\in[n]$, $\ltwo{x_i} \le \rho$,
-    and that for each class $i\in[c]$, $\ltwo{\vv_i}\le 1$ and $\ltwo{\uu_i}\le B$.
-Then the parameter vector $\bar W = V \bar U$ estimated from one epoch of SGD satisfies
-\begin{equation}
-    \E L_D(\bar W) - L_D(W^*) \le \frac {\sqrt eB\rho}{\sqrt n}
-\end{equation}
-where $W^* = \argmin L_D(W)$.
-\end{theorem}
-% \begin{proof}
-%     \fixme{Write a proof of this result using Theorem 14.12 of Shalev-Shwartz and Ben-David.}
-%     \begin{align}
-%     {\| U \|^2_F}&=\sum_{i=1}^e{\| U_i\|^2}\\
-%                 &\le\sum_{i=1}^e{B^2}\\
-%                 &\le eB^2\\
-%   \| U \|_F  &\le \sqrt e B  \\
-%   \| W \|_F  &\le \sqrt e B
-%     \end{align}
-%     Then we get:
-%     \begin{equation}
-%     l(\bar W)-l(W^*)\le\frac {\sqrt eB\rho}{\sqrt n}
-%     \end{equation}
-%   Take expectation of both side of equation(8):
-%   \begin{equation}
+% This factorization decreases the statistical complexity of the problem from $O(\sqrt{c/n})$ to $O(\sqrt{e/n})$.
+% Recall that $e$ is a hyperparameter that is selected to be much less than $c$ and should represent the "intrinsic" dimensionality of the weight matrix.
+% The following theorem proves this result formally.
+% \begin{theorem}
+% Assume that for all $i\in[n]$, $\ltwo{x_i} \le \rho$,
+%     and that for each class $i\in[c]$, $\ltwo{\vv_i}\le 1$ and $\ltwo{\uu_i}\le B$.
+% Then the parameter vector $\bar W = V \bar U$ estimated from one epoch of SGD satisfies
+% \begin{equation}
 %     \E L_D(\bar W) - L_D(W^*) \le \frac {\sqrt eB\rho}{\sqrt n}
 % \end{equation}
-% \end{proof}
+% where $W^* = \argmin L_D(W)$.
+% \end{theorem}
+% % \begin{proof}
+% %     \fixme{Write a proof of this result using Theorem 14.12 of Shalev-Shwartz and Ben-David.}
+% %     \begin{align}
+% %     {\| U \|^2_F}&=\sum_{i=1}^e{\| U_i\|^2}\\
+% %                 &\le\sum_{i=1}^e{B^2}\\
+% %                 &\le eB^2\\
+% %   \| U \|_F  &\le \sqrt e B  \\
+% %   \| W \|_F  &\le \sqrt e B
+% %     \end{align}
+% %     Then we get:
+% %     \begin{equation}
+% %     l(\bar W)-l(W^*)\le\frac {\sqrt eB\rho}{\sqrt n}
+% %     \end{equation}
+% %   Take expectation of both side of equation(8):
+% %   \begin{equation}
+% %     \E L_D(\bar W) - L_D(W^*) \le \frac {\sqrt eB\rho}{\sqrt n}
+% % \end{equation}
+% % \end{proof}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -730,13 +754,13 @@ We stop early to get the highest accuracy on validation set.
 
 
 \begin{table}[]
-\caption{Validation and test results with early stopping on CIFAR-100 dataset. Best values are written in bold.} \label{cifar100}
+\caption{Test results with early stopping on CIFAR-100 dataset. Best values are written in bold.} \label{cifar100}
 \begin{center}
 \begin{tabular}{@{}cccc@{}}
 \toprule
 \multirow{2}{*}{Loss} & \multicolumn{3}{c}{Test}    \\ \cmidrule(l){2-4} 
                       & Acc. & Similarity Acc. & SA \\ \cmidrule(r){1-1}
-Cover Tree Loss       & \textbf{52.78}     &  \textbf{65.90}               &  \textbf{62.55}  \\
+Tree Loss       & \textbf{52.78}     &  \textbf{65.90}               &  \textbf{62.55}  \\
 Cross Entropy         &  51.87    &   65.58              &  62.14  \\
 SimLoss               &    52.43  &    65.82             & 62.34  \\\bottomrule
 \end{tabular}
@@ -759,7 +783,7 @@ We use top1 accuracy and top5 accuracy to evaluate our loss functions.
 \toprule
 \multirow{2}{*}{Loss} & \multicolumn{2}{c}{Validation} \\ \cmidrule(l){2-3} 
                       & Top1 Acc.      & Top5 Acc.     \\ \cmidrule(r){1-1}
-Cover Tree Loss       & \textbf{76.52} & \textbf{92.92} \\
+Tree Loss       & \textbf{76.52} & \textbf{92.92} \\
 Cross Entropy         & 75.30          & 92.36         \\
 SimLoss               & 76.24          & 92.83         \\ \bottomrule
 \end{tabular}
@@ -769,7 +793,7 @@ SimLoss               & 76.24          & 92.83         \\ \bottomrule
 
 \subsubsection{Twitter Data}
 
-We apply cover tree loss on emoji prediction in twitter dataset. 
+We apply the tree loss on emoji prediction in twitter dataset. 
 Emojis are popular to express emotions in text messages and tweets are a wildely used social media over the world. 
 We trained the multilingual BERT model on tweets to predict which emoji corresponds to a piece of text is best for measuring the emotional content in the text. 
 Our 1660 target emojis are defined by emo2vec \cite{Eisner2016emoji2vecLE}.
@@ -780,9 +804,7 @@ We keep all hashtags and duplicate the tweet once for each emoji if a tweet has 
 Then we split the dataset into training validadtion and testing sets by user id to ensure each user appears in only one set in order to prevent data leakage.
 
 We take the multilingual BERT model \cite{Feng2020LanguageagnosticBS} pretrained on data from 109 distinct languages which achieves state-of-the-art performance on a wide variety of natural language tasks. 
-We get the embeddings of 1660 target emojis defined by emo2vec and construct a cover tree structure from these emojis. 
-In this cover tree structure, every leaf node represents each real target emoji and we replace all parent nodes with pseudo labels. 
-Then we would adopt cover tree loss and compare the performance with softmax cross entropy loss and SimLoss.
+We get the embeddings of 1660 target emojis defined by emo2vec.
 
 \begin{table}[h]
 \small
@@ -792,14 +814,18 @@ Then we would adopt cover tree loss and compare the performance with softmax cro
 \toprule
 \multicolumn{1}{c}{\multirow{2}{*}{Loss}} & \multicolumn{2}{c}{VALIDATION} & \multicolumn{2}{c}{TEST}       \\ \cmidrule(l){2-5} 
 \multicolumn{1}{c}{}                      & Acc.       & SA       & Acc.      & SA             \\ \cmidrule(r){1-1}
-Cover Tree Loss                           &   \textbf{20.81}    &   \textbf{50.26}  &  \textbf{20.96}    &   \textbf{50.45}        \\
+Tree Loss                           &   \textbf{20.81}    &   \textbf{50.26}  &  \textbf{20.96}    &   \textbf{50.45}        \\
 Cross Entropy                             &   19.90    &   48.27  &  19.95    &   48.33        \\
 SimLoss                                   &   19.91    &   48.25  &  19.96    &   48.32         \\ \bottomrule
 \end{tabular}
 \end{center}
 \end{table}
 
-\subsubsection{Analysis}
+\subsubsection{Results}
+We evaluate the tree loss on image data(CIFAR100, ImageNet) and text data(Twitter) and the tree loss outperforms cross entropy loss and Simloss on metrics.
+Table \ref{cifar100} shows the results of three loss functions for the test set of the CIFAR-100 dataset.
+Similarity accuracy and superclass accuracy pay attention to more similar classes and the tree loss get 
+
 
 
 \section{Conclusion}

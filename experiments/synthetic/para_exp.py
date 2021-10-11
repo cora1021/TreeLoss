@@ -27,7 +27,7 @@ parser_data.add_argument('--sigma', type=float, default=1.0)
 parser_data.add_argument('--random', type=float, default=0.0)
 parser_data.add_argument('--seed', type=int, default=666)
 parser_data.add_argument('--batch', type=int, default=1000)
-parser_data.add_argument('--epoch', type=int, default=10)
+parser_data.add_argument('--epoch', type=int, default=1)
 
 parser_model = parser.add_argument_group(
         title='model hyperparameters',
@@ -59,6 +59,7 @@ from tqdm import tqdm
 from TreeLoss.cover_tree import CoverTree
 from TreeLoss.utilities import set_seed, gen_sim, level
 from TreeLoss.loss import CoverTreeLoss, SimLoss, HSM
+import matplotlib.pyplot as plt
 
 # set the seed
 logging.debug('set_seed('+str(args.seed)+')')
@@ -101,7 +102,7 @@ class Mod(torch.nn.Module):
 
         weight = self.fc.weight
         loss, logits, added_weights = self.criterion(weight, x, y)
-        return loss, logits, weight
+        return loss, logits, weight, added_weights
 
 model = Mod(length, args.d, args.c, new2index).cuda()
 def get_levelnode(tree):
@@ -134,7 +135,7 @@ for ep in range(args.epoch):
         train_X = torch.FloatTensor(X[start:start+args.batch].view(args.batch,args.d))
         train_Y = torch.LongTensor(Y[start:start+args.batch].view(args.batch))
         train_X, train_Y = train_X.cuda(), train_Y.cuda()
-        loss, logits, W = model(train_X, train_Y)
+        loss, logits, V, W = model(train_X, train_Y)
 
         loss.backward()
         optimizer.step()
@@ -145,20 +146,78 @@ for leaf, path in new2index.items():
     for i, node in enumerate(path):
         level_list[i].add(node)
 
+def para_figure(W_norm, height):
+    level = np.arange(0,height,1)
+    W_ = W_norm
+    l1, = plt.plot(level, W_)
+    plt.xlabel('Level of Cover Tree')
+    plt.ylabel('|W|')
+    plt.savefig('W_vs_level.png', dpi=300)
+
 # W_norm = []
 # for i in level_list:
 #     leng = len(i)
 #     node = torch.LongTensor(list(i))
-#     W_norm.append(torch.norm(W[node,:])/leng)
+#     # W_norm.append(torch.mean(torch.norm(W[node,:])))
+#     W_norm.append(torch.norm(torch.mean(W[node,:])).item())
 
-W_norm = []
-for i in level_list:
-    leng = len(i)
-    node = torch.LongTensor(list(i))
-    temp = 0
-    for j in node:
-        temp += torch.linalg.norm(W[j,:])
-    W_norm.append(temp/leng)
 
-print(W_norm)
+# W_norm = []
+# for i in level_list:
+#     leng = len(i)
+#     node = torch.LongTensor(list(i))
+#     temp = 0
+#     for j in node:
+#         temp += torch.norm(V[j,:])
+#     W_norm.append(temp/leng)
 
+# para_figure(W_norm, height)
+
+# x = []
+# y = []
+# num = 0
+# for i in level_list:
+#     leng = len(i)
+#     node = torch.LongTensor(list(i))
+#     for j in node:
+#         x.append(num)
+#         y.append(torch.norm(V[j,:]).item())
+#     num += 1
+# plt.scatter(x, y)
+# plt.savefig('W_vs_level_scatter.png', dpi=300)
+
+x = []
+y = []
+for i in range(args.c):
+    x.append(torch.norm(W[i,:]).item())
+
+for i in range(length):
+    y.append(torch.norm(V[i,:]).item())
+
+import pickle as pkl
+with open('x.pickle', 'wb') as f1:
+    pkl.dump(x,f1)
+
+with open('y.pickle', 'wb') as f2:
+    pkl.dump(y,f2)
+# plt.rcParams.update({
+#     "font.family": "serif",  # use serif/main font for text elements
+#     "text.usetex": True,     # use inline math for ticks
+#     "pgf.rcfonts": False     # don't setup fonts from rc parameters
+#     })
+# import matplotlib
+# matplotlib.rcParams['text.usetex'] = True
+# fig, axs = plt.subplots()
+# axs[0].hist(x, bins=20)
+# axs[0].set_xlabel('|w|')
+# axs[0].set_ylabel('Number of Classes')
+# axs[1].hist(y, bins=20)
+# axs[1].set_xlabel('|v|')
+# plt.savefig('distri.png', dpi=300)
+
+# axs.hist(x, bins=20, range=[0.0,5.0])
+# axs.hist(y, bins=20, range=[0.0,5.0])
+# axs.set_ylabel('Number of Classes')
+# labels= [r'$|\mathbb{w}_i|$', r'$|\mathbb{v}_i|$']
+# plt.legend(labels)
+# plt.savefig('distri.png', dpi=300)
