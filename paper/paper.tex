@@ -184,11 +184,11 @@ The tree loss can learn more information and work well for unbalanced data.
 Our contributions are as below:
 \begin{itemize}
     \item [1] 
-    We introduce cover tree loss which take advantage of internal structure between all classes.
+    We introduce the tree loss which take advantage of internal structure between all classes.
     \item [2] 
-    We provide theoretical justification that the generalization error of cover tree loss is independent of the number of classes.
+    We provide theoretical justification that the generalization error of the tree loss is independent of the number of classes.
     \item [3]
-    We evaluate our cover tree loss on experiments. One is experiment on fully synthetic data which is designed to be convex. The another one is on real world data: CIFAR100, IMAGENET and TWITTER dataset. 
+    We evaluate our tree loss on experiments. One is experiment on fully synthetic data which is designed to be convex. The another one is on real world data: CIFAR100, IMAGENET and TWITTER dataset. 
     
 \end{itemize}
 
@@ -469,7 +469,7 @@ Specifically, we set the weight vector for class $j$ to be
     \w_j = \sum_{k\in P_j} \vv_k
     .
 \end{equation}
-Substituting \eqref{eq:covertree-reparam} into \eqref{eq:xentropy} gives us the final cover tree loss
+Substituting \eqref{eq:covertree-reparam} into \eqref{eq:xentropy} gives us the final tree loss
 \begin{equation}
     \ell(V;(\x,y)) = - \log \frac {\exp(-\sum_{k\in P_y}\trans\vv_k \x)}{\sum_{j=1}^c \exp(- \sum_{k\in P_j}\trans\vv_k \x)}
 \end{equation}
@@ -608,7 +608,7 @@ which is independent of the number of classes $c$.
 
 \subsection{Synthetic data}
 
-In this experiment we will demonstrate the cover tree loss's effectiveness on a simple multiclass logistic regression problem.
+In this experiment we will demonstrate the tree loss's effectiveness on a simple multiclass logistic regression problem.
 The problem will be specifically designed to be convex and have low intrinsic dimension in the class labels in order to illustrate the advantages of the cover tree loss.
 
 Let $N$ be the standard normal distribution.
@@ -641,7 +641,7 @@ With our problem defined in this way, it is clear that
 \begin{equation}
     \argmin_{W} \tfrac 1 n \ell(W; \x_i, y_i)
 \end{equation}
-converges to $W^*$ using the standard cross entropy loss and both the matrix factorization and cover tree reparameterizations.
+converges to $W^*$ using the standard cross entropy loss and both the matrix factorization and tree reparameterizations.
 % \fixme{You should prove this for yourself.}
 % Figure \ref{fig:synthetic-results} shows that the cover tree loss converges at a faster rate.
 
@@ -689,14 +689,14 @@ converges to $W^*$ using the standard cross entropy loss and both the matrix fac
         \begin{subfigure}[b]{0.45\textwidth}
             \centering
             \includegraphics[width=\textwidth]{fig/new_img/accuracy_vs_base.png}
-            {{\small Accuracy versus base of cover tree($n=1000, d=10, \sigma=1.0, c=100$)}}
+            {{\small Accuracy versus base of tree($n=1000, d=10, \sigma=1.0, c=100$)}}
             \label{subfig.1}
         \end{subfigure}
         \hfill
         \begin{subfigure}[b]{0.45\textwidth}  
             \centering 
             \includegraphics[width=\textwidth]{fig/new_img/height_vs_base.png}
-            {{\small Height versus base of cover tree($n=1000, d=10, \sigma=1.0, c=100$)}}   
+            {{\small Height versus base of tree($n=1000, d=10, \sigma=1.0, c=100$)}}   
             \label{subfig.2}
         \end{subfigure}
         \vskip\baselineskip
@@ -704,7 +704,7 @@ converges to $W^*$ using the standard cross entropy loss and both the matrix fac
             \centering 
             \includegraphics[width=\textwidth]{fig/new_img/loss_vs_structure.png}
             % \caption[Accuracy versus randomness($n=100, d=64, c=10$)]%
-            {{\small Accuracy versus cover tree structure($n=1000, d=64, \sigma=1.0, c=100$)}}  
+            {{\small Accuracy versus tree structure($n=1000, d=64, \sigma=1.0, c=100$)}}  
             \label{subfig.3}
         \end{subfigure}
         \hfill
@@ -740,28 +740,28 @@ As figure \ref{subfig.3} shows, when the tree structure become totally random, t
 \subsubsection{Alternative synthetic experiments}
 
 In multi-label classification, it is common for the classes to be unbalanced.
-We would like to show that the cover tree loss works well for unbalanced data.
+We would like to show that the tree loss works well for unbalanced data.
 A good way to do that is to change the distribution that $y_i$ is drawn from,
 and a geometric distribution is a likely good alternative.
 
-The cover tree loss can work well even when the weight matrix has non-linear intrinsic structure.
+The tree loss can work well even when the weight matrix has non-linear intrinsic structure.
 We should adapt the $\w*_i$ vectors to sit on a manifold instead of a hyperplane to demonstrate this fact.
 
 
 \subsection{Real world data}
 % \fixme{Write a description of the experiment.}
-In this experiment, we will compare cover tree loss with softmax corss entropy and simloss on some real world data.
+In this experiment, we will compare the tree loss with softmax corss entropy and simloss on some real world data.
 We conduct image classification tasks on CIFAR-100 dataset and ImageNet dataset and emoji prediction task on twitter dataset.
 Our goal is to investigate the effects of changing the loss function on our example experiments.
-We do not focus on if we have state-of-the-art performance on specific models, but rather on the evaluation of cover tree loss as a general loss function which can be applied on various tasks.
+We do not focus on if we have state-of-the-art performance on specific models, but rather on the evaluation of the tree loss as a general loss function which can be applied on various tasks.
 These three tasks and datasets are typical examples for using softmax cross entropy loss.
 
 \subsubsection{CIFAR-100 Data}
 We use CIFAR-100 dataset which has 100 classes for image classification.
-We also get word embeddings from a word2vec model pretrained on Google News \cite{Mikolov2013EfficientEO} of class names and construct cover tree structure and calculate similarity between classes from word embeddings.
+We also get word embeddings from a word2vec model pretrained on Google News \cite{Mikolov2013EfficientEO} of class names and construct tree structure and calculate similarity between classes from word embeddings.
 Four class names do not yield a word embedding and are therefore eliminated.
 
-To evaluate our cover tree loss, we rely on three metrics: accuracy (Acc.) which focus on correct predictions and similarity accuracy (Similarity Acc.) which focus on the similarity of predicted and target class and superclass accuracy (SA). Every example in CIFAR-100 dataset has a main class and a superclass. Superclass accuracy is the fraction of examples that are correctly put into the corresponding superclass.
+To evaluate our tree loss, we rely on three metrics: accuracy (Acc.) which focus on correct predictions and similarity accuracy (Similarity Acc.) which focus on the similarity of predicted and target class and superclass accuracy (SA). Every example in CIFAR-100 dataset has a main class and a superclass. Superclass accuracy is the fraction of examples that are correctly put into the corresponding superclass.
 We take ResNet20 model \cite{He2016DeepRL} and SGD optimizer with a learning rate 0.1 and a batch size of 1021. 
 We stop early to get the highest accuracy on validation set.
 
