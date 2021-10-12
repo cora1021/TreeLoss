@@ -165,12 +165,10 @@ if args.experiment == 'loss_vs_structure':
     #     W_err_HSM.append(np.mean(W_err_mid))
     #     accuracy_HSM.append(np.mean(accuracy_mid))
 
-    accuracy_ = accuracy_tree[:10]
-    accuracy_.append(0.098)
     accuracy_xentropy.append(accuracy_xentropy[0])
     x = [0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
     plt.figure(0)
-    l1, = plt.plot(x, accuracy_)
+    l1, = plt.plot(x, accuracy)
     l2, = plt.plot(x, accuracy_xentropy, linestyle='-.')
     # l3, = plt.plot(x, accuracy_simloss, linestyle='--')
     # l4, = plt.plot(x, accuracy_HSM, linestyle='dotted')
@@ -288,9 +286,6 @@ if args.experiment == 'base_experiment':
     #     train_accuracy_xentropy.append(np.mean(accuracy_mid))
     #     test_loss_xentropy.append(np.mean(test_loss_mid))
     #     test_accuracy_xentropy.append(np.mean(test_accuracy_mid))
-    train_accuracy_xentropy = []
-    for i in range(24):
-        train_accuracy_xentropy.append(0.028)
 
 
     plt.figure(0)
