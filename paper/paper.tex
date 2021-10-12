@@ -721,7 +721,20 @@ converges to $W^*$ using the standard cross entropy loss and both the matrix fac
     \end{figure*}
 
 
-\subsubsection{Analysis of Synthetic Experiment results}
+\subsubsection{Results}
+From figure \ref{fig.1}, it is clear that the tree loss achieves the best performance. 
+The tree loss converges at a faster rate as number of data points and dimension of parameter matrix increase.
+If we increase the number of classes, the tree loss can keep a higher accuracy and the accuracy of SimLoss is higher than cross entropy loss and hierarchical softmax.
+It is as our expected, the tree loss can improve performance on large classes tasks.
+Besides, when we increase the noise in the dataset, the accuracy of all loss functions decrease, yet the tree loss decreases slower.
+Among the four loss functions, hierarchical softmax hurts the performance obviously. 
+We would not apply hierarchical softmax on real world data experiment in terms of computation.
+
+There is a parameter 'base' which can control the height of tree.
+Figure \ref{subfig.2} shows that if we increase the value of base, the tree is shorter.
+As our expected, from figure \ref{subfig.1} we can see that a taller tree has higher accuracy. 
+We add a parameter randomness into the tree structure and the tree structure become more random as the randomness factor increase.
+As figure \ref{subfig.3} shows, when the tree structure become totally random, the performance of the tree loss is close to cross entropy loss.
 
 
 \subsubsection{Alternative synthetic experiments}
@@ -824,11 +837,23 @@ SimLoss                                   &   19.91    &   48.25  &  19.96    & 
 \subsubsection{Results}
 We evaluate the tree loss on image data(CIFAR100, ImageNet) and text data(Twitter) and the tree loss outperforms cross entropy loss and Simloss on metrics.
 Table \ref{cifar100} shows the results of three loss functions for the test set of the CIFAR-100 dataset.
-Similarity accuracy and superclass accuracy pay attention to more similar classes and the tree loss get 
-
+Similarity accuracy and superclass accuracy pay attention to more similar classes and the tree loss get higher accuracy.
+Table \ref{imagenet} shows the results for the valdidation set of ImageNet dataset.
+ImageNet has 1000 classes and many classes are semantically  similar.
+The tree loss incorporates the similarities to training and get a higher top1 accuracy and top5 accuracy.
+The emojis of Twitter dataset is typically unbalanced and the tree loss works well for unbalanced data.
+Table \ref{twitter} shows the results for validation set and test set of twitter dataset.
+The tree loss achieve the best performance on accuracy and similarity accuracy.
 
 
 \section{Conclusion}
+In this paper, we have presented the tree loss, a drop-in replacement for the cross entropy loss that incorporated class relations. 
+We use properties of stochastic gradient descent to provide the theoretical justifications that the generalization error of the tree loss is better. 
+The tree loss works by re-parameterizing the parameter matrix for softmax cross entropy loss and can be easily implement. 
+We evaluate our tree loss on synthetic data and typically real world data. 
+From the results of experiments, we found the tree loss improve the performance significantly and  help with predicting more similar classes if the model misclassified an example. 
+In our analysis, since the tree loss can obtain background knowledge of classes, it works well for tasks with many classes and data with unbalanced classes. 
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \bibliographystyle{plainnat}
