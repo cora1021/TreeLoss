@@ -744,80 +744,61 @@ converges to $W^*$ using the standard cross entropy loss and both the matrix fac
 % \fixme{You should prove this for yourself.}
 % Figure \ref{fig:synthetic-results} shows that the cover tree loss converges at a faster rate.
 
-\begin{figure*}
-        \centering
-        \begin{subfigure}[b]{0.45\textwidth}
-            \centering
-            \includegraphics[width=\textwidth]{fig/images/accuracy_vs_n.png}
-            % \caption[Accuracy versus number of data points($d=64, \sigma=1.0, k=10$)]%
-            {{\small Accuracy versus number of data points($d=64, \sigma=1.0, k=10$)}}  
-            \label{subfig.1}
-        \end{subfigure}
-        \hfill
-        \begin{subfigure}[b]{0.45\textwidth}  
-            \centering 
-            \includegraphics[width=\textwidth]{fig/images/accuracy_vs_d.png}
-            % \caption[Accuracy versus dimension of parameter matrix($n=100, \sigma=1.0, k=10$)]%
-            {{\small Accuracy versus dimension of parameter matrix($n=100, \sigma=1.0, k=10$)}}
-            \label{subfig.2}
-        \end{subfigure}
-        \vskip\baselineskip
-        \begin{subfigure}[b]{0.45\textwidth}   
-            \centering 
-            \includegraphics[width=\textwidth]{fig/images/accuracy_vs_sigma.png}
-            % \caption[Accuracy versus randomness($n=100, d=64, k=10$)]%
-            {{\small Accuracy versus randomness($n=100, d=64, k=10$)}}
-            \label{subfig.3}
-        \end{subfigure}
-        \hfill
-        \begin{subfigure}[b]{0.45\textwidth}   
-            \centering 
-            \includegraphics[width=\textwidth]{fig/images/accuracy_vs_class.png}
-            % \caption[Accuracy versus number of classes($n=100, d=64, \sigma=1.0$)]%
-            {{\small Accuracy versus number of classes($n=100, d=64, \sigma=1.0$)}}   
-            \label{subfig.4}
-        \end{subfigure}
-        % \caption[ Figures of Synthetic Data Experiment ]
-        % {{\small Figures of Synthetic Data Experiment}}
-        \label{fig.1}
-    \end{figure*}
-    
+\begin{figure}[h]
+\vspace{.3in}
+\includegraphics[width=\linewidth]{fig/images/accuracy_vs_n.png}
+\vspace{.3in}
+\caption{\small Accuracy versus number of data points($d=64, \sigma=1.0, k=10$)}
+\label{accuracy_vs_n}
+\end{figure}
 
-\begin{figure*}
-        \centering
-        \begin{subfigure}[b]{0.45\textwidth}
-            \centering
-            \includegraphics[width=\textwidth]{fig/new_img/accuracy_vs_base.png}
-            {{\small Accuracy versus base of tree($n=1000, d=10, \sigma=1.0, k=100$)}}
-            \label{subfig.1}
-        \end{subfigure}
-        \hfill
-        \begin{subfigure}[b]{0.45\textwidth}  
-            \centering 
-            \includegraphics[width=\textwidth]{fig/new_img/height_vs_base.png}
-            {{\small Height versus base of tree($n=1000, d=10, \sigma=1.0, k=100$)}}   
-            \label{subfig.2}
-        \end{subfigure}
-        \vskip\baselineskip
-        \begin{subfigure}[b]{0.45\textwidth}   
-            \centering 
-            \includegraphics[width=\textwidth]{fig/new_img/loss_vs_structure.png}
-            % \caption[Accuracy versus randomness($n=100, d=64, k=10$)]%
-            {{\small Accuracy versus tree structure($n=1000, d=64, \sigma=1.0, k=100$)}}  
-            \label{subfig.3}
-        \end{subfigure}
-        \hfill
-        % \begin{subfigure}[b]{0.45\textwidth}   
-        %     \centering 
-        %     \includegraphics[width=\textwidth]{fig/new_img/loss_vs_base.png}
-        %     % \caption[Accuracy versus number of classes($n=100, d=64, \sigma=1.0$)]%
-        %     {{\small Loss versus base of cover tree($n=1000, d=10, \sigma=1.0, k=100$)}}    
-        %     \label{subfig.4}
-        % \end{subfigure}
-        % \caption[ Figures of Synthetic Data Experiment ]
-        % {{\small Figures of Synthetic Data Experiment}} 
-        \label{fig.2}
-    \end{figure*}
+\begin{figure}[h]
+\vspace{.3in}
+\includegraphics[width=\linewidth]{fig/images/accuracy_vs_d.png}
+\vspace{.3in}
+\caption{\small Accuracy versus dimension of parameter matrix($n=100, \sigma=1.0, k=10$)}
+\label{accuracy_vs_d}
+\end{figure}
+
+\begin{figure}[h]
+\vspace{.3in}
+\includegraphics[width=\linewidth]{fig/images/accuracy_vs_sigma.png}
+\vspace{.3in}
+\caption{\small Accuracy versus randomness($n=100, d=64, k=10$)}
+\label{accuracy_vs_sigma}
+\end{figure}
+
+\begin{figure}[h]
+\vspace{.3in}
+\includegraphics[width=\linewidth]{fig/images/accuracy_vs_class.png}
+\vspace{.3in}
+\caption{\small Accuracy versus number of classes($n=100, d=64, \sigma=1.0$)}
+\label{accuracy_vs_class}
+\end{figure} 
+
+\begin{figure}[h]
+\vspace{.3in}
+\includegraphics[width=\linewidth]{fig/new_img/accuracy_vs_base.png}
+\vspace{.3in}
+\caption{\small Accuracy versus base of tree($n=1000, d=10, \sigma=1.0, k=100$)}
+\label{accuracy_vs_base}
+\end{figure}
+
+\begin{figure}[h]
+\vspace{.3in}
+\includegraphics[width=\linewidth]{fig/new_img/height_vs_base.png}
+\vspace{.3in}
+\caption{\small Height versus base of tree($n=1000, d=10, \sigma=1.0, k=100$)}
+\label{height_vs_base}
+\end{figure}
+
+\begin{figure}[h]
+\vspace{.3in}
+\includegraphics[width=\linewidth]{fig/new_img/loss_vs_structure.png}
+\vspace{.3in}
+\caption{\small Accuracy versus tree structure($n=1000, d=64, \sigma=1.0, k=100$)}
+\label{accuracy_vs_structure}
+\end{figure}
 
 
 \subsubsection{Results}
