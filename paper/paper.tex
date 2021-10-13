@@ -802,19 +802,19 @@ converges to $W^*$ using the standard cross entropy loss and both the matrix fac
 
 
 \subsubsection{Results}
-From figure \ref{fig.1}, it is clear that the tree loss achieves the best performance. 
-The tree loss converges at a faster rate as number of data points and dimension of parameter matrix increase.
-If we increase the number of classes, the tree loss can keep a higher accuracy and the accuracy of SimLoss is higher than cross entropy loss and hierarchical softmax.
+It is clear that the tree loss achieves the best performance. 
+From figure \ref{accuracy_vs_n} and \ref{accuracy_vs_d}, the tree loss converges at a faster rate as number of data points and dimension of parameter matrix increase.
+Figure \ref{accuracy_vs_class} shows that if we increase the number of classes, the tree loss can keep a higher accuracy and the accuracy of SimLoss is higher than cross entropy loss and hierarchical softmax.
 It is as our expected, the tree loss can improve performance on large classes tasks.
-Besides, when we increase the noise in the dataset, the accuracy of all loss functions decrease, yet the tree loss decreases slower.
+From figure \ref{accuracy_vs_sigma}, we can see that when we increase the noise in the dataset, the accuracy of all loss functions decrease, yet the tree loss decreases slower.
 Among the four loss functions, hierarchical softmax hurts the performance obviously. 
 We would not apply hierarchical softmax on real world data experiment in terms of computation.
 
 There is a parameter 'base' which can control the height of tree.
-Figure \ref{subfig.2} shows that if we increase the value of base, the tree is shorter.
-As our expected, from figure \ref{subfig.1} we can see that a taller tree has higher accuracy. 
+Figure \ref{height_vs_base} shows that if we increase the value of base, the tree is shorter.
+As our expected, from figure \ref{accuracy_vs_base} we can see that a taller tree has higher accuracy. 
 We add a parameter randomness into the tree structure and the tree structure become more random as the randomness factor increase.
-As figure \ref{subfig.3} shows, when the tree structure become totally random, the performance of the tree loss is close to cross entropy loss.
+As figure \ref{accuracy_vs_structure} shows, when the tree structure become totally random, the performance of the tree loss is close to cross entropy loss.
 
 
 \subsubsection{Alternative synthetic experiments}
