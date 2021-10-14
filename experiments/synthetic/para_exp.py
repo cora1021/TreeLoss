@@ -141,10 +141,10 @@ for ep in range(args.epoch):
         optimizer.step()
         optimizer.zero_grad()
 
-level_list = [set() for _ in range(height)]
-for leaf, path in new2index.items():
-    for i, node in enumerate(path):
-        level_list[i].add(node)
+# level_list = [set() for _ in range(height)]
+# for leaf, path in new2index.items():
+#     for i, node in enumerate(path):
+#         level_list[i].add(node)
 
 def para_figure(W_norm, height):
     level = np.arange(0,height,1)
@@ -186,25 +186,21 @@ def para_figure(W_norm, height):
 # plt.scatter(x, y)
 # plt.savefig('W_vs_level_scatter.png', dpi=300)
 
-x = []
-y = []
-for i in range(args.c):
-    x.append(torch.norm(W[i,:]).item())
+# x = []
+# y = []
+# for i in range(args.c):
+#     x.append(torch.norm(W[i,:]).item())
 
-for i in range(length):
-    y.append(torch.norm(V[i,:]).item())
+# for i in range(length):
+#     y.append(torch.norm(V[i,:]).item())
 
-import pickle as pkl
-with open('x.pickle', 'wb') as f1:
-    pkl.dump(x,f1)
+# import pickle as pkl
+# with open('x.pickle', 'wb') as f1:
+#     pkl.dump(x,f1)
 
-with open('y.pickle', 'wb') as f2:
-    pkl.dump(y,f2)
-# plt.rcParams.update({
-#     "font.family": "serif",  # use serif/main font for text elements
-#     "text.usetex": True,     # use inline math for ticks
-#     "pgf.rcfonts": False     # don't setup fonts from rc parameters
-#     })
+# with open('y.pickle', 'wb') as f2:
+#     pkl.dump(y,f2)
+
 # import matplotlib
 # matplotlib.rcParams['text.usetex'] = True
 # fig, axs = plt.subplots()
@@ -221,3 +217,8 @@ with open('y.pickle', 'wb') as f2:
 # labels= [r'$|\mathbb{w}_i|$', r'$|\mathbb{v}_i|$']
 # plt.legend(labels)
 # plt.savefig('distri.png', dpi=300)
+
+W_norm = torch.norm(W)
+V_norm = torch.norm(V)
+with open('norm.txt', 'a') as f:
+    f.write(f'W_norm: {W_norm} \t V_norm: {V_norm} \n')
