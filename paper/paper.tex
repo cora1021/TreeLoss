@@ -115,7 +115,8 @@
 \newcommand{\D}{\mathcal D}
 \DeclareMathOperator*{\erm}{ERM}
 
-\newcommand{\fixme}[1]{\noindent{\color{red}\textbf{FIXME:}  {#1}}}
+%\newcommand{\fixme}[1]{\noindent{\color{red}\textbf{FIXME:}  {#1}}}
+\newcommand{\fixme}[1]{}
 \newcommand{\fixmemike}[1]{\noindent{\color{blue}\textbf{FIXME (Mike):}  {#1}}}
 
 \newcommand{\ignore}[1]{}
@@ -147,9 +148,9 @@
 \aistatsaddress{ Claremont Graduate University \And  Claremont McKenna College } ]
 
 \begin{abstract}
-    %Multiclass logistic regression has generalization error $O(\sqrt{k/n})$, where $k$ is the number of classes and $n$ the number of data points.
+    %Multi-class logistic regression has generalization error $O(\sqrt{k/n})$, where $k$ is the number of classes and $n$ the number of data points.
 
-    Multiclass classification problems often have many semantically similar classes.
+    Multi-class classification problems often have many semantically similar classes.
     For example, 90 of ImageNet's 1000 classes are for different breeds of dog.
     We should expect that these semantically similar classes will have similar parameter vectors,
     but the standard cross entropy loss does not enforce this constraint.
@@ -178,6 +179,71 @@
 
 \section{Introduction}
 
+%Binary classification is perhaps the oldest and most important problem in statistical learning theory.
+%The classic VC theory \citep{vapnik2015uniform} shows that for linear problems in $d$ dimensions and $n$ data points,
+%the generalization error decays at a rate of $O(\sqrt{d/n})$.
+%Multi-class classification is a natural generalization of the binary case,
+%and \citet{natarajan1989learning} generalized the VC theory to show that for a $k$-class problem, the generalization error decays as $O(\sqrt{kd/n})$.
+%This bound is tight in the sense that for any given hypothesis class,
+%there exists a data distribution whose generalization error will decay as $\Omega(\sqrt{kd/n})$.
+%Chapter 29 of \citet{shalev2014understanding} provides a modern overview of these results.
+
+The cross entropy loss is the most widely used loss function for multi-class classification problems,
+and stochastic gradient descent (SGD) is the most common algorithm for optimizing this loss.
+Standard results show that generalization error decays at a rate of $O(\sqrt{kd/n})$,
+where $k$ is the number of class labels, $d$ is the number of feature dimensions, and $n$ is the number of data points.
+These results (which we review later) make no assumptions about the underlying distribution of classes.
+
+In this paper,
+we assume that the class labels have an underlying metric structure,
+and we introduce the tree loss for exploiting this structure.
+The tree loss is the first multi-class loss function with provably better generalization error than the cross entropy loss.
+We show that if the class label metric has doubling dimension $c$,
+then SGD applied to the tree loss will converge at a rate of $O(\sqrt{d \log k/n})$ when $c\le 1$ or $O(\sqrt{k^{1-1/c}d/n})$ when $c\ge 1$.
+These improvements are most dramatic for small $c$,
+and our empirical results show that many real world classification problems have a label structure with small $c$.
+
+Our paper is organized as follows.
+We begin in Section \ref{sec:related} by discussing limitations of related loss functions and how the tree loss will address those limitations.
+Section \ref{sec:tree} then formally defines the tree loss.
+We emphasize that the tree loss is simply a reparameterization of the standard cross entropy loss,
+and so it is easy to implement in common machine learning libraries.
+Section \ref{sec:theory} reviews standard results on the convergence of stochastic gradient descent,
+and uses those results to prove the convergence bounds for the tree loss.
+Finally, Section \ref{sec:experiment} conducts experiments on synthetic, real world image (CIFAR100, ImageNet) and text (Twitter) data.
+We show that in practice, the tree loss essentially always outperforms the cross entropy loss.
+
+\section{Related Work}
+\label{sec:related}
+
+Previous work on multi-class loss functions have focused on improving either the statistical or computational performance.
+Statistical work includes loss functions designed for hierarchichally structured labels \citep{cesa2006incremental,wu2017hierarchical},
+loss functions for improving top-$k$ accuracy \citep{lapin2016loss},
+or focusing on noisy labels \citep{sukhbaatar2014training,zhang2018generalized}.
+The work most similar to ours is the simloss \citep{Kobs2020SimLossCS},
+which also makes a metric assumptions about the class label structure.
+Our work improves on all of this statistical work by being the first to provide convergence bounds that improve on the bounds of the cross entropy loss.
+
+Other work focuses on improving the speed of multiclass classification.
+The hierarchical softmax \citep{morin2005hierarchical} is a particularly well studied variant of the cross entropy loss with many variations \citep[e.g.][]{Peng2017IncrementallyLT,Jiang2017ExplorationOT,Yang2017OptimizeHS,Mohammed2018EffectivenessOH}.
+It is easily confused with our tree loss because both loss functions involve a tree structure.
+The difference, however, is that the hierarchical softmax focuses on improving runtime performance,
+and most variants actually sacrifice statistical performance to do so.
+The tree loss, in contrast maintains the runtime performance of the standard cross entropy loss but improves the statistical performance.
+Our empirical results in Section \ref{sec:experiment} show that the tree loss has much better statistical performance than the hierarchical softmax.
+Other variations of the cross entropy loss include negative sampling, as used in the celebrated word2vec model \citep{mikolov2013distributed}. 
+Like with the hierarchical softmax, negative sampling makes no attempt to improve statistical performance.
+
+\ignore{
+%Hierarchical classification \citep{cesa2006incremental}
+%Hierarchical but without success \citep{wu2017hierarchical}
+%
+%Focus on top-$k$ accuracy rather than top-1 accuracy \citep{lapin2016loss}
+%
+%Requires custom training procedure \citep{liu2017easy}
+%
+%Noisy labels \citep{sukhbaatar2014training,zhang2018generalized}
+
 When people do a multi-class classification task, the standard loss function is cross entropy.
 The mechanism of cross entropy loss function is to maximize the assigned target class probability and punishes every misclassification equally, independent of some other information about the predicted class.
 However, classes often have an internal structure. 
@@ -205,6 +271,7 @@ Our contributions are as below:
     We evaluate our tree loss on experiments. One is experiment on fully synthetic data which is designed to be convex. The another one is on real world data: CIFAR100, IMAGENET and TWITTER dataset. 
     
 \end{itemize}
+}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure*}
@@ -282,6 +349,7 @@ Our contributions are as below:
 \end{figure*}
 
 \section{The Tree Loss}
+\label{sec:tree}
 
 This section first formally defines our problem setting,
 then formally defines the tree loss.
@@ -393,6 +461,7 @@ In our experiments, we found this this to cause the $V$-tree loss to be about tw
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Theoretical Results}
+\label{sec:theory}
 
 It is well known that when using the standard cross entropy loss,
 SGD converges at a rate of $O(\sqrt{k/n})$.
@@ -531,21 +600,22 @@ We are not aware of any lower bounds for SGD in the Lipschitz setting.
 \subsection {Bad Tree Structures}
 
 \begin{lemma}
-    \ref{lemma:starV}
+    \label{lemma:starV}
     We have that for all $V$-trees derived from a $U$-tree,
     \begin{equation}
         \lF{\star V} \le \lF{\star U}.
     \end{equation}
 \end{lemma}
+\fixme{
 \begin{proof}
-    \fixme{}
 \end{proof}
+}
 
 The following lemma shows that even for arbitrarily bad tree structures,
 the bound on the parameter spaces cannot be too bad.
 
 \begin{lemma}
-    \ref{lemma:starU}
+    \label{lemma:starU}
     Under assumption \ref{ass:B},
     the following bound holds for all $U$-tree structures:
     \begin{equation}
@@ -578,7 +648,7 @@ We denote by $c$ the doubling dimension of the metric $d$.
 \end{assumption}
 
 \begin{lemma}
-    \ref{lemma:main}
+    \label{lemma:main}
     When $c\le1$, we have that
     \begin{equation}
         \lF{\star U} \le \tfrac{1}{\sqrt2}\lambda B \sqrt{\log_2 k}.
@@ -590,18 +660,9 @@ We denote by $c$ the doubling dimension of the metric $d$.
         \label{eq:c>1}
     \end{equation}
 \end{lemma}
+
+\fixme{
 \begin{proof}
-%Construct a cover tree over the distance metric $d$.
-%For each class $i$, define the vector
-%\begin{equation}
-    %\uu_i =
-    %\begin{cases}
-        %\w_i & \text{if $i$ is the root of the cover tree} \\
-        %\w_i - \w_{\parent{i}} & \text{otherwise} \\
-    %\end{cases}
-    %.
-%\end{equation}
-%Define the vector $\star\uu_i$ similarly by replacing all the $\w_i$ with $\star\w_i$ above.
     First, we review some simple properties of the cover tree structure that will be needed in our proof.
     Let $q$ denote the maximum number of children of any node in the cover tree.
     A standard property of cover trees is that $q \le (4^c)$ \citep[Lemma 25]{izbickithesis}.
@@ -667,6 +728,7 @@ Substituting into Eq \eqref{eq:precases}, we have
 \end{align}
     Inequality \eqref{eq:lFU:5} follows because $\tfrac{q/4}{q/4-1} \le 5$ for integer values of $q>4$.
 \end{proof}
+}
 
 %Substituting \eqref{eq:lFU:frac} info \eqref{eq:lFU:5} gives
 %\begin{align}
@@ -696,6 +758,7 @@ Substituting into Eq \eqref{eq:precases}, we have
 \end{figure*}
 
 \section{Experiments}
+\label{sec:experiment}
 
 \subsection{Synthetic data}
 
@@ -871,7 +934,7 @@ the tree loss still outperforms the cross entropy loss.
 \begin{table*}
     \centering
     \input{fig/real_world.tex}
-    \caption{Experimental results on real world datasets.  For all accuracy measures, larger numbers are better.  The tree loss achieves the best results in all cases.}
+    \caption{Experimental results on real world datasets.  For all performance measures, larger numbers are better.  The tree loss achieves the best results in all cases.}
     \label{table:results}
 \end{table*}
 
@@ -957,6 +1020,7 @@ We therefore suggest that you replace the cross entropy loss with the tree loss 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
 \bibliographystyle{plainnat}
 \bibliography{paper}
 % \begin{abstract}
@@ -1210,6 +1274,7 @@ We therefore suggest that you replace the cross entropy loss with the tree loss 
 %     \newblock \textit{Neural Computation} \textbf{1}(3):321--323.
 % \end{thebibliography}
 
+\ignore{
 \appendix
 \section{Related loss functions}
 
@@ -1271,5 +1336,5 @@ Our tree loss define a tree structure which can be obtained automatically and it
     p_i&=\frac {\exp(-\trans\w_{y_i} \x)}{\sum_{j=1}^C \exp(-\trans \w_j \x)}
 \end{align}
 
-
+}
 \end{document}
