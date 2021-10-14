@@ -22,13 +22,13 @@
 
 % If you use BibTeX in apalike style, activate the following line:
 %\bibliographystyle{apalike}
-\usepackage[margin=1in]{geometry}
+%\usepackage[margin=1in]{geometry}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsthm}
 \usepackage{mathtools}
 \usepackage{bm}
-\usepackage{natbib}
+\usepackage[round]{natbib}
 \usepackage[inline]{enumitem}
 \usepackage{tikz}
 \usepackage{booktabs}
@@ -36,6 +36,12 @@
 \usepackage{graphicx}
 \usepackage{subcaption}
 \usepackage{mwe}
+
+\usepackage{array}
+\newcommand{\PreserveBackslash}[1]{\let\temp=\\#1\let\\=\temp}
+\newcolumntype{C}[1]{>{\PreserveBackslash\centering}p{#1}}
+\newcolumntype{R}[1]{>{\PreserveBackslash\raggedleft}p{#1}}
+\newcolumntype{L}[1]{>{\PreserveBackslash\raggedright}p{#1}}
 
 \usepackage{color}
 \usepackage{colortbl}
@@ -54,7 +60,8 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\theoremstyle{definition}
+%\theoremstyle{definition}
+\newtheorem{assumption}{Assumption}
 \newtheorem{problem}{Problem}
 \newtheorem{defn}{Definition}
 \newtheorem{lemma}{Lemma}
@@ -83,7 +90,10 @@
 \newcommand{\epsapp}{\epsilon_{\text{app}}}
 \newcommand{\epsest}{\epsilon_{\text{est}}}
 
+\newcommand{\parent}[1]{\texttt{parent}({#1})}
+
 \renewcommand{\star}[1]{{#1}^{*}}
+\newcommand{\bad}[1]{{#1}^{\textit{bad}}}
 \newcommand{\trans}[1]{{#1}^{T}}
 \newcommand{\loss}{\ell}
 \newcommand{\aaa}{\mathbf a}
@@ -197,12 +207,90 @@ Our contributions are as below:
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure*}
+\resizebox{\columnwidth}{!}{
+\begin{tikzpicture}
+    [ level distance=1.5cm
+    , level 1/.style={sibling distance=3cm}
+    , level 2/.style={sibling distance=1.5cm}
+    ]
+\node[draw, rounded corners=0.1in, inner sep=0.1in] at (-1.5in,0){\textbf{$U$-Tree}};
+\node {\texttt{truck}}
+    child {node {\texttt{boxer}}
+      child {node {\texttt{tiger}}}
+      child {node {\texttt{skunk}}}
+      child {node {\texttt{boxer}}
+        child {edge from parent[draw=none]} % Added
+        child {node {\texttt{bulldog}}}
+        child {node {\texttt{boxer}}}
+        child {node {\texttt{husky}}}
+        child {node {\texttt{sheepdog}}}
+      }
+      child {node {\texttt{bear}}}
+      child {edge from parent[draw=none]} % Added
+      }
+    child {node {\texttt{truck}}
+      child {edge from parent[draw=none]} % Added
+      child {node {\texttt{truck}}}
+      child {node {\texttt{bus}}}
+    }
+    child {node {\texttt{toaster}}}
+    ;
+
+\end{tikzpicture}
+}
+~~~
+\resizebox{\columnwidth}{!}{
+\begin{tikzpicture}
+    [ level distance=1.5cm
+    , level 1/.style={sibling distance=3cm}
+    , level 2/.style={sibling distance=1.5cm}
+    ]
+\node[draw, rounded corners=0.1in, inner sep=0.1in] at (-1.5in,0){\textbf{$V$-Tree}};
+\node {\textit{pseudo1}}
+    child {node {\textit{pseudo2}}
+      child {node {\texttt{tiger}}}
+      child {node {\texttt{skunk}}}
+      child {node {\textit{pseudo3}}
+        child {edge from parent[draw=none]} % Added
+        child {node {\texttt{bulldog}}}
+        child {node {\texttt{boxer}}}
+        child {node {\texttt{husky}}}
+        child {node {\texttt{sheepdog}}}
+      }
+      child {node {\texttt{bear}}}
+      child {edge from parent[draw=none]} % Added
+      }
+    child {node {\textit{pseudo4}}
+      child {edge from parent[draw=none]} % Added
+      child {node {\texttt{truck}}}
+      child {node {\texttt{bus}}}
+    }
+    child {node {\texttt{toaster}}}
+    ;
+
+\end{tikzpicture}
+}
+    \caption{
+        Example label tree structures for a subset of 10 ImageNet classes.
+        The $U$-tree has class labels that repeat at multiple levels,
+        and the $V$-tree introduces ``pseudoclasses''.
+        The pseudoclass \textit{pseudo3} represents the class of ``dogs'',
+        and the pseudoclass \textit{pseudo2} represents the class of ``animals''.
+    }
+    \label{fig:labeltree}
+\end{figure*}
+
 \section{The Tree Loss}
+
+This section first formally defines our problem setting,
+then formally defines the tree loss.
+We conclude with a comparison between the tree loss and related loss functions.
 
 \subsection{Problem Setting}
 
-Assume we are solving a standard multi-class classification problem with $k$ classes and $d$ input feature dimensions.
-The cross entropy loss (also called the logistic loss) is the standard loss function for this problem.
+We consider the multi-class classification setting with $k$ classes and $d$ input feature dimensions.
+The cross entropy loss is the standard loss function for this setting.
 It is defined to be
 \begin{equation}
     \label{eq:xentropy}
@@ -211,497 +299,401 @@ It is defined to be
 where for each class $i\in[k]$,
 $\w_i : \R^d$ is the parameter vector associated with class $i$;
 the variable $W : \R^{k \times d} = (\w_1; \w_2; ...; \w_k)$ is the full parameter matrix;
-$\x : \R^d$ is the feature vector;
-and $y \in [k]$ is the class label.
+$\x : \R^d$ is the input feature vector;
+and $y \in [k]$ is the input class label.
 
 \subsection{The Tree Loss}
 
-The tree loss works by reparameterizing the weight matrix for the cross entropy loss.
-Intuitively, our goal is to enforce that semantically similar labels will have similar weight vectors.
-
+The tree loss reparameterizes the weight matrix used in the cross entropy loss in order to enforce that semantically similar labels will have similar weight vectors.
 The reparameterization is defined according to a \emph{label tree} structure that captures the similarity between labels.
-Every class is represented by a leaf node in the label tree,
-and internal nodes represent \emph{pseudo-classes} that group the existing classes into a logical hierarchy.
-At this point, we assume that the label tree structure is given a priori, and in Section \ref{sec:bias-var} we discuss methods for generating this structure and their tradeoffs.
-Figure \ref{fig:labeltree} shows an example label tree for a classification problem with 9 classes.
+And we propose two variants of the tree loss called the $U$ and $V$ variants that use slightly different label tree structures.
+The main purpose of the $U$-tree structure is to simplify the analysis and exposition of the $V$-tree structure,
+and we show later in our theoretical results that the $V$-tree is strictly better than the $U$-tree.
+Figure \ref{fig:labeltree} shows examples of both.
 
-\begin{figure}
-    \resizebox{\columnwidth}{!}{
-\begin{tikzpicture}
-    [ level distance=1.5cm
-    , level 1/.style={sibling distance=3cm}
-    , level 2/.style={sibling distance=1.5cm}
-    ]
-\node {\textit{pseudo1}}
-    child {node {\textit{pseudo2}}
-      child {node {\texttt{boat}}}
-      child {node {\texttt{plane}}}
-      child {node {\textit{pseudo3}}
-        child {node {\texttt{car}}}
-        child {node {\texttt{truck}}}
-        child {node {\texttt{van}}}
-        child {node {\texttt{motorcycle}}}
-      }
-      }
-    child {node {\texttt{building}}}
-    child {node {\textit{pseudo4}}
-      child {node {\texttt{cat}}}
-      child {node {\texttt{dog}}}
-    };
-\end{tikzpicture}
-}
-    \caption{\fixme{caption}}
-    \label{fig:labeltree}
-\end{figure}
+\subsubsection{The $U$-Tree Loss}
 
-We parameterize the weight vectors from the label tree as follows.
-For each leaf node $i$ (equivalently for each class $i$),
-we let the sequence $P_i$ denote the path from the leaf node to the root.
-For example, using the label tree above,
+In a $U$-tree, every node is a class and the class of all internal nodes matches the class of one of its children.
+For each class $i$, we define $\parent{i}$ to be the parent of the upper-most node for class $i$,
+and the $\texttt{parent}$ of the root is the 0 vector..
+For example, in the example of Figure \ref{fig:labeltree},
 we have
-
-\begin{equation}
+\begin{equation*}
 \begin{split}
-    P_{\texttt{truck}} &= (\texttt{truck}, \textit{pseudo3}, \textit{pseudo2}, \textit{pseudo1} ) \\
-    P_{\texttt{cat}} &= (\texttt{cat}, \textit{pseudo4}, \textit{pseudo1} )
+    \parent{\texttt{husky}} &= \texttt{boxer} \text{, and}\\
+    \parent{\texttt{bear}} &= \texttt{boxer} \text{, and}\\
+    \parent{\texttt{boxer}} &= \texttt{truck} .\\
 \end{split}
+\end{equation*}
+We associate for each class $i$ a new parameter vector $\uu_i$ and set
+\begin{equation}
+    \w_i = \w_{\parent{i}} - \uu_i,
+    \label{eq:uu}
 \end{equation}
+and we define the parameter matrix $U : \mathbb R^{k\times d}$ to be $(\uu_1;...;\uu_k)$.
+The $U$-tree loss is then defined by substituting \eqref{eq:uu} into \eqref{eq:xentropy} to get
+\begin{equation*}
+    \ell(U;(\x,y)) = - \log \frac {\exp(-(\trans\uu_{\parent{y}}-\trans\uu_y) \x)}{\sum_{j=1}^k \exp(-(\trans\uu_{\parent{j}}-\trans \uu_j) \x)}
+\end{equation*}
+We use the same $\ell$ notation for the standard cross entropy loss function and the $U$-Tree loss because the function is exactly the same;
+the only difference is how we represent the parameters.
 
-% \end{equation}
+\subsubsection{The $V$-Tree Loss}
 
-Next, we associate a vector $\vv_i$ to each leaf and internal node $i$ in the tree structure.
-In particular, there is a vector $\vv_i$ for each class and for each pseudo-class.
+The $V$-tree is constructed from the $U$-tree by replacing all non-leaf nodes with ``pseudoclasses''.
+Let $k'$ be the total number of nodes in the $V$-tree;
+so $k'$ equals $k$ plus the number of internal nodes.
+For each class $i$, we let the sequence $P_i$ denote the path from the leaf node to the root.
+For example, using the $V$-tree in Figure \ref{fig:labeltree},
+we have
+\begin{equation*}
+\begin{split}
+    P_{\texttt{sheepdog}} &= (\texttt{sheepdog}, \textit{pseudo3}, \textit{pseudo2}, \textit{pseudo1} ) \\
+    P_{\texttt{truck}} &= (\texttt{truck}, \textit{pseudo4}, \textit{pseudo1} )
+\end{split}
+\end{equation*}
+Next, we associate a vector $\vv_i$ to each node $i$ in the tree structure.
+In particular, there is a vector $\vv_i$ for each class and for each pseudo-class,
+so there are more parameter vectors for the $V$-tree loss than either the $U$-tree loss or the standard cross entropy loss.
+
 Finally, we reparameterize the weights for the cross entropy loss as the sum of the vectors along the paths.
-Specifically, we set the weight vector for class $j$ to be 
+Specifically, we set the weight vector for class $i$ to be 
 \begin{equation}
     \label{eq:covertree-reparam}
-    \w_j = \sum_{k\in P_j} \vv_k
+    \w_j = \sum_{j\in P_i} \vv_i
     .
 \end{equation}
-Substituting \eqref{eq:covertree-reparam} into \eqref{eq:xentropy} gives us the final tree loss
+The $V$-tree loss is defined by substituting \eqref{eq:covertree-reparam} into \eqref{eq:xentropy} to get
 \begin{equation}
     \ell(V;(\x,y)) = - \log \frac {\exp(-\sum_{k\in P_y}\trans\vv_k \x)}{\sum_{j=1}^k \exp(- \sum_{k\in P_j}\trans\vv_k \x)}
+    .
 \end{equation}
-where $V=(\vv_1,...,\vv_k)$,
-and our goal is to minimize $\ell$ with respect to $V$.
-Note that this loss can easily be computed in libraries like pytorch or tensorflow with the standard cross entropy loss functions.
+We continue to use the $\ell$ function to represent both the standard cross entropy loss and the $V$-tree loss function to emphasize that these are the same loss functions,
+just with different parameterizations of the weight matrix.
+
+\subsection{Intuition}
+
+The intuition behind the $V$-tree reparameterization is that whenever we perform a gradient update on a data point with class $i$,
+we will also be ``automatically'' updating the parameter vectors of similar classes.
+To see this, note that when we have a \texttt{sheepdog} data point,
+we will perform gradient updates on all $\vv_i$ in $P_\texttt{sheepdog}$; i.e. $\vv_{sheepdog}$, $\vv_{\textit{pseudo3}}$, $\vv_{\textit{pseudo2}}$, and $\vv_{\textit{pseudo1}}$.
+This will cause the $\w_{\texttt{husky}}$ and $\w_{\texttt{bear}}$ parameters (among many others) to update because they also depend on the pseudoclass vectors $\vv_{\textit{pseudo3}}$ and $\vv{_\textit{pseudo2}}$.
+Because $P_\texttt{husky}$ has a larger overlap with $P_\texttt{sheepdog}$ than $P_\texttt{bear}$,
+the parameters of this more similar class will be updated more heavily.
+
+\subsection{Implementation Notes}
+
+Both the $U$-tree and $V$-tree losses are easy to implement in practice using the built-in cross entropy loss function in libraries like PyTorch \citep{NEURIPS2019_9015} or Tensorflow \citep{tensorflow2015-whitepaper}.
 The only change needed is to define the loss in terms of the sum of vectors $V$ instead of a variable tensor $W$.
+This ensures that the loss is implemented efficiently and is numerically stable.
 
-\subsection{Related loss functions}
-
-Many alternatives to the cross entropy loss have been proposed.
-
-The tree loss is superficially related to the hierarchical softmax (HSM) because both losses are defined based on tree structures.
-\cite{morin2005hierarchical} introduced the HSM to speed up the computational time of neural network training,
-but the tree loss is used to improve sample efficiency rather than computational efficiency.
-
-\cite{mikolov2013distributed} introduce the word2vec model and experiment with using both the hierarchical softmax and cross entropy with negative sampling.
-They conclude that negative sampling has the best performance both computationally and statistically.
-Since the tree loss is a simple extension of the cross entropy loss,
-negative sampling can be used to speed up the cross entropy loss as well.
-
-\cite{bojanowski2017enriching} introduce the fastText extension of the word2vec model, which uses sub-word information to improve sample efficiency.
-They do not provide any theoretical justification for why their technique should improve sample efficiency,
-but their technique is computationally very similar to the tree loss,
-and so our technique may be able to provide the first theoretical justification for their work.
-
-HSM:
-\begin{equation}
-    \label{eq:xentropy}
-    \ell(W;(\x,y)) = - \log \prod_{k\in P_y}\frac {\exp(-\trans\w_k \x)}{j\in L_k \exp(-\trans \w_j \x)}
-\end{equation}
-where $P_y$ is path from root to node of Huffman Tree,
-$L_k$ are nodes on the level where $k$ are
-
-
-% \fixme{Read the papers mentioned above.  Verify that you agree with the things I wrote.  Then, write a detailed mathematical description of the HSM loss and contrast it with the cover tree loss.}
-
-% \fixme{Read 5-10 additional papers about the hierarchical softmax.  For each paper, write a paragraph describing the paper's contributions and how it relates to the cover tree loss.  For the final paper we will reference these papers.  We will have to trim down the notes that you write for this task, but it's useful when writing the paper to have detailed notes about references.}
-
-The hierarchical softmax loss aims to improve computation efficiency. 
-\cite{Peng2017IncrementallyLT} introduce a training method incrementally train the hierarchical softmax function for neural network language models.
-They also provide a new stochastic gradient based method to update all the word vectors and their experimental results show the incremental training can save a lot of time.
-\cite{Jiang2017ExplorationOT} explore the tree-based hierarchical softmax method and reform its architecture, making it compatible with modern GPUs.
-\cite{Yang2017OptimizeHS} gives a theoretic analysis on how should organize the hierarchical tree by treating the tree structure as a parameter of the training objective function.
-They propose SemHuff, a new tree constructing scheme based on adjusting the Huffman tree with word similarity knowledge.
-Their experiments results also show that word embeddings trained with optimized hierarchical tree can give better results in various tasks.
-
-\cite{Mohammed2018EffectivenessOH} compare the performance of normal softmax and hierarchical softmax in large scale classification tasks. 
-Normal softmax is computationally expensive for large scale datasets with large number of possible outputs.
-Their experimental results show that normal softmax and hierarchical softmax underperforms on datasets with large number of labels.
-That is also one of our motivations of the tree loss function. 
-Compared to classic cross entropy loss function, the tree loss function performs better on datasets with large number of labels.
-Extreme multi-label classification is difficult, but organizing labels as a tree can handle this problem. 
-
-% \fixme{Write a detailed description of the sim loss}
-
-SimLoss \cite{Kobs2020SimLossCS} is similarity based loss function which incorporates class similarities to support the training of neural network classifiers.
-Cross entropy loss assumes only one class is correct and punishes every misclassification, while Simloss indicates classes have similarities and classifying a target as a similar class is better.
-When calculating the loss function, instead of only taking the probability vector at the target index Simloss also adds the product of similarity between target and other classes and probability vector at the corresponding class. 
-Non zero values of similarity matrix lead to smaller losses when the network gives a high score to classes similar to the correct one. 
-It would allow the classifier to make less severe mistakes as it learns to predict similar classes.
-However, SimLoss does not have any theoretical justification to prove why it can outperform cross entropy.
-SimLoss has a hyperparameter lower bound that controls the minimal class similarity that should have an impact on the network punishment.
-Any similarities below lower bound will be all zeros.
-It implies SimLoss would cost more time to fine tune.
-Our tree loss define a tree structure which can be obtained automatically and it is time-saving.
-\begin{align}
-    L_{Simloss}&=-\frac{1}{N}\log(\sum_{k=1}^{C}S_{y_i,k}\cdot p_i[k])\\
-    % L_{Simloss}=-\frac{1}{N}\log(\sum_{k=1}^{C}S_{y_i,k}\cdot\frac {\exp(-\trans\w_{y_i} \x)}{\sum_{j=1}^C \exp(-\trans \w_j \x)})
-    p_i&=\frac {\exp(-\trans\w_{y_i} \x)}{\sum_{j=1}^C \exp(-\trans \w_j \x)}
-\end{align}
-
+In practice, the $V$-tree loss is slightly slower than the standard cross entropy loss and $U$-tree losses due to the additional summation over the paths.
+In our experiments, we found this this to cause the $V$-tree loss to be about twice as slow.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Theoretical Results}
 
-It is well known that the cross entropy loss has generalization error $O(\sqrt{k/n})$.
-Our main theoretical result states that the tree loss significantly improves this generalization error down to $O(\sqrt{1/n})$.
-This is a shocking improvement since it implies that the generalization error is independent of the number of classes in our problem.
+It is well known that when using the standard cross entropy loss,
+SGD converges at a rate of $O(\sqrt{k/n})$.
+Our theoretical results asymptotically improve this convergence rate.
 
+With an appropriately constructed label tree,
+we show convergence at a rate of $O(\sqrt{\log k/n})$ or $O(\sqrt{k^{1-1/c}/n})$,
+where $c$ is a measure of difficulty of the problem.
+But what happens if the tree is poorly constructed?
+Remarkably, nothing bad.
+We also show that for arbitrarily bad label tree structures,
+the $U$ and $V$ losses maintain a $O(\sqrt{k/n})$ convergence rate.
+This suggests that there is essentially no downside to using the tree loss parameterizations.
+
+\fixme{
 Our analysis relies on simple properties of stochastic gradient descent,
 and we view the simplicity of our analysis as a major strength of the tree loss.
-In this section, we first review standard results of stochastic gradient needed for our analysis.
+In this section, we first review standard results of stochastic gradient descent needed for our analysis.
 Then we formally state and prove our main result.
-We conclude with a discussion about the bias-variance tradeoff.
+}
 
 \subsection{SGD Background}
 
 SGD is a standard algorithm for optimizing convex losses,
 and it has many variations.
-Our analysis uses the results from \citet{shalev2014understanding} which are based off of a version of SGD that uses parameter averaging.
-All variants of SGD have similar results, however, and we refer the reader to the above reference for a detailed discussion of these variants and their algorithmic details.
+Our analysis uses the results from Chapter 14 of \citet{shalev2014understanding} which are based off of a version of SGD that uses parameter averaging.\footnote{
+Other variants of SGD have similar results,
+and our results are easy to generalize to other SGD variants.
+We refer the reader to \citet{shalev2014understanding} for a discussion of these variants.}
+In this section we recall these results,
+occasionally changing the names of variables to avoid conflicts with variable names used elsewhere in this paper.
 
-The main result we use is a bound on the convergence rate of SGD for convex Lipschitz functions.
+We assume we are optimizing a function $f : \Theta \to \mathbb R$,
+and that we are only given noisy samples of the function and its gradient.
+We let $\theta^{t}$ denote the parameter value at iteration $t$,
+and $\eta : \mathbb R$ be the step size.
+Then the parameter update for step $t$ is defined to be
+\begin{equation}
+    \theta^{(t+1)} = \theta^{(t)} - \eta \nabla f(\theta^{(t)}).
+\end{equation}
+When using parameter averaging, the final model parameters are defined to be
+\begin{equation}
+    \bar\theta = \frac1T \sum_{i=1}^T \theta^{(t)}
+    .
+\end{equation}
+Parameter averaging is not often used in practice because of the memory requirements,
+but we use it here due because theorems using parameter averaging are typically much easier to state and prove.
+Equivalent results without parameter averaging typically require and additional $\log T$ factor in their convergence rates\citep{}.
+
+The main result we rely on is a bound on the convergence rate of SGD for convex Lipschitz functions.
 We reproduce Theorem 14.8 of \citet{shalev2014understanding} in the theorem below.
 
 \begin{theorem}
     \label{thm:sgd}
-    Let $B,\rho>0$.
-    Let $f$ be a convex function and let $\star W = \argmin_{W : \lF{W}\le B} f(W)$.
-    Assume that SGD is run for $T$ iterations with $\eta = \sqrt{\frac{B^2}{\rho^2 T}}$.
-    Assume that for all $t$, $\ltwo{\nabla f(W_t)} \le \rho$.
+    Let $\beta,\rho>0$.
+    Let $f$ be a convex function and let $\star \theta = \argmin_{\theta : \ltwo{\theta}\le \beta} f(\theta)$.
+    Assume that SGD is run for $T$ iterations with $\eta = \sqrt{\frac{\beta^2}{\rho^2 T}}$.
+    Assume that for all $t$, $\ltwo{\nabla f(\theta^{(t)})} \le \rho$.
     Then,
     \begin{equation}
-        \E f(\bar W) - f(\star W) \le \frac{B\rho}{\sqrt{T}}
+        \E f(\bar \theta) - f(\star \theta) \le \frac{\beta\rho}{\sqrt{T}}
         .
     \end{equation}
 \end{theorem}
 
-The following theorem bounds the generalization error of the cross entropy loss for multiclass classification problems.
-It is an immediate consequence of Theorem \ref{thm:sgd} above when $f$ is the cross entropy loss.
+\subsection{SGD and Statistical Learning}
+
+We now introduce more statistical learning theory notation,
+then apply Theorem \ref{thm:sgd} above to bound the rate of learning.
+
+Define the true loss of our learning problem as
+\begin{equation}
+    L_D(A) = \E_{(\x,y)\sim D} \ell(A; (\x, y))
+\end{equation}
+where $A \in \{W, U, V\}$ is a parameterization of the cross entropy loss.
+The optimal parameter vector is defined to be the minimum of the true loss:
+\begin{equation}
+    \star A = \argmin_{A} L_D(A).
+\end{equation}
+In order to apply Theorem \ref{thm:sgd} to a learning problem,
+we make the following assumption about our the size of our data points:
+\begin{assumption}
+    \label{ass:lip}
+    For each feature vector $\x$ in the data set, 
+        $\ltwo{\x} \le \rho$
+        .
+\end{assumption}
+Under this assumption, the cross entropy loss $\ell$ is $\rho$-Lipschitz for all parameterizations,
+and the true loss $L_D$ is therefore also $\rho$-Lipschitz.
+
+Applying Theorem \ref{thm:sgd} with $f=L_D$ gives
+\begin{corollary}
+    \label{ref:cor:A}
+    Under Assumption \ref{ass:lip}, we have that for any parameterization $A$ of the cross entropy loss,
+    \begin{equation}
+        \E L_D(\bar A) - L_D(\star A) \le \frac{\lF{\star A}\rho}{\sqrt n}.
+        \label{eq:Aconv}
+    \end{equation}
+\end{corollary}
+
+We can now bound the convergence of the standard cross entropy loss and the $U$ and $V$-tree losses by bounding the Frobenius norms of their parameter matrices.
+
+In order to recover the standard convergence rate of multiclass classification, we make the following assumption.
+\begin{assumption}
+    \label{ass:B}
+    For each class $i$, the optimal parameter vector $\star\w_i$ satisfies
+        $\ltwo{\star\w_i} \le B$
+        .
+\end{assumption}
+Note that this assumption is not limiting because the value of $B$ need not be known during the optimization procedure.
+
+It follows that
+\begin{equation}
+    \lF{\star W}^2 = \sum_{i=1}^k \ltwo{\star\w_i} \le kB^2.
+    \label{eq:starW}
+\end{equation}
+Substituting Eq \eqref{eq:starW} into \eqref{eq:Aconv} gives the following bound.
 
 \begin{theorem}
 \label{theorem:xentropy}
-Assume that for all $i\in[n]$, $\ltwo{\x_i} \le \rho$,
-    and that for each class $i\in[k]$, $\ltwo{\w_i}\le B$.
-Then the parameter vector $\bar W$ estimated from one epoch of SGD satisfies
+    Under assumptions \ref{ass:lip} and \ref{ass:B} above,
+then the parameter vector $\bar W$ estimated from one epoch of SGD satisfies
 \begin{equation}
-    \E L_D(\bar W) - L_D(W^*) \le \frac {\sqrt kB\rho}{\sqrt n}
-\end{equation}
-where $W^* = \argmin L_D(W)$.
-\end{theorem}
-
-Intuitively, this theorem states that the generalization error of the cross entropy loss shrinks at the rate $O(\sqrt{k/n})$.
-
-%\begin{theorem}
-    %Let $B,\rho>0$.
-    %Let $f$ be a convex function and let $\star \w = \argmin_{\w : \ltwo{\w}\le B} f(\w)$.
-    %Assume that SGD is run for $T$ iterations with $\eta = \sqrt{\frac{B^2}{\rho^2 T}}$.
-    %Assume that for all $t$, $\ltwo{\nabla f(\w_t)} \le \rho$ with probability 1.
-    %Then,
-    %\begin{equation}
-        %\E f(\bar \w) - f(\star \w) \le \frac{B\rho}{\sqrt{T}}
-        %.
-    %\end{equation}
-%\end{theorem}
-%
-%When analyzing stochastic gradient descent using the cross entropy loss,
-%it is common to assume that the parameter space is bounded.
-%Under the standard parameterization, we have that the weight vector for each class satisfies $\ltwo{\w_j} \le B$.
-%It immediately follows that $\lF{W} \le \sqrt{k}B$,
-%and from this and convergence results of SGD it follows that the generalization error is $O(\sqrt{k}B/n)$.
-%(See Theorem \ref{theorem:xentropy} above.)
-%
-%\begin{defn}
-    %A learning problem is called convex-lipschitz-bounded with parameters $\rho,B$ if
-    %\begin{enumerate}
-        %\item $\ltwo{\w} \le B$
-        %\item the loss
-    %\end{enumerate}
-%\end{defn}
-%
-%\begin{corollary}[Corollary 14.12 \citep{shalev2014understanding}]
-    %Consider a convex-Lipschitz-bounded learning problem with parameters $\rho, B$.
-    %Then for every $\epsilon>0$, if we run the SGD method for minimizing $L_\mathcal D(W)$ with a number of iterations
-        %$T \ge \frac{B^2\rho^2}{\epsilon^2}$
-    %and with
-        %$\eta = \sqrt{\frac{B^2}{\rho^2 T}}$
-    %then the output of SGD satisfies
-    %\begin{equation}
-        %\E L_\mathcal D (\bar W) - L_\mathcal D(\star W) \le \epsilon
-    %\end{equation}
-%\end{corollary}
-%
-%\subsection{Background}
-
-%In this section, we first introduce more notation and definitions needed for our analysis,
-%then we recall a standard result of stochastic gradient descent.
-%We follow the notation of \citet{shalev2014understanding}'s textbook as closely as possible.
-%
-%Let $\mathcal D$ be a distribution over the input data points and $S \sim D^m$ be a set of $m$ data points sampled from this distribution.
-%Then we define the true loss as
-%\begin{equation}
-    %L_\mathcal D(W) = \E_{(\x,y)\sim\mathcal D} \ell(W; \x, y)
-%\end{equation}
-%and the sample loss as
-%\begin{equation}
-    %L_S(W) = \frac 1 m \sum_{i=1}^m \ell(W; \x_i, y_i)
-    %.
-%\end{equation}
-%We refer to the difference between these two losses as the generalization error.
-%\begin{equation}
-    %\left\lvert L_\mathcal D(W) - L_S(W) \right\rvert.
-%\end{equation}
-%
-%Given a distribution of data points $\mathcal D$, the optimal parameter matrix is defined as
-%\begin{equation}
-    %\star W = \argmin_{W} \E_{(\x, y)} \ell(W; (\x, y))
-%\end{equation}
-%Given a dataset of $n$ points, we can estimate the parameter 
-%\begin{equation}
-    %\hat W = \argmin_{W} \frac1n\sum_{i=1}^n \ell(W; (\x_i, y_i))
-%\end{equation}
-%The main theoretical result for the cross entropy loss is that for a dataset with $n$ points,
-%the generalization error is $O(\sqrt{k/n})$.
-%There are many theorems that establish this result in different contexts.
-%The following is an example that relies on properties of SGD.
-%\begin{theorem}
-%\label{theorem:xentropy}
-%Assume that for all $i\in[n]$, $\ltwo{x_i} \le \rho$,
-    %and that for each class $i\in[k]$, $\ltwo{\w_i}\le B$.
-%Then the parameter vector $\bar W$ estimated from one epoch of SGD satisfies
-%\begin{equation}
-    %\E L_D(\bar W) - L_D(W^*) \le \frac {\sqrt cB\rho}{\sqrt n}
-%\end{equation}
-%where $W^* = \argmin L_D(W)$.
-%\end{theorem}
-% \begin{proof}
-%     \fixme{Write a proof of this result using Theorem 14.12 of Shalev-Shwartz and Ben-David and the properties of the cross entropy loss from the last set of notes.}
-%     \begin{align}
-%     {\| W \|^2_F}&=\sum_{i=1}^k{\| W_i\|^2}\\
-%                 &\le\sum_{i=1}^k{B^2}\\
-%                 &\le cB^2\\
-%   \| W \|_F  &\le \sqrt k B 
-%     \end{align}
-% Then we get:
-%     \begin{equation}
-%     l(\bar W)-l(W^*)\le\frac {\sqrt cB\rho}{\sqrt n}
-%     \end{equation}
-%   Take expectation of both side of equation(3):
-%   \begin{equation}
-%     \E L_D(\bar W) - L_D(W^*) \le \frac {\sqrt cB\rho}{\sqrt n}
-% \end{equation}
-% \end{proof}
-
-%There are many other loss functions that have been proposed for multilabel classification.
-%In this section, we review these alternatives before presenting our proposed the tree loss.
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%\subsection{Bounds using L2 regularization}
-%
-%Recall that when we apply L2 regularization,
-%we are minimizing the objective function
-%\begin{equation}
-    %f(W) = \tfrac 1 m \sum_{i=1}^m \loss(W; (\x_i,y_i)) + \tfrac\lambda2\lF{W}^2
-    %.
-%\end{equation}
-%This function is $\lambda$-strongly convex in $W$.
-%(Why?)
-%Then Theorem 14.11 tells us that after performing $T$ iterations of SGD, we have that
-%\begin{equation}
-    %\label{eq:f-bound}
-    %\E f(\bar W) - f(W^*) \le \frac{4\rho^2}{\lambda T} ( 1 + \log T)
-%\end{equation}
-%where $W^* = \argmin f(W)$.
-%If we substitute $f(W)=L_D(W)+\tfrac\lambda 2\lF{W}^2$ into Equation \ref{eq:f-bound} above,
-%then we get
-%\begin{align}
-    %\E L_D(\bar W) - L_D(W^*) 
-    %&\le \frac{4\rho^2}{\lambda T} ( 1 + \log T) + \tfrac\lambda2\lF{W^*}^2 - \tfrac\lambda2\lF{\bar W}^2
-    %\\
-    %&\le \frac{4\rho^2}{\lambda T} ( 1 + \log T) + \frac{\lambda k B^2}{2}
-    %.
-%\end{align}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% \subsection{Weight matrix factorization}
-
-% A simple way to reduce sample complexity when $k$ is large is to factor the parameter matrix as $W = VU$,
-% where $V : \R ^ {k \times e}$, $U : \R^{e \times d}$, and $e<\!<\!k$.
-% Then, each $\w_i = \vv_i U$, and the cross entropy softmax loss is
-% \begin{equation}
-%     \ell(VU;(\x,y)) = - \log \frac {\exp(-\trans\vv_y U \x)}{\sum_{j=1}^k \exp(-\trans \vv_j U \x)}
-%     .
-% \end{equation}
-% Unfortunately, this new parameterization is not simultaneously convex in both $V$ and $U$;
-% therefore, to analyze this formulation, we will assume that $V$ is fixed and only $U$ is a learned parameter.
-% In practice, it is fine to set $V$ to be a random matrix (and there is good theory to justify this),
-% or to simultaneously learn both $V$ and $U$ despite the nonconvexity.
-
-% This factorization decreases the statistical complexity of the problem from $O(\sqrt{k/n})$ to $O(\sqrt{e/n})$.
-% Recall that $e$ is a hyperparameter that is selected to be much less than $k$ and should represent the "intrinsic" dimensionality of the weight matrix.
-% The following theorem proves this result formally.
-% \begin{theorem}
-% Assume that for all $i\in[n]$, $\ltwo{x_i} \le \rho$,
-%     and that for each class $i\in[k]$, $\ltwo{\vv_i}\le 1$ and $\ltwo{\uu_i}\le B$.
-% Then the parameter vector $\bar W = V \bar U$ estimated from one epoch of SGD satisfies
-% \begin{equation}
-%     \E L_D(\bar W) - L_D(W^*) \le \frac {\sqrt eB\rho}{\sqrt n}
-% \end{equation}
-% where $W^* = \argmin L_D(W)$.
-% \end{theorem}
-% % \begin{proof}
-% %     \fixme{Write a proof of this result using Theorem 14.12 of Shalev-Shwartz and Ben-David.}
-% %     \begin{align}
-% %     {\| U \|^2_F}&=\sum_{i=1}^e{\| U_i\|^2}\\
-% %                 &\le\sum_{i=1}^e{B^2}\\
-% %                 &\le eB^2\\
-% %   \| U \|_F  &\le \sqrt e B  \\
-% %   \| W \|_F  &\le \sqrt e B
-% %     \end{align}
-% %     Then we get:
-% %     \begin{equation}
-% %     l(\bar W)-l(W^*)\le\frac {\sqrt eB\rho}{\sqrt n}
-% %     \end{equation}
-% %   Take expectation of both side of equation(8):
-% %   \begin{equation}
-% %     \E L_D(\bar W) - L_D(W^*) \le \frac {\sqrt eB\rho}{\sqrt n}
-% % \end{equation}
-% % \end{proof}
-
-
-\subsection{Our Results}
-
-The key idea of the tree loss is that we can reduce the bound on the size of the parameter space,
-and this will result in the reduced sample complexity.
-Let $\level k$ denote the level of node $k$ in the label tree.
-Then we replace the constraints on the $\w_j$s with the following constraint on all $\vv_k$:
-\begin{equation}
-    \ltwo{\vv_k} \le \frac{B}{2^{\level k}}
+    \E L_D(\bar W) - L_D(W^*)
+    \le \frac {\sqrt kB\rho}{\sqrt n}
     .
-    \label{eq:tree-constraint}
 \end{equation}
-Notice that the original constraint \eqref{} immediately follows from the tree constraint \eqref{eq:tree-constraint} and the reparameterization \eqref{eq:covertree-reparam}.
-One way to interpret this is that we have ``factored out'' our bounds on the $\w_i$ into bounds on the smaller $\vv_k$ components,
-and because the $\vv_k$ vectors are shared between classes,
-we can reduce the overall bound.
-The following lemma bounds the Frobenius norm of the weight matrix $V$.
+\end{theorem}
+\fixme{
+It is important to note that this result above is an upper bound and not a lower bound.
+This $O(\sqrt{k/n})$ convergence rate matches the convergence rate implied by the Nataranj dimension \citep{}.
+We are not aware of any lower bounds for SGD in the Lipschitz setting.
+\citet{nguyen2018tight,jentzen2020lower} study the strongly convex case and find that the upper bounds match the lower bounds.
+}
+
+\subsection {Bad Tree Structures}
 
 \begin{lemma}
-    Assume that the label tree has at most $q$ nodes per level and $r$ levels.
-    Then,
+    \ref{lemma:starV}
+    We have that for all $V$-trees derived from a $U$-tree,
     \begin{equation}
-        \lF{V} \le \tfrac12 Bq k^{(1 - 1/\log_2 q)}
+        \lF{\star V} \le \lF{\star U}.
     \end{equation}
-    In particular, if $q=2$, then
-    \begin{equation}
-        \lF{V} \le B,
-    \end{equation}
-    which is independent of the number of classes $k$.
 \end{lemma}
 \begin{proof}
-    We have the following chain of inequalities
-    \begin{align}
-        \lF{V} 
-        &\le \sum_{k\in \text{nodes of the level tree}} \ltwo{\vv_k}
-        \\
-        &= \sum_{i=0}^r \sum_{k\in \text{nodes at level $i$}} \ltwo{\vv_k}
-        \\
-        &\le \sum_{i=0}^r B\left(\frac {q} {2}\right)^i
-        \label{eq:lem:lFV:1}
-        \\
-        &=
-        B\left(\frac{1 - (q/2)^{r+1}}{1-q/2}\right)
-        \label{eq:lem:lFV:2}
-        \\
-        &\le
-        B(q/2)^{r+1}.
-        \label{eq:lem:lFV:3}
-    \end{align}
-    Line \eqref{eq:lem:lFV:1} follows from the fact that the number of nodes at level $i$ in the tree is upper bounded by $q^i$ and the the maximum L2 norm of a vector at level $i$ in the tree is $B/2^i$,so the sum of all vectors at level $i$ is bounded by $B(q/2)^i$.
-    Lines \eqref{eq:lem:lFV:2} and \eqref{eq:lem:lFV:3} are standard properties of geometric series.
-
-    Next, we show that
-    \begin{equation}
-    \begin{split}
-        \left(\frac q 2\right)^r
-        &=
-        \left(\frac q 2\right)^{\log_q k}\\
-        &=
-        \frac{k}{2^{\log_q k}}\\
-        &=
-        \frac{k}{2^{{\log_2 k}/{\log_2 q}}}\\
-        &=
-        \frac{k}{k^{1/\log_2 q}}\\
-        &=
-        k^{\left(1 - {1}/{\log_2 q}\right)}
-        .
-        \label{eq:lem:technical2}
-    \end{split}
-    \end{equation}
-    Substituting \eqref{eq:lem:technical2} into \eqref{eq:lem:lFV:3} gives the stated result.
+    \fixme{}
 \end{proof}
 
-Substituting this Lemma into the SGD bounds gives us our main result: 
+The following lemma shows that even for arbitrarily bad tree structures,
+the bound on the parameter spaces cannot be too bad.
 
-\begin{theorem}
-\label{theorem:xentropy}
-% Assume that for all $i\in[n]$, $\ltwo{x_i} \le \rho$,
-%     and that for each class $i\in[k]$, $\ltwo{\w_i}\le B$.
-Assume that for all $i\in[n]$, $\ltwo{\x_i} \le \rho$,
-    and that for each class $i\in[k]$,  $\ltwo{\vv _i} \le \frac{B}{2^{\level i}}$.
-Then the parameter vector $\bar W$ estimated from one epoch of SGD satisfies
+\begin{lemma}
+    \ref{lemma:starU}
+    Under assumption \ref{ass:B},
+    the following bound holds for all $U$-tree structures:
+    \begin{equation}
+        \lF{\star U} \le 2\sqrt{k}B.
+    \end{equation}
+\end{lemma}
+\begin{proof}
+    We have
+    \begin{align}
+        \lF{\star U}^2 
+        &= \sum_{i=1}^k \ltwo{\star\uu_i}^2 \\
+        &= \sum_{i=1}^k \ltwo{\star\w_i - \star\w_{\parent{i}}}^2 \\
+        &\le \sum_{i=1}^k \left(\ltwo{\star\w_i} + \ltwo{\star\w_{\parent{i}}} \right)^2 \\
+        &\le \sum_{i=1}^k (2B)^2 \\
+        &\le k (2B)^2
+        .
+    \end{align}
+\end{proof}
+
+\subsection{Good Tree Structures}
+
+\begin{assumption}
+We are given a distance metric $d$ over the labels such that for all labels $i$ and $j$,
 \begin{equation}
-    \E L_D(\bar W) - L_D(W^*) \le \frac {B\rho}{\sqrt n}
-    ,
+    \frac 1 \lambda d(i,j)
+    \le \ltwo{\star \w_i - \star \w_j}
+    \le \lambda d(i, j).
 \end{equation}
-which is independent of the number of classes $k$.
-\end{theorem}
-%Let $\mathcal L$ be a metric space over the set of labels,
-%and $\ddim$ be the doubling dimension of $\mathcal L$.
-%Then we build a ``cover tree'' from the class labels that respects the metric structure.
-%This cover tree will have exactly $k$ leaf nodes, one for each class label,
-%and $O(k)$ internal nodes.
-%Why does this small change work?
-%Intuitively, classes that have a small distance from each other should have similar weight vectors.
+We denote by $c$ the doubling dimension of the metric $d$.
+\end{assumption}
 
+\begin{lemma}
+    \ref{lemma:main}
+    When $c\le1$, we have that
+    \begin{equation}
+        \lF{\star U} \le \tfrac{1}{\sqrt2}\lambda B \sqrt{\log_2 k}.
+        \label{eq:c<=1}
+    \end{equation}
+    When $c>1$, we have that
+    \begin{equation}
+        \lF{\star U} \le \sqrt{5}\lambda B \sqrt{k^{(1-1/c)}}.
+        \label{eq:c>1}
+    \end{equation}
+\end{lemma}
+\begin{proof}
+%Construct a cover tree over the distance metric $d$.
+%For each class $i$, define the vector
+%\begin{equation}
+    %\uu_i =
+    %\begin{cases}
+        %\w_i & \text{if $i$ is the root of the cover tree} \\
+        %\w_i - \w_{\parent{i}} & \text{otherwise} \\
+    %\end{cases}
+    %.
+%\end{equation}
+%Define the vector $\star\uu_i$ similarly by replacing all the $\w_i$ with $\star\w_i$ above.
+    First, we review some simple properties of the cover tree structure that will be needed in our proof.
+    Let $q$ denote the maximum number of children of any node in the cover tree.
+    A standard property of cover trees is that $q \le (4^c)$ \citep[Lemma 25]{izbickithesis}.
+    Let $Q_i$ denote the number of nodes at level $i$ in the cover tree.
+    Then we have that $|Q_i| \le q^i.$
+    Finally, let $r$ be the height of the cover tree.
+    Without loss of generality, we analyze the bound when the cover tree is perfectly balanced and so $r = \log_q k = \log_2 k / (2c)$.
+
+We have that
+\begin{align}
+    \lF{\star U}^2
+    &= \sum_{i=1}^k \ltwo{\star\uu_i}^2 \\
+    &= \sum_{i=0}^r \sum_{j\in Q_i} \ltwo{\star\uu_j}^2 \\
+    &= \sum_{i=0}^r \sum_{j\in Q_i} \ltwo{\star\w_j - \star\w_{\parent{j}}}^2 \\
+    &\le \sum_{i=0}^r \sum_{j\in Q_i} \lambda^2 d(j, \parent{j})^2 \\
+    &\le \sum_{i=0}^r \sum_{j\in Q_i} \lambda^2 (B/2^i)^2 \\
+    &\le \sum_{i=0}^r q^i \lambda^2 (B/2^i)^2 \\
+    &\le \sum_{i=0}^r \lambda^2 B^2 (q/4)^i 
+    \label{eq:precases}
+\end{align}
+We proceed by considering the case of $c\le1$ and $c>1$ separately.
+
+When $c\le1$, $q\le4$.
+Substituting into Eq \eqref{eq:precases}, we have
+\begin{align}
+    \lF{\star U}^2
+    &\le \sum_{i=0}^r \lambda^2 B^2 \\
+    &= (r+1) \lambda^2 B^2 \\
+    &= \frac{\log_2k}{2c} \lambda^2 B^2 \\
+    &\le \frac{\log_2k}{2} \lambda^2 B^2
+    .
+\end{align}
+This matches Eq \eqref{eq:c<=1} in the lemma's statement.
+
+When $c>$, then $q>4$.
+We first show the following equality.
+\begin{align}
+\left(\frac q 4\right)^r
+&=
+\left(\frac q 4\right)^{\log_q k}\\
+&=
+\frac{k}{4^{\log_q k}}\\
+&=
+\frac{k}{4^{{\log_4 k}/{\log_4 q}}}\\
+&=
+\frac{k}{k^{1/\log_4 q}}\\
+&=
+k^{\left(1 - {1}/{\log_4 q}\right)} \\
+&=
+k^{\left(1 - 1/c\right)}
+.
+\label{eq:lFU:frac}
+\end{align}
+Substituting into Eq \eqref{eq:precases}, we have
+\begin{align}
+    \lF{\star U}^2
+    &= \lambda^2B^2 \left(\frac{(q/4)^{r+1}-1}{q/4-1}\right) \\
+    \label{eq:lFU:4}
+    &= \lambda^2B^2 \left(\frac{(q/4)k^{(1-1/c)}-1}{q/4-1}\right) \\
+    &\le \lambda^2B^2 \left(\frac{(q/4)k^{(1-1/c)}}{q/4-1}\right) \\
+    &\le 5 \lambda^2B^2 k^{(1-1/c)}
+    \label{eq:lFU:5}
+\end{align}
+    Inequality \eqref{eq:lFU:5} follows because $\tfrac{q/4}{q/4-1} \le 5$ for integer values of $q>4$.
+\end{proof}
+
+%Substituting \eqref{eq:lFU:frac} info \eqref{eq:lFU:5} gives
+%\begin{align}
+    %\lF{U} \le \lambda B \sqrt{\frac{\log_2 k}{2c} + 1}\sqrt{k^{(1-1/c)}}
+%\end{align}
 %\begin{lemma}
-    %Under the conditions defined above, we have
-%\begin{equation}
-    %\label{eq:lFV-bound}
-    %\lF{V} \le (\ddim \log k) B.
-%\end{equation}
+    %\label{lemma:technical}
+    %For all $a>1$ and $b>1$, we have that
+    %\begin{equation}
+        %\frac {1-a^b}{1-a} \le ba^b
+    %\end{equation}
 %\end{lemma}
-%\begin{proof}
-%\end{proof}
 
-%Formally, we can bound the Frobenius norm of the weight matrix $V$ by
-%which is significantly better than our bound on the weight matrix $W$ of only $\sqrt k B$.
-%Substituting \eqref{eq:lFV-bound} into Theorem 14.12 of Shalev-Shwartz and Ben-David gives us that if SGD is run for $T$ iterations to compute parameter estimate $\bar W$,
-%then
-%\begin{equation}
-    %\E L_D(\bar W) - L_D(W^*) \le \frac {\sqrt {\dim \mathcal L}B\rho\log k}{\sqrt T}
-%\end{equation}
-%where $W^* = \argmin L_D(W)$.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-\subsection{Limitations: the bias-variance tradeoff}
-
-\label{sec:bias-var}
+\begin{figure*}
+\includegraphics[width=\columnwidth,height=1.5in]{fig/images/accuracy_vs_n.png}
+\includegraphics[width=\columnwidth,height=1.5in]{fig/images/accuracy_vs_d.png}
+\includegraphics[width=\columnwidth,height=1.5in]{fig/images/accuracy_vs_class.png}
+\includegraphics[width=\columnwidth,height=1.5in]{fig/images/accuracy_vs_sigma.png}
+\caption{
+    Results of our Synthetic Experiments I.
+    The x-axis of each plot shows which problem parameter is being varied.
+    As our theory predicts, the Tree Loss outperforms the baseline loss functions in all data regimes.
+}
+\label{fig:synth:1}
+\end{figure*}
 
 \section{Experiments}
 
@@ -710,21 +702,16 @@ which is independent of the number of classes $k$.
 In this experiment we will demonstrate the tree loss's effectiveness on a simple multiclass logistic regression problem.
 The problem will be specifically designed to be convex and have low intrinsic dimension in the class labels in order to illustrate the advantages of the cover tree loss.
 
-Let $N$ be the standard normal distribution.
-Then sample the matrices
+\subsubsection{Data Generation Procedure}
+\label{sec:exp:synth:problem}
+
+Let $\mathcal N$ be the standard normal distribution.
+Then sample the true parameter matrix
 \begin{align}
-    U \sim N^{k\times a} \qquad\text{and}\qquad
-    A \sim N^{a\times d},
+    \star W \sim \mathcal N^{k\times d}
+    .
 \end{align}
-and define the true parameter matrix to be
-\begin{equation}
-    W^* = UA.
-\end{equation}
 For all $i \in [k]$, the row $\w_i^*$ of $W^*$ corresponds to the parameter vector for class $i$ and has dimension $d$.
-The variable $a$ controls the intrinsic dimensionality of the problem.
-When $a$ is small, then many class labels will be similar to each other;
-but as $a$ increases, the class labels will have increasingly less structure.
-When $a$ is known in advance, then we can use weight matrix factorization and set $e=a$.
 
 For each data point $i\in[n]$,
 we sample the data point according to the following rules:
@@ -736,91 +723,35 @@ where $\sigma$ controls the noise in the dataset.
 Increasing $\sigma$ adds noise and makes classes harder to distinguish,
 whereas decreasing $\sigma$ reduces noise and makes the classes easier to distinguish.
 
-With our problem defined in this way, it is clear that
+With our problem defined in this way, it is clear that the empirical risk minimizer
 \begin{equation}
-    \argmin_{W} \tfrac 1 n \ell(W; \x_i, y_i)
+    \hat W = \argmin_{W} \tfrac 1 n \ell(W; \x_i, y_i)
 \end{equation}
-converges to $W^*$ using the standard cross entropy loss and both the matrix factorization and tree reparameterizations.
-% \fixme{You should prove this for yourself.}
-% Figure \ref{fig:synthetic-results} shows that the cover tree loss converges at a faster rate.
-
-\begin{figure*}
-        \centering
-        \begin{subfigure}[b]{0.45\textwidth}
-            \centering
-            \includegraphics[width=\textwidth]{fig/images/accuracy_vs_n.png}
-            % \caption[Accuracy versus number of data points($d=64, \sigma=1.0, k=10$)]%
-            {{\small Accuracy versus number of data points($d=64, \sigma=1.0, k=10$)}}  
-            \label{subfig.1}
-        \end{subfigure}
-        \hfill
-        \begin{subfigure}[b]{0.45\textwidth}  
-            \centering 
-            \includegraphics[width=\textwidth]{fig/images/accuracy_vs_d.png}
-            % \caption[Accuracy versus dimension of parameter matrix($n=100, \sigma=1.0, k=10$)]%
-            {{\small Accuracy versus dimension of parameter matrix($n=100, \sigma=1.0, k=10$)}}
-            \label{subfig.2}
-        \end{subfigure}
-        \vskip\baselineskip
-        \begin{subfigure}[b]{0.45\textwidth}   
-            \centering 
-            \includegraphics[width=\textwidth]{fig/images/accuracy_vs_sigma.png}
-            % \caption[Accuracy versus randomness($n=100, d=64, k=10$)]%
-            {{\small Accuracy versus randomness($n=100, d=64, k=10$)}}
-            \label{subfig.3}
-        \end{subfigure}
-        \hfill
-        \begin{subfigure}[b]{0.45\textwidth}   
-            \centering 
-            \includegraphics[width=\textwidth]{fig/images/accuracy_vs_class.png}
-            % \caption[Accuracy versus number of classes($n=100, d=64, \sigma=1.0$)]%
-            {{\small Accuracy versus number of classes($n=100, d=64, \sigma=1.0$)}}   
-            \label{subfig.4}
-        \end{subfigure}
-        % \caption[ Figures of Synthetic Data Experiment ]
-        % {{\small Figures of Synthetic Data Experiment}}
-        \label{fig.1}
-    \end{figure*}
-    
-
-\begin{figure*}
-        \centering
-        \begin{subfigure}[b]{0.45\textwidth}
-            \centering
-            \includegraphics[width=\textwidth]{fig/new_img/accuracy_vs_base.png}
-            {{\small Accuracy versus base of tree($n=1000, d=10, \sigma=1.0, k=100$)}}
-            \label{subfig.1}
-        \end{subfigure}
-        \hfill
-        \begin{subfigure}[b]{0.45\textwidth}  
-            \centering 
-            \includegraphics[width=\textwidth]{fig/new_img/height_vs_base.png}
-            {{\small Height versus base of tree($n=1000, d=10, \sigma=1.0, k=100$)}}   
-            \label{subfig.2}
-        \end{subfigure}
-        \vskip\baselineskip
-        \begin{subfigure}[b]{0.45\textwidth}   
-            \centering 
-            \includegraphics[width=\textwidth]{fig/new_img/loss_vs_structure.png}
-            % \caption[Accuracy versus randomness($n=100, d=64, k=10$)]%
-            {{\small Accuracy versus tree structure($n=1000, d=64, \sigma=1.0, k=100$)}}  
-            \label{subfig.3}
-        \end{subfigure}
-        \hfill
-        % \begin{subfigure}[b]{0.45\textwidth}   
-        %     \centering 
-        %     \includegraphics[width=\textwidth]{fig/new_img/loss_vs_base.png}
-        %     % \caption[Accuracy versus number of classes($n=100, d=64, \sigma=1.0$)]%
-        %     {{\small Loss versus base of cover tree($n=1000, d=10, \sigma=1.0, k=100$)}}    
-        %     \label{subfig.4}
-        % \end{subfigure}
-        % \caption[ Figures of Synthetic Data Experiment ]
-        % {{\small Figures of Synthetic Data Experiment}} 
-        \label{fig.2}
-    \end{figure*}
+converges to $W^*$.
 
 
-\subsubsection{Results}
+\subsubsection{Experiment I: Data Regimes}
+
+In this experiment, we investigate the tree loss's performance in a wide range of settings as we vary the number of data points ($n$), the number of dimensions ($d$), number of class labels ($k$), and the Bayes error ($\sigma$) of our problem.
+First, we construct a standard experimental setting with $n=100$, $d=64$, $k=10$, and $\sigma=1$.
+Then, for each of these parameters, we investigate the effect of that parameter's performance on the problem by varying it over a large range.
+For each value in the range, we:
+(1) randomly sample 50 problems using the procedure described in Section \ref{sec:exp:synth:problem};
+(2) for each problem, we:
+(2a) sample a training set with $n$ data points and a test set with 10000 data points;
+(2b) train 4 models on the training set using the standard cross entropy loss, tree loss, simloss, and hierarchical softmax;
+(2c) report the average accuracy accross the sampled test sets.
+
+Figure \ref{fig:synth:1} shows the results of these experiments.
+As our theory suggests, the tree loss outperforms all other losses in all regimes.
+Consider the top-left plot.
+As the number of data points $n$ gets large,
+then all of the models have accuracies that converge to 1;
+for most problems, however, the number of data points will not be sufficiently large to drive the generalization error to 0,
+and the fewer data points that the problem has,
+the better the tree loss performs compared to other losses.
+
+\fixme{
 From figure \ref{fig.1}, it is clear that the tree loss achieves the best performance. 
 The tree loss converges at a faster rate as number of data points and dimension of parameter matrix increase.
 If we increase the number of classes, the tree loss can keep a higher accuracy and the accuracy of SimLoss is higher than cross entropy loss and hierarchical softmax.
@@ -828,130 +759,201 @@ It is as our expected, the tree loss can improve performance on large classes ta
 Besides, when we increase the noise in the dataset, the accuracy of all loss functions decrease, yet the tree loss decreases slower.
 Among the four loss functions, hierarchical softmax hurts the performance obviously. 
 We would not apply hierarchical softmax on real world data experiment in terms of computation.
+}
 
-There is a parameter 'base' which can control the height of tree.
-Figure \ref{subfig.2} shows that if we increase the value of base, the tree is shorter.
-As our expected, from figure \ref{subfig.1} we can see that a taller tree has higher accuracy. 
-We add a parameter randomness into the tree structure and the tree structure become more random as the randomness factor increase.
-As figure \ref{subfig.3} shows, when the tree structure become totally random, the performance of the tree loss is close to cross entropy loss.
+\subsubsection{Experiment II: Parameter Norms}
 
+Corollary \ref{ref:cor:A} suggests that the norm of the parameter matrix is what controls convergence rate of SGD,
+and the proof of our main result in Theorem \ref{} relies on bounding this norm.
+In this experiment, we directly measure the norm of the parameter matrices and show that $\lF{V}$ is significantly less than the $lF{W}$,
+justifying the good convergence rates we observed in Synthetic Experiment I above.
+We set $n=1000$, $d=10$, and $\sigma=1$, and vary the number of classes $k$.
+Figure \ref{fig:synth:norm} shows that $\lF{\star V}$ grows much slower than $\lF{\star W}$.
+Notice in particular that $\lF{\star W}$ grows at the rate $O(\sqrt{k})$ and $\lF{\star V}$ grows at a rate strictly less than $o(\sqrt{k})$ as our theory predicts.
 
-\subsubsection{Alternative synthetic experiments}
-
-In multi-label classification, it is common for the classes to be unbalanced.
-We would like to show that the tree loss works well for unbalanced data.
-A good way to do that is to change the distribution that $y_i$ is drawn from,
-and a geometric distribution is a likely good alternative.
-
-The tree loss can work well even when the weight matrix has non-linear intrinsic structure.
-We should adapt the $\w*_i$ vectors to sit on a manifold instead of a hyperplane to demonstrate this fact.
-
-
-\subsection{Real world data}
-% \fixme{Write a description of the experiment.}
-In this experiment, we will compare the tree loss with softmax corss entropy and simloss on some real world data.
-We conduct image classification tasks on CIFAR-100 dataset and ImageNet dataset and emoji prediction task on twitter dataset.
-Our goal is to investigate the effects of changing the loss function on our example experiments.
-We do not focus on if we have state-of-the-art performance on specific models, but rather on the evaluation of the tree loss as a general loss function which can be applied on various tasks.
-These three tasks and datasets are typical examples for using cross entropy loss.
-
-\subsubsection{CIFAR-100 Data}
-We use CIFAR-100 dataset which has 100 classes for image classification.
-We also get word embeddings from a word2vec model pretrained on Google News \cite{Mikolov2013EfficientEO} of class names and construct tree structure and calculate similarity between classes from word embeddings.
-Four class names do not yield a word embedding and are therefore eliminated.
-
-To evaluate our tree loss, we rely on three metrics: accuracy (Acc.) which focus on correct predictions and similarity accuracy (Similarity Acc.) which focus on the similarity of predicted and target class and superclass accuracy (SA). Every example in CIFAR-100 dataset has a main class and a superclass. Superclass accuracy is the fraction of examples that are correctly put into the corresponding superclass.
-We take ResNet20 model \cite{He2016DeepRL} and SGD optimizer with a learning rate 0.1 and a batch size of 1021. 
-We stop early to get the highest accuracy on validation set.
+\begin{figure}
+\includegraphics[width=\columnwidth,height=1.5in]{fig/images/class_v_norm.png}
+\caption{As we increase the number of classes $k$,
+    $\lF{\star V}$ grows significantly slower than $\lF{\star W}$.
+    Since the convergence rate of SGD is proportional to $\lF{\cdot}$ (by Corollary \ref{ref:cor:A}),
+    the tree loss converges faster than the standard cross entropy loss. 
+    }
+\label{fig:synth:norm}
+\end{figure}
 
 
-\begin{table}[]
-\caption{Test results with early stopping on CIFAR-100 dataset. Best values are written in bold.} \label{cifar100}
-\begin{center}
-\begin{tabular}{@{}cccc@{}}
-\toprule
-\multirow{2}{*}{Loss} & \multicolumn{3}{c}{Test}    \\ \cmidrule(l){2-4} 
-                      & Acc. & Similarity Acc. & SA \\ \cmidrule(r){1-1}
-Tree Loss       & \textbf{52.78}     &  \textbf{65.90}               &  \textbf{62.55}  \\
-Cross Entropy         &  51.87    &   65.58              &  62.14  \\
-SimLoss               &    52.43  &    65.82             & 62.34  \\\bottomrule
-\end{tabular}
-\end{center}
-\end{table}
+\subsubsection{Experiment III: Tree Shapes}
 
+In this experiment, we study how the shape of our tree structure impacts performance.
+We set $n=1000$, $d=10$, $k=100$, and $\sigma=1$.
+We use a relatively large number of classes $k$ compared to our standard problem in Section \ref{sec:synth:1} above in order to ensure that we have enough classes to generate meaningfully different tree structures.
+The basic trends we observe are consistent for all other values of $n$, $d$, and $\sigma$.
 
-\subsubsection{ImageNet Data}
-ImageNet dataset \cite{Russakovsky2015ImageNetLS} has 1000 classes and many of the classes are similar and related, we consider the internal class structure has a impact on performance of loss function.
-We use class names to get class representations from a pretrained FastText model.
-We take ResNet50 model \cite{He2016DeepRL} trained on 1.28 mollion training images and evaluated on the 50k validation images and SGD optimizer with a learning rate 0.01.
-We use top1 accuracy and top5 accuracy to evaluate our loss functions.
+Recall that the cover tree has a parameter \texttt{base} which controls the rate of expansion between layers of the tree.
+As seen in Figure \ref{fig:ct:height}, reducing \texttt{base} increases the height of the tree and increasing \texttt{base} reduces the height of the tree.
+This will affect the performance of our tree loss because taller trees result in more parameter sharing.
+Figure \ref{fig:ct:acc} plots the accuracy of the tree loss as a function of the \texttt{base} hyperparameter.
+Across all ranges, the tree loss outperforms the cross entropy loss.
+Interestingly, the tree loss's accuracy is maximized when $\texttt{base}\approx1.3$.
+The original cover tree paper \citep{beygelzimer2006cover} also found that a \texttt{base} of 1.3 resulted in the fastest nearest neighbor queries.
+It's unclear why 1.3 has this good quality,
+but the fact that this constant results in good computational performance for nearest neighbor queries and good statistical performance in the tree loss, two rather different use cases, suggests that there is something fundamental going on here that we don't yet fully understand.
+
+\begin{figure}
+            \includegraphics[width=\columnwidth,height=1.5in]{fig/new_img/height_vs_base.png}
+            \caption{The height of a cover tree varies inversely with it's \texttt{base} hyperparameter.}
+            \label{fig:ct:height}
+\end{figure}
+
+\begin{figure}
+    \includegraphics[width=\columnwidth,height=1.5in]{fig/new_img/accuracy_vs_base.png}
+            \caption
+            {The tree loss outperforms the standard cross entropy loss for all values of \texttt{base}, but the performance is maximized when $\texttt{base}\approx1.3$.}
+            \label{fig:ct:acc}
+\end{figure}
 
 
 
-\begin{table}[]
-\caption{Validation results on ImageNet dataset. Best values are written in bold.} \label{imagenet}
-\begin{center}
-\begin{tabular}{@{}ccc@{}}
-\toprule
-\multirow{2}{*}{Loss} & \multicolumn{2}{c}{Validation} \\ \cmidrule(l){2-3} 
-                      & Top1 Acc.      & Top5 Acc.     \\ \cmidrule(r){1-1}
-Tree Loss       & \textbf{76.52} & \textbf{92.92} \\
-Cross Entropy         & 75.30          & 92.36         \\
-SimLoss               & 76.24          & 92.83         \\ \bottomrule
-\end{tabular}
-\end{center}
-\end{table}
+\subsubsection{Experiment IV: Metric Quality}
+\label{sec:synth:eps}
 
+Recall that our theoretical results state that the convergence rate of SGD depends on a factor $\lambda$ that measures how well our metric over the class labels is able to predict the distances between the true parameter vectors.
+In this experiment, we study the effect of this $\lambda$ parameter on prediction accuracy.
+
+We fix the following problem hyperparameters:
+$n=100$, $d=64$, $k=10$, and $\sigma=1$.
+Then we construct a bad parameter matrix $\bad W$ using the same procedure we used to construct the optimal parameter matrix;
+that is,
+\begin{equation}
+    \bad W \sim \mathcal N ^ {k\times d}
+    .
+\end{equation}
+Each row $\bad \w_i$ of $\bad W$ is now a $d$ dimensional random vector that has absolutely no relation to the true parameter vector.
+Next, we define a family of ``$\epsilon$-bad'' parameter vectors that mix between the perfectly bad and perfectly good parameter vectors:
+\begin{equation}
+    \w^\epsilon_i = (1-\epsilon) \w^*_i + \epsilon \bad\w_i.
+\end{equation}
+Finally, we define our $\epsilon$-bad distance metric as
+\begin{equation}
+    d_\epsilon(i,j) = \ltwo{\w_i^\epsilon - \w_j^\epsilon}
+\end{equation}
+and build our cover tree structure using $d_\epsilon$.
+When $\epsilon=0$, this cover tree structure will be the ideal structure and $\lambda$ will be equal to 1;
+when $\epsilon=1$, this cover tree structure will be maximally bad, and $\lambda$ will be large.
+
+Figure \ref{fig:synth:eps} shows the performance of the tree loss as a function of $\epsilon$.
+Remarkably, the tree loss outperforms the standard cross entropy loss even when using a perfectly bad tree structure (i.e. when $\epsilon=1$).
+This surprising empirical finding actually agrees with our theoretical results in two ways.
+First, Lemmas \ref{lemma:starV} and \ref{lemma:starU} together imply that that $\lF{\star V} = O(\lF{\star W})$,
+and so no tree structure can perform asymptotically worse than the standard cross entropy loss.
+Second, when $\epsilon=1$ and we have a perfectly random tree structure,
+the distance $d_\epsilon$ can still be embedded into the ideal metric $d$ with some large (but finite!) $\lambda$.
+Asymptotically, Lemma \ref{lemma:main} then implies that SGD converges at the rate $O(\sqrt{k^{1-1/c}})$,
+which is less than the convergence rate of the standard cross entropy loss.
+\fixme{replace lemma with theorem}
+
+\begin{figure}
+\includegraphics[width=\columnwidth,height=1.5in]{fig/new_img/loss_vs_structure.png}
+\caption{
+As $\epsilon\to1$, the quality of our metric for generating the tree structure decreases.
+But even with a perfectly random tree structure,
+the tree loss still outperforms the cross entropy loss.
+}  
+\label{fig:synth:eps}
+\end{figure}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Real World Data}
+
+\begin{table*}
+    \centering
+    \input{fig/real_world.tex}
+    \caption{Experimental results on real world datasets.  For all accuracy measures, larger numbers are better.  The tree loss achieves the best results in all cases.}
+    \label{table:results}
+\end{table*}
+
+We now validate the tree loss on real world image (CIFAR100, ImageNet) and text (Twitter) data.
+For each dataset, we report standard top-k accuracy scores,
+and the less well known \emph{superclass accuracy} (SA) score.
+SA is a generalization of the top-1 accuracy proposed by the simloss paper \citep{Kobs2020SimLossCS}.
+The idea is that misclassifying a \texttt{sheepdog} as a \texttt{husky} should be penalized less than misclassifying a \texttt{sheepdog} as a \texttt{bus} because the \texttt{sheepdog} and \texttt{husky} classes are more similar to each other.
+
+Table \ref{table:results} shows that on each of these datasets and for each metric,
+the tree loss outperforms the baseline cross entropy loss and simloss.\footnote{We do not evaluate against the hierarchical softmax on these datasets for computational reasons.  The results on the synthetic data, however, suggest that the hierarchical softmax would have performed poorly.}
+The remainder of this section describes the experimental procedures for each dataset in detail.
+
+\subsubsection{CIFAR100}
+
+CIFAR100 is a standard image dataset with 100 classes \citep{krizhevsky2009learning}.
+It is more difficult than MNIST and CIFAR-10,
+but small and so less computationally demanding than ImageNet.
+
+We follow the procedure used in the SimLoss paper \citep{Kobs2020SimLossCS} in this experiment.
+We generate our distance metric over the class labels using a word2vec model \citep{Mikolov2013EfficientEO} pretrained on GoogleNews.
+The distance between class labels is defined to be the distance between their corresponding word2vec embeddings.
+There are 4 class labels with no corresponding word2vec embedding,
+and so following the simloss paper we discard these classes.
+
+We train 3 ResNet20 models on CIFAR100 \citep{He2016DeepRL} using hyperparameters specified in the original paper.
+The only difference between the three models is the final layer:
+one model uses the standard cross entropy loss, one uses the tree loss, and one uses the simloss.
+The results shown in Table \ref{table:results} shows that the tree loss significantly outperforms the other losses.
+
+\subsubsection{ImageNet}
+
+ImageNet is the gold-standard dataset for image classification tasks \citep{Russakovsky2015ImageNetLS}.
+It has 1000 class labels and 1.2 million images.
+
+We generate our distance metric over the image labels using a pretrained fastText model \citep{bojanowski2017enriching}.
+We use fastText rather than word2vec because many of the class labels contain words not in the word2vec models' vocabulary;
+since fastText is naturally able to handle out-of-vocabulary words,
+there is not need to discard class labels like we did for CIFAR100.
+Many ImageNet class label names contain multiple words,
+and for these classes we generate the embedding with a simple average of the fastText embedding over all words.
+
+We again train a ResNet50 model \citep{He2016DeepRL} using standard hyperparameters, replacing only the last layer of the model.
+As with CIFAR100, Table \ref{table:results} shows that the tree loss significantly outperforms the other losses.
+Since the publication of ResNet50 in 2016,
+there have been many newer network architectures with better performance on ImageNet \citep[e.g.][]{howard2017mobilenets,huang2017densely,pmlr-v97-tan19a}.
+We unfortunately did not have sufficient computational resources to train these more modern models with the tree loss,
+and we emphasize that we are not trying to compete directly with these network architectures to achieve state-of-the-art performance.
+Instead, our goal is to show that for a given network architecture,
+replacing the cross entropy loss with the tree loss results in improved performance.
 
 \subsubsection{Twitter Data}
 
-We apply the tree loss on emoji prediction in twitter dataset. 
-Emojis are popular to express emotions in text messages and tweets are a wildely used social media over the world. 
-We trained the multilingual BERT model on tweets to predict which emoji corresponds to a piece of text is best for measuring the emotional content in the text. 
-Our 1660 target emojis are defined by emo2vec \cite{Eisner2016emoji2vecLE}.
+We now consider the problem of predicting the emotions of twitter text.
+This is a very different domain than the image problems considered above,
+and demonstrates that the tree loss works across many domains.
+We use the dataset collected by \citep{stoikos2020multilingual} for analyzing emotional response to Covid19 on Twitter.
+This dataset contains all geolocated tweets written in any language sent over the 6 month period between 1 January 2020 and 1 July 2020.
+Tweets in the dataset are preprocessed to have all emojis, usernames, and urls removed from the text,
+and then the goal is to predict the emoji given only the remaining text.
+Since most emojis represent emotions,
+the task of emoji prediction serves as a proxy for emotion prediction.
 
-We collect all tweets \cite{Izbicki2019GeolocatingTI} in any languages sent from anywhere in the world and filter the tweets with target emojis. 
-For each tweet, we replace all user mentions with a special token \texttt{\text{<}mention\text{>}} and all URLS with a special token \texttt{\text{<}url\text{>}} and delete all emojis. 
-We keep all hashtags and duplicate the tweet once for each emoji if a tweet has multiple emojis. 
-Then we split the dataset into training validadtion and testing sets by user id to ensure each user appears in only one set in order to prevent data leakage.
-
-We take the multilingual BERT model \cite{Feng2020LanguageagnosticBS} pretrained on data from 109 distinct languages which achieves state-of-the-art performance on a wide variety of natural language tasks. 
-We get the embeddings of 1660 target emojis defined by emo2vec.
-
-\begin{table}[h]
-\small
-\caption{Validation and test results of emoji prediction task on twitter dataset. Best values are written in bold.} \label{twitter}
-\begin{center}
-\begin{tabular}{@{}lcccc@{}}
-\toprule
-\multicolumn{1}{c}{\multirow{2}{*}{Loss}} & \multicolumn{2}{c}{VALIDATION} & \multicolumn{2}{c}{TEST}       \\ \cmidrule(l){2-5} 
-\multicolumn{1}{c}{}                      & Acc.       & SA       & Acc.      & SA             \\ \cmidrule(r){1-1}
-Tree Loss                           &   \textbf{20.81}    &   \textbf{50.26}  &  \textbf{20.96}    &   \textbf{50.45}        \\
-Cross Entropy                             &   19.90    &   48.27  &  19.95    &   48.33        \\
-SimLoss                                   &   19.91    &   48.25  &  19.96    &   48.32         \\ \bottomrule
-\end{tabular}
-\end{center}
-\end{table}
-
-\subsubsection{Results}
-We evaluate the tree loss on image data(CIFAR100, ImageNet) and text data(Twitter) and the tree loss outperforms cross entropy loss and Simloss on metrics.
-Table \ref{cifar100} shows the results of three loss functions for the test set of the CIFAR-100 dataset.
-Similarity accuracy and superclass accuracy pay attention to more similar classes and the tree loss get higher accuracy.
-Table \ref{imagenet} shows the results for the valdidation set of ImageNet dataset.
-ImageNet has 1000 classes and many classes are semantically  similar.
-The tree loss incorporates the similarities to training and get a higher top1 accuracy and top5 accuracy.
-The emojis of Twitter dataset is typically unbalanced and the tree loss works well for unbalanced data.
-Table \ref{twitter} shows the results for validation set and test set of twitter dataset.
-The tree loss achieve the best performance on accuracy and similarity accuracy.
-
+We generate our distance metric over the class labels using the pretrained emoji2vec model \citep{Eisner2016emoji2vecLE},
+which associates each emoji with a vector embedding.
+We then follow the procedure in \citet{stoikos2020multilingual} to train multilingual BERT models \citep{Feng2020LanguageagnosticBS} with the last layers replaced by the three different loss functions.
+Table \ref{table:results} shows the tree loss significantly outperforming the baseline models.
+%Furthermore, the original BERTmoticon model proposed in \citet{stoikos2020multilingual} is only able to predict 80 emoji categories and ignores all other emoji,
+%a restriction they found necessary due to the sample complexity of including more emoji in the classsification problem.
+%But our model using the tree loss is able to predict over 1600 different emoji and still achieves better accuracy than the original BERTmoticon.
 
 \section{Conclusion}
-In this paper, we have presented the tree loss, a drop-in replacement for the cross entropy loss that incorporated class relations. 
-We use properties of stochastic gradient descent to provide the theoretical justifications that the generalization error of the tree loss is better. 
-The tree loss works by re-parameterizing the parameter matrix for cross entropy loss and can be easily implement. 
-We evaluate our tree loss on synthetic data and typically real world data. 
-From the results of experiments, we found the tree loss improve the performance significantly and  help with predicting more similar classes if the model misclassified an example. 
-In our analysis, since the tree loss can obtain background knowledge of classes, it works well for tasks with many classes and data with unbalanced classes. 
+The tree loss is a drop-in replacement for the cross entropy loss for multiclass classification problems.
+It can take advantage of background knowledge about the underlying class structure in order to improve the convergence rate of SGD.
+
+Both our theoretical and empirical results show that the tree loss improves performance over the cross entropy loss in a wide range of circumstances.
+Remarkably, we observe that the tree loss improves performance even when our assumptions about the underlying class structure are perfectly wrong (see Section \ref{sec:synth:eps}).
+We therefore suggest that you replace the cross entropy loss with the tree loss on all of your multiclass problems.
+%there are no downsides there is essentially no downside to using the tree loss as a drop-in replacement for the cross entropy loss.
+%Even if you have no a-priori knowledge about the class structure,
+%and are forced to use a random tree,
+%the tree loss can still improve classification accuracy.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1207,5 +1209,67 @@ In our analysis, since the tree loss can obtain background knowledge of classes,
 %     \newblock Neurogammon wins computer Olympiad.
 %     \newblock \textit{Neural Computation} \textbf{1}(3):321--323.
 % \end{thebibliography}
+
+\appendix
+\section{Related loss functions}
+
+Many alternatives to the cross entropy loss have been proposed.
+
+The tree loss is superficially related to the hierarchical softmax (HSM) because both losses are defined based on tree structures.
+\cite{morin2005hierarchical} introduced the HSM to speed up the computational time of neural network training,
+but the tree loss is used to improve sample efficiency rather than computational efficiency.
+
+\cite{mikolov2013distributed} introduce the word2vec model and experiment with using both the hierarchical softmax and cross entropy with negative sampling.
+They conclude that negative sampling has the best performance both computationally and statistically.
+Since the tree loss is a simple extension of the cross entropy loss,
+negative sampling can be used to speed up the cross entropy loss as well.
+
+\cite{bojanowski2017enriching} introduce the fastText extension of the word2vec model, which uses sub-word information to improve sample efficiency.
+They do not provide any theoretical justification for why their technique should improve sample efficiency,
+but their technique is computationally very similar to the tree loss,
+and so our technique may be able to provide the first theoretical justification for their work.
+
+HSM:
+\begin{equation}
+    \label{eq:xentropy}
+    \ell(W;(\x,y)) = - \log \prod_{k\in P_y}\frac {\exp(-\trans\w_k \x)}{j\in L_k \exp(-\trans \w_j \x)}
+\end{equation}
+where $P_y$ is path from root to node of Huffman Tree,
+$L_k$ are nodes on the level where $k$ are
+
+
+The hierarchical softmax loss aims to improve computation efficiency. 
+\cite{Peng2017IncrementallyLT} introduce a training method incrementally train the hierarchical softmax function for neural network language models.
+They also provide a new stochastic gradient based method to update all the word vectors and their experimental results show the incremental training can save a lot of time.
+\cite{Jiang2017ExplorationOT} explore the tree-based hierarchical softmax method and reform its architecture, making it compatible with modern GPUs.
+\cite{Yang2017OptimizeHS} gives a theoretic analysis on how should organize the hierarchical tree by treating the tree structure as a parameter of the training objective function.
+They propose SemHuff, a new tree constructing scheme based on adjusting the Huffman tree with word similarity knowledge.
+Their experiments results also show that word embeddings trained with optimized hierarchical tree can give better results in various tasks.
+
+\cite{Mohammed2018EffectivenessOH} compare the performance of normal softmax and hierarchical softmax in large scale classification tasks. 
+Normal softmax is computationally expensive for large scale datasets with large number of possible outputs.
+Their experimental results show that normal softmax and hierarchical softmax underperforms on datasets with large number of labels.
+That is also one of our motivations of the tree loss function. 
+Compared to classic cross entropy loss function, the tree loss function performs better on datasets with large number of labels.
+Extreme multi-label classification is difficult, but organizing labels as a tree can handle this problem. 
+
+% \fixme{Write a detailed description of the sim loss}
+
+SimLoss \cite{Kobs2020SimLossCS} is similarity based loss function which incorporates class similarities to support the training of neural network classifiers.
+Cross entropy loss assumes only one class is correct and punishes every misclassification, while Simloss indicates classes have similarities and classifying a target as a similar class is better.
+When calculating the loss function, instead of only taking the probability vector at the target index Simloss also adds the product of similarity between target and other classes and probability vector at the corresponding class. 
+Non zero values of similarity matrix lead to smaller losses when the network gives a high score to classes similar to the correct one. 
+It would allow the classifier to make less severe mistakes as it learns to predict similar classes.
+However, SimLoss does not have any theoretical justification to prove why it can outperform cross entropy.
+SimLoss has a hyperparameter lower bound that controls the minimal class similarity that should have an impact on the network punishment.
+Any similarities below lower bound will be all zeros.
+It implies SimLoss would cost more time to fine tune.
+Our tree loss define a tree structure which can be obtained automatically and it is time-saving.
+\begin{align}
+    L_{Simloss}&=-\frac{1}{N}\log(\sum_{k=1}^{C}S_{y_i,k}\cdot p_i[k])\\
+    % L_{Simloss}=-\frac{1}{N}\log(\sum_{k=1}^{C}S_{y_i,k}\cdot\frac {\exp(-\trans\w_{y_i} \x)}{\sum_{j=1}^C \exp(-\trans \w_j \x)})
+    p_i&=\frac {\exp(-\trans\w_{y_i} \x)}{\sum_{j=1}^C \exp(-\trans \w_j \x)}
+\end{align}
+
 
 \end{document}
