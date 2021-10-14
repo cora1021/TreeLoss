@@ -110,13 +110,14 @@
 
 \newcommand{\dist}[2]{d_{{#1},{#2}}}
 \newcommand{\level}[1]{\texttt{level}({#1})}
+\newcommand{\depth}[1]{\texttt{depth}({#1})}
 
 \newcommand{\h}{\mathcal H}
 \newcommand{\D}{\mathcal D}
 \DeclareMathOperator*{\erm}{ERM}
 
-%\newcommand{\fixme}[1]{\noindent{\color{red}\textbf{FIXME:}  {#1}}}
-\newcommand{\fixme}[1]{}
+\newcommand{\fixme}[1]{\noindent{\color{red}\textbf{FIXME:}  {#1}}}
+%\newcommand{\fixme}[1]{}
 \newcommand{\fixmemike}[1]{\noindent{\color{blue}\textbf{FIXME (Mike):}  {#1}}}
 
 \newcommand{\ignore}[1]{}
@@ -348,14 +349,8 @@ Our contributions are as below:
     \label{fig:labeltree}
 \end{figure*}
 
-\section{The Tree Loss}
+\section{Problem Setting}
 \label{sec:tree}
-
-This section first formally defines our problem setting,
-then formally defines the tree loss.
-We conclude with a comparison between the tree loss and related loss functions.
-
-\subsection{Problem Setting}
 
 We consider the multi-class classification setting with $k$ classes and $d$ input feature dimensions.
 The cross entropy loss is the standard loss function for this setting.
@@ -370,68 +365,131 @@ the variable $W : \R^{k \times d} = (\w_1; \w_2; ...; \w_k)$ is the full paramet
 $\x : \R^d$ is the input feature vector;
 and $y \in [k]$ is the input class label.
 
-\subsection{The Tree Loss}
+The cross entropy loss has no constraints on the weight matrix that cause similar classes to have similar parameter vectors.
+The tree loss fixes this problem, resulting in faster convergence and better generalization.
 
-The tree loss reparameterizes the weight matrix used in the cross entropy loss in order to enforce that semantically similar labels will have similar weight vectors.
-The reparameterization is defined according to a \emph{label tree} structure that captures the similarity between labels.
-And we propose two variants of the tree loss called the $U$ and $V$ variants that use slightly different label tree structures.
-The main purpose of the $U$-tree structure is to simplify the analysis and exposition of the $V$-tree structure,
-and we show later in our theoretical results that the $V$-tree is strictly better than the $U$-tree.
-Figure \ref{fig:labeltree} shows examples of both.
+\section{The Tree Loss}
 
-\subsubsection{The $U$-Tree Loss}
+The main idea of the tree loss is that similar classes should be forced to ``share'' some of their parameters.
+%This sharing causes parameter updates in SGD to also update the parameters of similar classes,
+%resulting in improved generalization.
+The tree loss refactors the cross entropy loss's weight matrix in order to enforce this sharing.
 
-In a $U$-tree, every node is a class and the class of all internal nodes matches the class of one of its children.
-For each class $i$, we define $\parent{i}$ to be the parent of the upper-most node for class $i$,
-and the $\texttt{parent}$ of the root is the 0 vector..
-For example, in the example of Figure \ref{fig:labeltree},
+We propose two variants of the tree loss which enforce this sharing in different ways.
+We begin by introducing the $U$-tree loss,
+which is simpler to explain and analyze.
+Then, we introduce the $V$-tree loss,
+which improves on the $U$-tree loss and is the loss we suggest using in practice.
+Whenever we refer to the tree loss without a qualifier,
+we mean the $V$-tree loss.
+
+%Our analysis in Section \ref{sec:theory} will require a metric structure over the class labels.
+%This metric structure is not needed to explain the construction of the tree loss itself,
+%however, so we defer this explanation until later.
+
+%The tree loss reparameterizes the weight matrix used in the cross entropy loss in order to enforce that semantically similar labels will have similar weight vectors.
+%The reparameterization is defined according to a \emph{label tree} structure that captures the similarity between labels.
+%And we propose two variants of the tree loss called the $U$ and $V$ variants that use slightly different label tree structures.
+%The main purpose of the $U$-tree structure is to simplify the analysis and exposition of the $V$-tree structure,
+%and we show later in our theoretical results that the $V$-tree is strictly better than the $U$-tree.
+%Figure \ref{fig:labeltree} shows examples of both.
+
+\subsection{The $U$-Tree Loss}
+
+Explaining our new $U$-tree parameterization requires introducing some notation.
+
+We define a $U$-tree over the class labels to be a tree where each leaf node is represented by a label,
+and each internal node shares a label with a child node.
+Figure \ref{fig:labeltree} (left) shows an example $U$-tree structure.
+The definition of a $U$-tree is motivated by the cover tree data structure \citep{beygelzimer2006cover},
+which generates $U$-tree structures given a metric over the class labels.
+
+%In a $U$-tree, every node is a class and the class of all internal nodes matches the class of one of its children.
+For each class $i$, we let the sequence $P_i$ denote the path from the leaf node to the root with duplicates removed.
+For example, using the $U$-tree in Figure \ref{fig:labeltree},
 we have
 \begin{equation*}
 \begin{split}
-    \parent{\texttt{husky}} &= \texttt{boxer} \text{, and}\\
-    \parent{\texttt{bear}} &= \texttt{boxer} \text{, and}\\
-    \parent{\texttt{boxer}} &= \texttt{truck} .\\
+    P_{\texttt{bear}} &= (\texttt{bear}, \texttt{boxer}, \texttt{truck}) \\
+    P_{\texttt{sheepdog}} &= (\texttt{sheepdog}, \texttt{boxer}, \texttt{truck}) \\
+    P_{\texttt{truck}} &= (\texttt{truck})
 \end{split}
 \end{equation*}
-We associate for each class $i$ a new parameter vector $\uu_i$ and set
+For each class $i$, we define $\parent{i}$ to be the first node in $P_i$ not equal to $i$.
+In other words, $\parent{i}$ is the parent of the upper-most node for class $i$.
+%For example, using the $U$-tree structure in Figure \ref{fig:labeltree},
+%we have
+%\begin{equation*}
+%\begin{split}
+    %\parent{\texttt{husky}} &= \texttt{boxer} \text{, and}\\
+    %\parent{\texttt{bear}} &= \texttt{boxer} \text{, and}\\
+    %\parent{\texttt{boxer}} &= \texttt{truck} .\\
+%\end{split}
+%\end{equation*}
+
+We are now ready to introduce the $U$-tree parameterization.
+Intuitively, we will represent each parameter as the difference between itself and it's parent in the $U$-tree.
+We associate for each class $i$ a new parameter vector $\uu_i$ defined to be
 \begin{equation}
-    \w_i = \w_{\parent{i}} - \uu_i,
+    \uu_i =
+    \begin{cases}
+        \w_i                    & \text{if $i$ is the root} \\
+        \w_{\parent{i}} - \w_i  & \text{otherwise}
+    \end{cases}
+    ,
+\end{equation}
+and we define the parameter matrix $U : \mathbb R^{k\times d}$ to be $(\uu_1;\uu_2;...;\uu_k)$.
+We can recursively rewrite the original parameter vectors in terms of this new parameterization as
+\begin{equation}
+    \w_i = \sum_{j\in P_i} \uu_i
+    .
     \label{eq:uu}
 \end{equation}
-and we define the parameter matrix $U : \mathbb R^{k\times d}$ to be $(\uu_1;...;\uu_k)$.
 The $U$-tree loss is then defined by substituting \eqref{eq:uu} into \eqref{eq:xentropy} to get
 \begin{equation*}
-    \ell(U;(\x,y)) = - \log \frac {\exp(-(\trans\uu_{\parent{y}}-\trans\uu_y) \x)}{\sum_{j=1}^k \exp(-(\trans\uu_{\parent{j}}-\trans \uu_j) \x)}
+    %\ell(U;(\x,y)) = - \log \frac {\exp(-(\trans\uu_{\parent{y}}-\trans\uu_y) \x)}{\sum_{j=1}^k \exp(-(\trans\uu_{\parent{j}}-\trans \uu_j) \x)}
+\ell(U;(\x,y)) = - \log \frac {\exp(-\sum_{j\in P_y}\trans\uu_j \x)}{\sum_{i=1}^k \exp(- \sum_{j\in P_i}\trans\uu_j \x)}
 \end{equation*}
 We use the same $\ell$ notation for the standard cross entropy loss function and the $U$-Tree loss because the function is exactly the same;
-the only difference is how we represent the parameters.
+the only difference is how we represent the parameters during the training procedure.
 
-\subsubsection{The $V$-Tree Loss}
+\subsection{The $V$-Tree Loss}
 
 The $V$-tree is constructed from the $U$-tree by replacing all non-leaf nodes with ``pseudoclasses''.
-Let $k'$ be the total number of nodes in the $V$-tree;
-so $k'$ equals $k$ plus the number of internal nodes.
-For each class $i$, we let the sequence $P_i$ denote the path from the leaf node to the root.
-For example, using the $V$-tree in Figure \ref{fig:labeltree},
-we have
+Let $k'$ denote the total number of classes plus the total number of pseudoclasses.
+%so $k'$ equals $k$ plus the number of internal nodes.
+%For each class $i$, we let the sequence $P_i$ denote the path from the leaf node to the root.
+%For example, using the $V$-tree in Figure \ref{fig:labeltree},
+%we have
+
+We let $P_i$ be defined as the path from leaf node $i$ to the root as before,
+but note that there are now no duplicates to remove and so the paths are longer.
+For example,
 \begin{equation*}
 \begin{split}
+    P_{\texttt{bear}} &= (\texttt{bear}, \textit{pseudo2}, \textit{pseudo1}) \\
     P_{\texttt{sheepdog}} &= (\texttt{sheepdog}, \textit{pseudo3}, \textit{pseudo2}, \textit{pseudo1} ) \\
     P_{\texttt{truck}} &= (\texttt{truck}, \textit{pseudo4}, \textit{pseudo1} )
 \end{split}
 \end{equation*}
-Next, we associate a vector $\vv_i$ to each node $i$ in the tree structure.
-In particular, there is a vector $\vv_i$ for each class and for each pseudo-class,
-so there are more parameter vectors for the $V$-tree loss than either the $U$-tree loss or the standard cross entropy loss.
+%Next, we associate a vector $\vv_i$ to each node $i$ in the tree structure.
+%In particular, there is a vector $\vv_i$ for each class and for each pseudo-class,
+%so there are more parameter vectors for the $V$-tree loss than either the $U$-tree loss or the standard cross entropy loss.
+The $\vv_i$ and $V$ parameters are now defined analogously to the $\uu_i$ and $U$ parameters, but over the $V$-tree structure instead of the $U$-tree structure.
+An important distinction between the $V$ and $U$ parameter matrices is that they will have different shapes.
+The $U$ matrix has shape $k \times d$, which is the same as the $W$ matrix,
+but the $V$ matrix has shape $k' \times d$,
+which is potentially a factor of up to 2 times larger.
 
-Finally, we reparameterize the weights for the cross entropy loss as the sum of the vectors along the paths.
-Specifically, we set the weight vector for class $i$ to be 
-\begin{equation}
-    \label{eq:covertree-reparam}
-    \w_j = \sum_{j\in P_i} \vv_i
-    .
-\end{equation}
-The $V$-tree loss is defined by substituting \eqref{eq:covertree-reparam} into \eqref{eq:xentropy} to get
+%Finally, we reparameterize the weights for the cross entropy loss as the sum of the vectors along the paths.
+%Specifically, we set the weight vector for class $i$ to be 
+%\begin{equation}
+    %\label{eq:covertree-reparam}
+    %\w_j = \sum_{j\in P_i} \vv_i
+    %.
+%\end{equation}
+%The $V$-tree loss is defined by substituting \eqref{eq:covertree-reparam} into \eqref{eq:xentropy} to get
+The $V$-tree loss is defined by using the $V$ matrix to parameterize the cross entropy loss, giving
 \begin{equation}
     \ell(V;(\x,y)) = - \log \frac {\exp(-\sum_{k\in P_y}\trans\vv_k \x)}{\sum_{j=1}^k \exp(- \sum_{k\in P_j}\trans\vv_k \x)}
     .
@@ -449,14 +507,21 @@ This will cause the $\w_{\texttt{husky}}$ and $\w_{\texttt{bear}}$ parameters (a
 Because $P_\texttt{husky}$ has a larger overlap with $P_\texttt{sheepdog}$ than $P_\texttt{bear}$,
 the parameters of this more similar class will be updated more heavily.
 
+This reparameterization is reminiscent of the way that fastText \citep{bojanowski2017enriching} reparameterizes the word2vec \citep{Mikolov2013EfficientEO} model to improve statistical efficiency.
+Two notable difference, however, are that fastText is a domain-specific adaptation and provides no theoretical guarantees;
+our tree loss works on any domain and provides theoretical guarantees.
+
 \subsection{Implementation Notes}
 
 Both the $U$-tree and $V$-tree losses are easy to implement in practice using the built-in cross entropy loss function in libraries like PyTorch \citep{NEURIPS2019_9015} or Tensorflow \citep{tensorflow2015-whitepaper}.
-The only change needed is to define the loss in terms of the sum of vectors $V$ instead of a variable tensor $W$.
-This ensures that the loss is implemented efficiently and is numerically stable.
+%The only change needed is to pass in a variable representing the $U$/$V$ parameter matrices to the cross entropy loss function
+The only change needed is to represent the $W$ parameter matrix in your code as an appropriate sum over the $U$ or $V$ parameter matrices.
+The magic of automatic differentiation will then take care of the rest and ensure that the underlying $U$ or $V$ matrix is optimized.
+Our TreeLoss library\footnote{URL blinded for peer review.} provides easy-to-use functions for generating these matrices,
+and so modifying code to work with the tree loss is a 1 line code change.
 
-In practice, the $V$-tree loss is slightly slower than the standard cross entropy loss and $U$-tree losses due to the additional summation over the paths.
-In our experiments, we found this this to cause the $V$-tree loss to be about twice as slow.
+In practice, the tree loss is slightly slower than the standard cross entropy loss due to the additional summation over the paths.
+In our experiments, we observed an approximately 2x slowdown.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -465,23 +530,23 @@ In our experiments, we found this this to cause the $V$-tree loss to be about tw
 
 It is well known that when using the standard cross entropy loss,
 SGD converges at a rate of $O(\sqrt{k/n})$.
-Our theoretical results asymptotically improve this convergence rate.
+The tree loss's parameter sharing scheme asymptotically improves this convergence rate.
 
-With an appropriately constructed label tree,
-we show convergence at a rate of $O(\sqrt{\log k/n})$ or $O(\sqrt{k^{1-1/c}/n})$,
-where $c$ is a measure of difficulty of the problem.
+We assume that the class labels have a metric structure and let $c$ denote the doubling dimension of this metric.
+This $c$ is a measure of the difficulty of our problem,
+with larger $c$ implying more complex metrics and a more difficult learning problem.
+This is captured in our convergence rates,
+which show show that the tree loss converges at a rate of $O(\sqrt{\log k/n})$ for $c\le1$ or $O(\sqrt{k^{1-1/c}/n})$ for $c>1$.
+
 But what happens if the tree is poorly constructed?
 Remarkably, nothing bad.
 We also show that for arbitrarily bad label tree structures,
 the $U$ and $V$ losses maintain a $O(\sqrt{k/n})$ convergence rate.
 This suggests that there is essentially no downside to using the tree loss parameterizations.
 
-\fixme{
-Our analysis relies on simple properties of stochastic gradient descent,
-and we view the simplicity of our analysis as a major strength of the tree loss.
-In this section, we first review standard results of stochastic gradient descent needed for our analysis.
-Then we formally state and prove our main result.
-}
+Our analysis relies on standard properties of stochastic gradient descent.
+In this section, we first review these results,
+then we formally state and prove our main result.
 
 \subsection{SGD Background}
 
@@ -489,27 +554,36 @@ SGD is a standard algorithm for optimizing convex losses,
 and it has many variations.
 Our analysis uses the results from Chapter 14 of \citet{shalev2014understanding} which are based off of a version of SGD that uses parameter averaging.\footnote{
 Other variants of SGD have similar results,
-and our results are easy to generalize to other SGD variants.
-We refer the reader to \citet{shalev2014understanding} for a discussion of these variants.}
-In this section we recall these results,
-occasionally changing the names of variables to avoid conflicts with variable names used elsewhere in this paper.
+and we refer the reader to \citet{shalev2014understanding} for a discussion of these variants.}
+In this section we review these results.
+We follow the notation of \citet{shalev2014understanding} as closely as possible,
+but we occasionally change the names of variables to avoid conflicts with variable names used elsewhere in this paper.\footnote{
+    Specifically, we replace all Latin variables with Greek alternatives.
+    We use $\theta$ instead of $\w$, $\nu$ instead of $\vv$, and $\beta$ instead of $B$.
+    The Greek letters $\rho$ and $\eta$ have the same meaning in both documents.
+}
 
-We assume we are optimizing a function $f : \Theta \to \mathbb R$,
-and that we are only given noisy samples of the function and its gradient.
-We let $\theta^{t}$ denote the parameter value at iteration $t$,
+SGD is an iterative procedure for optimizing a function $f : \Theta \to \mathbb R$ given only noisy samples of the function's gradient.
+We let $\theta^{(t)}$ denote the parameter value at iteration $t$,
 and $\eta : \mathbb R$ be the step size.
+Let $\nu_t$ be a noisy gradient of $f$ satisfying
+\begin{equation}
+    \E[\nu_t | \theta^{(t)}] = \nabla f(\theta^{(t)}).
+\end{equation}
 Then the parameter update for step $t$ is defined to be
 \begin{equation}
-    \theta^{(t+1)} = \theta^{(t)} - \eta \nabla f(\theta^{(t)}).
+    \theta^{(t+1)} = \theta^{(t)} - \eta \nabla \nu_t
+    .
 \end{equation}
 When using parameter averaging, the final model parameters are defined to be
 \begin{equation}
     \bar\theta = \frac1T \sum_{i=1}^T \theta^{(t)}
     .
 \end{equation}
-Parameter averaging is not often used in practice because of the memory requirements,
-but we use it here due because theorems using parameter averaging are typically much easier to state and prove.
-Equivalent results without parameter averaging typically require and additional $\log T$ factor in their convergence rates\citep{}.
+Parameter averaging is not often used in practice because it has a large memory overhead,
+but it is widely used in theoretical analysis of SGD.
+Theorems using parameter averaging are typically much easier to state and prove,
+and equivalent results without parameter averaging typically require an additional $\log T$ factor in their convergence rates \citep{rakhlin2011making}.
 
 The main result we rely on is a bound on the convergence rate of SGD for convex Lipschitz functions.
 We reproduce Theorem 14.8 of \citet{shalev2014understanding} in the theorem below.
@@ -517,9 +591,9 @@ We reproduce Theorem 14.8 of \citet{shalev2014understanding} in the theorem belo
 \begin{theorem}
     \label{thm:sgd}
     Let $\beta,\rho>0$.
-    Let $f$ be a convex function and let $\star \theta = \argmin_{\theta : \ltwo{\theta}\le \beta} f(\theta)$.
+    Let $f$ be a convex, $\rho$-Lipschitz function and let $\star \theta = \argmin_{\theta : \ltwo{\theta}\le \beta} f(\theta)$.
     Assume that SGD is run for $T$ iterations with $\eta = \sqrt{\frac{\beta^2}{\rho^2 T}}$.
-    Assume that for all $t$, $\ltwo{\nabla f(\theta^{(t)})} \le \rho$.
+    %Assume that for all $t$, $\ltwo{\nabla f(\theta^{(t)})} \le \rho$.
     Then,
     \begin{equation}
         \E f(\bar \theta) - f(\star \theta) \le \frac{\beta\rho}{\sqrt{T}}
@@ -530,7 +604,7 @@ We reproduce Theorem 14.8 of \citet{shalev2014understanding} in the theorem belo
 \subsection{SGD and Statistical Learning}
 
 We now introduce more statistical learning theory notation,
-then apply Theorem \ref{thm:sgd} above to bound the rate of learning.
+and apply Theorem \ref{thm:sgd} above to bound the rate of learning.
 
 Define the true loss of our learning problem as
 \begin{equation}
@@ -542,78 +616,84 @@ The optimal parameter vector is defined to be the minimum of the true loss:
     \star A = \argmin_{A} L_D(A).
 \end{equation}
 In order to apply Theorem \ref{thm:sgd} to a learning problem,
-we make the following assumption about our the size of our data points:
+we make the following assumption about the size of our data points.
 \begin{assumption}
     \label{ass:lip}
     For each feature vector $\x$ in the data set, 
         $\ltwo{\x} \le \rho$
         .
 \end{assumption}
+%For standard data distributions (e.g. any sub-normal distribution),
+%$\rho$ is upper bounded by $O(\sqrt{d})$.
 Under this assumption, the cross entropy loss $\ell$ is $\rho$-Lipschitz for all parameterizations,
 and the true loss $L_D$ is therefore also $\rho$-Lipschitz.
 
-Applying Theorem \ref{thm:sgd} with $f=L_D$ gives
-\begin{corollary}
+We use SGD to optimize $L_D$.
+We let $f=L_D$, and $\theta = A$,
+so $\nu_t$ is the gradient of $\ell$ on the $t$th data point.
+Applying Theorem \ref{thm:sgd} gives the following convergence bound.
+\begin{lemma}
     \label{ref:cor:A}
-    Under Assumption \ref{ass:lip}, we have that for any parameterization $A$ of the cross entropy loss,
+    Under Assumption \ref{ass:lip},
+    we have that for any parameterization $A$ of the cross entropy loss,
+    SGD converges at the rate
     \begin{equation}
         \E L_D(\bar A) - L_D(\star A) \le \frac{\lF{\star A}\rho}{\sqrt n}.
         \label{eq:Aconv}
     \end{equation}
-\end{corollary}
+\end{lemma}
 
-We can now bound the convergence of the standard cross entropy loss and the $U$ and $V$-tree losses by bounding the Frobenius norms of their parameter matrices.
+We emphasize that this convergence rate above is both computational and statistical.
+The expression on the left hand side of \eqref{eq:Aconv} is equivalent to the expected generalization error of the parameter $\bar A$,
+and so we use the terms ``convergence rate'' and ``generalization error'' essentially interchangeably.
 
-In order to recover the standard convergence rate of multiclass classification, we make the following assumption.
+The important intuition of Lemma \ref{ref:cor:A} is that the generalization error of the cross entropy loss depends on the Frobenious norm of the optimal parameter matrix.
+We can therefore compare the convergence of the standard parameterization with the $U$/$V$-tree parameterizations by comparing these norms.
+
+Our next task is to recover the standard convergence rate of multi-class classification, and so we will now bound $\lF{\star W}$.
+We make the following assumption.
 \begin{assumption}
     \label{ass:B}
     For each class $i$, the optimal parameter vector $\star\w_i$ satisfies
         $\ltwo{\star\w_i} \le B$
         .
 \end{assumption}
-Note that this assumption is not limiting because the value of $B$ need not be known during the optimization procedure.
-
+%Note that this assumption is not limiting because the value of $B$ need not be known during the optimization procedure.
+%
 It follows that
 \begin{equation}
     \lF{\star W}^2 = \sum_{i=1}^k \ltwo{\star\w_i} \le kB^2.
     \label{eq:starW}
 \end{equation}
 Substituting Eq \eqref{eq:starW} into \eqref{eq:Aconv} gives the following bound.
-
-\begin{theorem}
+\begin{corollary}
 \label{theorem:xentropy}
-    Under assumptions \ref{ass:lip} and \ref{ass:B} above,
-then the parameter vector $\bar W$ estimated from one epoch of SGD satisfies
+    Under assumptions \ref{ass:lip} and \ref{ass:B},
+    then the generalization error of the standard cross entropy parameterization when trained with SGD is
 \begin{equation}
     \E L_D(\bar W) - L_D(W^*)
     \le \frac {\sqrt kB\rho}{\sqrt n}
     .
 \end{equation}
-\end{theorem}
-\fixme{
+\end{corollary}
+
+\ignore{
 It is important to note that this result above is an upper bound and not a lower bound.
 This $O(\sqrt{k/n})$ convergence rate matches the convergence rate implied by the Nataranj dimension \citep{}.
 We are not aware of any lower bounds for SGD in the Lipschitz setting.
 \citet{nguyen2018tight,jentzen2020lower} study the strongly convex case and find that the upper bounds match the lower bounds.
 }
 
-\subsection {Bad Tree Structures}
+\subsection{Bounding the Tree Loss}
 
-\begin{lemma}
-    \label{lemma:starV}
-    We have that for all $V$-trees derived from a $U$-tree,
-    \begin{equation}
-        \lF{\star V} \le \lF{\star U}.
-    \end{equation}
-\end{lemma}
-\fixme{
-\begin{proof}
-\end{proof}
-}
+We now bound the Frobenius norm of $\star U$ in order to bound the generalization of the $U$-tree loss.
+By construction, $\lF{\star V} \le \lF{\star U}$,
+so this will also bound the convergence rates of the $V$-tree loss.
 
-The following lemma shows that even for arbitrarily bad tree structures,
-the bound on the parameter spaces cannot be too bad.
-
+The analysis is divided into two parts.
+First, we make no assumptions that the $U$-tree structure is good,
+and we show that even in the worst case $\lF{\star U} = O(\lF{\star W})$.
+This implies that using the tree loss cannot significantly hurt our performance.
 \begin{lemma}
     \label{lemma:starU}
     Under assumption \ref{ass:B},
@@ -634,101 +714,74 @@ the bound on the parameter spaces cannot be too bad.
         .
     \end{align}
 \end{proof}
-
-\subsection{Good Tree Structures}
-
+Now we consider the more important case of when we have a useful $U$-tree structure that meaningfully captures the similarity between classes.
+This idea is captured in the following assumption.
 \begin{assumption}
-We are given a distance metric $d$ over the labels such that for all labels $i$ and $j$,
+    \label{ass:metric}
+    Let $\lambda >= 1$, and $d$ be a distance metric over the labels such that for all labels $i$ and $j$,
 \begin{equation}
     \frac 1 \lambda d(i,j)
     \le \ltwo{\star \w_i - \star \w_j}
     \le \lambda d(i, j).
 \end{equation}
-We denote by $c$ the doubling dimension of the metric $d$.
+We denote by $c$ the doubling dimension of the metric $d$,
+and we assume that the $U$-tree structure is built using a cover tree \citep{beygelzimer2006cover}.
 \end{assumption}
+
+The Cover Tree was originally designed for speeding up nearest neighbor queries in arbitrary metric spaces.
+The definition is rather technical, so we do not restate it here.
+Instead, we mention only two important properties of the cover tree.
+First, it can be constructed in time $O(k)$,
+so building the cover tree is a cheap operation that has no meaningful impact on training performance.
+It also only has to be done in the initialization step of the learning process, and not on every iteration.
+Second, the cover tree construction has a hyperparameter which we call \texttt{base}.
+This hyperparameter controls the fanout and depth of the tree because at any node $i$ at depth $\depth{i}$ in the tree,
+the cover tree maintains the invariant that $d(i, \parent{i}) \le \texttt{base}^{-\depth{i}}$.
+Increasing the $\texttt{base}$ hyperparameter results in shorter, fatter trees,
+and decreasing it results in taller, narrower trees.
+Our analysis follows the convention of setting $\texttt{base}=2$,
+but we show in the experiments below that good performance is achieved for a wide range of base values.
+
+The following Lemma uses Assumption \ref{ass:metric} and properties of the cover tree to bound the norm of $\lF{\star U}$.
+It is our main technical result and the proof is deferred to the appendix.
 
 \begin{lemma}
     \label{lemma:main}
-    When $c\le1$, we have that
+    Under Assumptions \ref{ass:B} and \ref{ass:metric},
+    when $c\le1$, we have that
     \begin{equation}
-        \lF{\star U} \le \tfrac{1}{\sqrt2}\lambda B \sqrt{\log_2 k}.
+        \lF{\star U} \le \tfrac{1}{\sqrt2}\lambda B \sqrt{\log_2 k},
         \label{eq:c<=1}
     \end{equation}
-    When $c>1$, we have that
+    and when $c>1$, we have that
     \begin{equation}
         \lF{\star U} \le \sqrt{5}\lambda B \sqrt{k^{(1-1/c)}}.
         \label{eq:c>1}
     \end{equation}
 \end{lemma}
 
-\fixme{
-\begin{proof}
-    First, we review some simple properties of the cover tree structure that will be needed in our proof.
-    Let $q$ denote the maximum number of children of any node in the cover tree.
-    A standard property of cover trees is that $q \le (4^c)$ \citep[Lemma 25]{izbickithesis}.
-    Let $Q_i$ denote the number of nodes at level $i$ in the cover tree.
-    Then we have that $|Q_i| \le q^i.$
-    Finally, let $r$ be the height of the cover tree.
-    Without loss of generality, we analyze the bound when the cover tree is perfectly balanced and so $r = \log_q k = \log_2 k / (2c)$.
+We note that embedding techniques can be used to reduce the intrinsic dimension of the metric ($c$) at the expense of increasing the metric's distortion,
+but we make no attempt to optimize this tradeoff in this paper.
 
-We have that
-\begin{align}
-    \lF{\star U}^2
-    &= \sum_{i=1}^k \ltwo{\star\uu_i}^2 \\
-    &= \sum_{i=0}^r \sum_{j\in Q_i} \ltwo{\star\uu_j}^2 \\
-    &= \sum_{i=0}^r \sum_{j\in Q_i} \ltwo{\star\w_j - \star\w_{\parent{j}}}^2 \\
-    &\le \sum_{i=0}^r \sum_{j\in Q_i} \lambda^2 d(j, \parent{j})^2 \\
-    &\le \sum_{i=0}^r \sum_{j\in Q_i} \lambda^2 (B/2^i)^2 \\
-    &\le \sum_{i=0}^r q^i \lambda^2 (B/2^i)^2 \\
-    &\le \sum_{i=0}^r \lambda^2 B^2 (q/4)^i 
-    \label{eq:precases}
-\end{align}
-We proceed by considering the case of $c\le1$ and $c>1$ separately.
-
-When $c\le1$, $q\le4$.
-Substituting into Eq \eqref{eq:precases}, we have
-\begin{align}
-    \lF{\star U}^2
-    &\le \sum_{i=0}^r \lambda^2 B^2 \\
-    &= (r+1) \lambda^2 B^2 \\
-    &= \frac{\log_2k}{2c} \lambda^2 B^2 \\
-    &\le \frac{\log_2k}{2} \lambda^2 B^2
+We now state our main result.
+It is an immediate consequence of the fact that $\lF{\star V} \le \lF{\star U}$ and Lemmas \ref{ref:cor:A} and \ref{lemma:main}.
+\begin{corollary}
+    \label{cor:main}
+    Under assumptions \ref{ass:lip}, \ref{ass:B}, and \ref{ass:metric},
+    when $c\le1$, the generalization error of the tree loss is bounded by
+\begin{equation}
+    \E L_D(\bar V) - L_D(V^*)
+    \le \frac {\lambda B\rho \sqrt{\log_2 k}}{\sqrt 2n}
     .
-\end{align}
-This matches Eq \eqref{eq:c<=1} in the lemma's statement.
-
-When $c>$, then $q>4$.
-We first show the following equality.
-\begin{align}
-\left(\frac q 4\right)^r
-&=
-\left(\frac q 4\right)^{\log_q k}\\
-&=
-\frac{k}{4^{\log_q k}}\\
-&=
-\frac{k}{4^{{\log_4 k}/{\log_4 q}}}\\
-&=
-\frac{k}{k^{1/\log_4 q}}\\
-&=
-k^{\left(1 - {1}/{\log_4 q}\right)} \\
-&=
-k^{\left(1 - 1/c\right)}
-.
-\label{eq:lFU:frac}
-\end{align}
-Substituting into Eq \eqref{eq:precases}, we have
-\begin{align}
-    \lF{\star U}^2
-    &= \lambda^2B^2 \left(\frac{(q/4)^{r+1}-1}{q/4-1}\right) \\
-    \label{eq:lFU:4}
-    &= \lambda^2B^2 \left(\frac{(q/4)k^{(1-1/c)}-1}{q/4-1}\right) \\
-    &\le \lambda^2B^2 \left(\frac{(q/4)k^{(1-1/c)}}{q/4-1}\right) \\
-    &\le 5 \lambda^2B^2 k^{(1-1/c)}
-    \label{eq:lFU:5}
-\end{align}
-    Inequality \eqref{eq:lFU:5} follows because $\tfrac{q/4}{q/4-1} \le 5$ for integer values of $q>4$.
-\end{proof}
-}
+\end{equation}
+    When $c>1$, the generalization error of the tree loss is bounded by
+\begin{equation}
+    \E L_D(\bar V) - L_D(V^*)
+    \le \frac {\lambda B\rho \sqrt{5 k^{(1-1/c)}}}{\sqrt n}
+    .
+\end{equation}
+\end{corollary}
+These convergence rates are asymptotically better than the convergence rates for the standard parameterization of the cross entropy loss.
 
 %Substituting \eqref{eq:lFU:frac} info \eqref{eq:lFU:5} gives
 %\begin{align}
@@ -760,61 +813,91 @@ Substituting into Eq \eqref{eq:precases}, we have
 \section{Experiments}
 \label{sec:experiment}
 
+We evaluate the tree loss on 4 synthetic and 3 real world experiments.
+We compare the tree loss to the standard cross entropy loss, the recently proposed simloss \citep{Kobs2020SimLossCS}, and the confusingly similar hierarchical softmax \citep{morin2005hierarchical}.
+The results confirm our theoretical findings from Section \ref{sec:theory} and demonstrate that the tree loss significantly improves the performance of these baseline losses in a wide range of scenarios.
+
 \subsection{Synthetic data}
 
-In this experiment we will demonstrate the tree loss's effectiveness on a simple multiclass logistic regression problem.
-The problem will be specifically designed to be convex and have low intrinsic dimension in the class labels in order to illustrate the advantages of the cover tree loss.
+Experiments on synthetic data let us control various hyperparameters of the dataset in order to see how the tree loss behaves in a wide range of scenarios.
+The next subsection introduces our data generation procedure,
+and then subsequent subsections describe 4 different experiments baed on this procedure.
 
 \subsubsection{Data Generation Procedure}
 \label{sec:exp:synth:problem}
 
+Our data generation procedure has 4 key hyperparameters:
+the number of data points $n$, the number of feature dimensions $d$, the number of classes $k$, and a randomness parameter $\sigma$.
+
 Let $\mathcal N$ be the standard normal distribution.
-Then sample the true parameter matrix
+Then sample the true parameter matrix as
 \begin{align}
     \star W \sim \mathcal N^{k\times d}
     .
 \end{align}
 For all $i \in [k]$, the row $\w_i^*$ of $W^*$ corresponds to the parameter vector for class $i$ and has dimension $d$.
+Standard results on random matrices show that $\lF{\star W} = O(\sqrt{kd})$ with high probability, as assumed by our theory.
 
 For each data point $i\in[n]$,
 we sample the data point according to the following rules:
 \begin{align}
     y_i &\sim \text{Uniform}([k]), \text{and} \\
-    \x_{i} &\sim \mathcal N(\w^*_{y_i}; \sigma),
+    \x_{i} &\sim \mathcal N(\w^*_{y_i}; \sigma).
 \end{align}
-where $\sigma$ controls the noise in the dataset.
-Increasing $\sigma$ adds noise and makes classes harder to distinguish,
-whereas decreasing $\sigma$ reduces noise and makes the classes easier to distinguish.
 
-With our problem defined in this way, it is clear that the empirical risk minimizer
-\begin{equation}
-    \hat W = \argmin_{W} \tfrac 1 n \ell(W; \x_i, y_i)
-\end{equation}
-converges to $W^*$.
+Observe that larger $\sigma$ values result in
+more noise in the data points,
+making the classes harder to distinguish,
+and increasing the bayes error of the problem.
+Also observe that for any two classes $i$ and $j$,
+the distance between the two classes $\ltwo{\star\w_i - \star\w_j} = O(\sqrt{d})$.
+This implies that as $d$ increases,
+the separation between data points from different classes will also increase,
+reducing the bayes error of the problem.
+
+%With our problem defined in this way, it is clear that the empirical risk minimizer
+%\begin{equation}
+    %\hat W = \argmin_{W} \tfrac 1 n \ell(W; \x_i, y_i)
+%\end{equation}
+%converges to $W^*$.
 
 
 \subsubsection{Experiment I: Data Regimes}
 
-In this experiment, we investigate the tree loss's performance in a wide range of settings as we vary the number of data points ($n$), the number of dimensions ($d$), number of class labels ($k$), and the Bayes error ($\sigma$) of our problem.
-First, we construct a standard experimental setting with $n=100$, $d=64$, $k=10$, and $\sigma=1$.
-Then, for each of these parameters, we investigate the effect of that parameter's performance on the problem by varying it over a large range.
+Our first experiment investigates the tree loss's performance in a wide range of statistical settings controlled by the dataset hyperparameters ($n$, $d$, $k$, and $\sigma$).
+We use a baseline experimental setting with $n=100$, $d=64$, $k=10$, and $\sigma=1$.
+For each of the hyperparameters, we investigate the effect of that hyperparameter's performance on the problem by varying it over a large range.
 For each value in the range, we:
-(1) randomly sample 50 problems using the procedure described in Section \ref{sec:exp:synth:problem};
-(2) for each problem, we:
-(2a) sample a training set with $n$ data points and a test set with 10000 data points;
+(1) randomly sample 50 different $\star W$ using the procedure described in Section \ref{sec:exp:synth:problem};
+(2) for each $\star W$, we:
+(2a) sample a training set with $n$ data points and a test set with 10000 data points\footnote{The size of the test set is fixed and large to ensure that our results have high statistical significance.};
 (2b) train 4 models on the training set using the standard cross entropy loss, tree loss, simloss, and hierarchical softmax;
-(2c) report the average accuracy accross the sampled test sets.
-
+(2c) report the average accuracy across the sampled test sets.
 Figure \ref{fig:synth:1} shows the results of these experiments.
 As our theory suggests, the tree loss outperforms all other losses in all regimes.
-Consider the top-left plot.
-As the number of data points $n$ gets large,
-then all of the models have accuracies that converge to 1;
-for most problems, however, the number of data points will not be sufficiently large to drive the generalization error to 0,
-and the fewer data points that the problem has,
-the better the tree loss performs compared to other losses.
 
-\fixme{
+Consider the top-left plot.
+This plot has a low bayes error, and so all the variation in performance we see is due to the generalization error of the models.
+As the number of data points $n$ grows large,
+then all models generalize well and have accuracies that converge to 1 (except the hierarchical softmax, which is designed for speed not statistical performance).
+In other words, as $n$ grows large, its influence on the cross entropy's convergence rate of $O(\sqrt{k/n})$ dominates the influence of $k$.
+When the number of data points is small (as it typically is in the real world),
+then the dependence on $k$ becomes more important.
+The tree loss's dependence of $O(\sqrt{k^{1-1/c}/n})$ is strictly better than the cross entropy loss's,
+explaining the observed improved performance.
+A similar effect explain's our model's observed improved performance in the bottom-left plot as $k$ varies.
+
+Now consider the top-right plot.
+The bayes error of our problem setup is inversely related to the problem dimension $d$ (see observations in Section \ref{sec:exp:synth:problem}),
+so this plot compares the different loss's performance on different probablem difficulties.
+On maximally easy (large $d$) and hard (small $d$) problems,
+then the tree loss performs similarly to the other loss functions because the performance is dominated by the bayes error and no improvement is possible.
+The main advantage of the tree loss is in the mid-difficulty problems.
+In this regime, performance is dominated by the generalization ability of the different losses,
+and the tree loss's improved generalization results in noticable improvements.
+The bottom-right plot tells a similar story but controls the difficulty of the problem directly by tuning the randomness $\sigma$.
+
+\ignore{
 From figure \ref{fig.1}, it is clear that the tree loss achieves the best performance. 
 The tree loss converges at a faster rate as number of data points and dimension of parameter matrix increase.
 If we increase the number of classes, the tree loss can keep a higher accuracy and the accuracy of SimLoss is higher than cross entropy loss and hierarchical softmax.
@@ -907,13 +990,12 @@ when $\epsilon=1$, this cover tree structure will be maximally bad, and $\lambda
 Figure \ref{fig:synth:eps} shows the performance of the tree loss as a function of $\epsilon$.
 Remarkably, the tree loss outperforms the standard cross entropy loss even when using a perfectly bad tree structure (i.e. when $\epsilon=1$).
 This surprising empirical finding actually agrees with our theoretical results in two ways.
-First, Lemmas \ref{lemma:starV} and \ref{lemma:starU} together imply that that $\lF{\star V} = O(\lF{\star W})$,
+First, Lemma \ref{lemma:starU} implies that that $\lF{\star V} = O(\lF{\star W})$,
 and so no tree structure can perform asymptotically worse than the standard cross entropy loss.
 Second, when $\epsilon=1$ and we have a perfectly random tree structure,
 the distance $d_\epsilon$ can still be embedded into the ideal metric $d$ with some large (but finite!) $\lambda$.
-Asymptotically, Lemma \ref{lemma:main} then implies that SGD converges at the rate $O(\sqrt{k^{1-1/c}})$,
+Asymptotically, Corollary \ref{cor:main} then implies that SGD converges at the rate $O(\sqrt{k^{1-1/c}})$,
 which is less than the convergence rate of the standard cross entropy loss.
-\fixme{replace lemma with theorem}
 
 \begin{figure}
 \includegraphics[width=\columnwidth,height=1.5in]{fig/new_img/loss_vs_structure.png}
@@ -1337,4 +1419,332 @@ Our tree loss define a tree structure which can be obtained automatically and it
 \end{align}
 
 }
+
+\clearpage
+\appendix
+
+\section{Theoretical Results}
+\label{sec:theory}
+
+It is well known that when using the standard cross entropy loss,
+SGD converges at a rate of $O(\sqrt{k/n})$.
+The tree loss's parameter sharing scheme asymptotically improves this convergence rate.
+
+We assume that the class labels have a metric structure and let $c$ denote the doubling dimension of this metric.
+This $c$ is a measure of the difficulty of our problem,
+with larger $c$ implying more complex metrics and a more difficult learning problem.
+This is captured in our convergence rates,
+which show show that the tree loss converges at a rate of $O(\sqrt{\log k/n})$ for $c\le1$ or $O(\sqrt{k^{1-1/c}/n})$ for $c>1$.
+
+But what happens if the tree is poorly constructed?
+Remarkably, nothing bad.
+We also show that for arbitrarily bad label tree structures,
+the $U$ and $V$ losses maintain a $O(\sqrt{k/n})$ convergence rate.
+This suggests that there is essentially no downside to using the tree loss parameterizations.
+
+Our analysis relies on standard properties of stochastic gradient descent.
+In this section, we first review these results,
+then we formally state and prove our main result.
+
+\subsection{SGD Background}
+
+SGD is a standard algorithm for optimizing convex losses,
+and it has many variations.
+Our analysis uses the results from Chapter 14 of \citet{shalev2014understanding} which are based off of a version of SGD that uses parameter averaging.\footnote{
+Other variants of SGD have similar results,
+and we refer the reader to \citet{shalev2014understanding} for a discussion of these variants.}
+In this section we review these results.
+We follow the notation of \citet{shalev2014understanding} as closely as possible,
+but we occasionally change the names of variables to avoid conflicts with variable names used elsewhere in this paper.\footnote{
+    Specifically, we replace all Latin variables with Greek alternatives.
+    We use $\theta$ instead of $\w$, $\nu$ instead of $\vv$, and $\beta$ instead of $B$.
+    The Greek letters $\rho$ and $\eta$ have the same meaning in both documents.
+}
+
+SGD is an iterative procedure for optimizing a function $f : \Theta \to \mathbb R$ given only noisy samples of the function's gradient.
+We let $\theta^{(t)}$ denote the parameter value at iteration $t$,
+and $\eta : \mathbb R$ be the step size.
+Let $\nu_t$ be a noisy gradient of $f$ satisfying
+\begin{equation}
+    \E[\nu_t | \theta^{(t)}] = \nabla f(\theta^{(t)}).
+\end{equation}
+Then the parameter update for step $t$ is defined to be
+\begin{equation}
+    \theta^{(t+1)} = \theta^{(t)} - \eta \nabla \nu_t
+    .
+\end{equation}
+When using parameter averaging, the final model parameters are defined to be
+\begin{equation}
+    \bar\theta = \frac1T \sum_{i=1}^T \theta^{(t)}
+    .
+\end{equation}
+Parameter averaging is not often used in practice because it has a large memory overhead,
+but it is widely used in theoretical analysis of SGD.
+Theorems using parameter averaging are typically much easier to state and prove,
+and equivalent results without parameter averaging typically require an additional $\log T$ factor in their convergence rates \citep{rakhlin2011making}.
+
+The main result we rely on is a bound on the convergence rate of SGD for convex Lipschitz functions.
+We reproduce Theorem 14.8 of \citet{shalev2014understanding} in the theorem below.
+
+\begin{theorem}
+    \label{thm:sgd}
+    Let $\beta,\rho>0$.
+    Let $f$ be a convex, $\rho$-Lipschitz function and let $\star \theta = \argmin_{\theta : \ltwo{\theta}\le \beta} f(\theta)$.
+    Assume that SGD is run for $T$ iterations with $\eta = \sqrt{\frac{\beta^2}{\rho^2 T}}$.
+    %Assume that for all $t$, $\ltwo{\nabla f(\theta^{(t)})} \le \rho$.
+    Then,
+    \begin{equation}
+        \E f(\bar \theta) - f(\star \theta) \le \frac{\beta\rho}{\sqrt{T}}
+        .
+    \end{equation}
+\end{theorem}
+
+\subsection{SGD and Statistical Learning}
+
+We now introduce more statistical learning theory notation,
+and apply Theorem \ref{thm:sgd} above to bound the rate of learning.
+
+Define the true loss of our learning problem as
+\begin{equation}
+    L_D(A) = \E_{(\x,y)\sim D} \ell(A; (\x, y))
+\end{equation}
+where $A \in \{W, U, V\}$ is a parameterization of the cross entropy loss.
+The optimal parameter vector is defined to be the minimum of the true loss:
+\begin{equation}
+    \star A = \argmin_{A} L_D(A).
+\end{equation}
+In order to apply Theorem \ref{thm:sgd} to a learning problem,
+we make the following assumption about the size of our data points.
+\begin{assumption}
+    \label{ass:lip}
+    For each feature vector $\x$ in the data set, 
+        $\ltwo{\x} \le \rho$
+        .
+\end{assumption}
+%For standard data distributions (e.g. any sub-normal distribution),
+%$\rho$ is upper bounded by $O(\sqrt{d})$.
+Under this assumption, the cross entropy loss $\ell$ is $\rho$-Lipschitz for all parameterizations,
+and the true loss $L_D$ is therefore also $\rho$-Lipschitz.
+
+We use SGD to optimize $L_D$.
+We let $f=L_D$, and $\theta = A$,
+so $\nu_t$ is the gradient of $\ell$ on the $t$th data point.
+Applying Theorem \ref{thm:sgd} gives the following convergence bound.
+\begin{lemma}
+    \label{ref:cor:A}
+    Under Assumption \ref{ass:lip},
+    we have that for any parameterization $A$ of the cross entropy loss,
+    SGD converges at the rate
+    \begin{equation}
+        \E L_D(\bar A) - L_D(\star A) \le \frac{\lF{\star A}\rho}{\sqrt n}.
+        \label{eq:Aconv}
+    \end{equation}
+\end{lemma}
+
+We emphasize that this convergence rate above is both computational and statistical.
+The expression on the left hand side of \eqref{eq:Aconv} is equivalent to the expected generalization error of the parameter $\bar A$,
+and so we use the terms ``convergence rate'' and ``generalization error'' essentially interchangeably.
+
+The important intuition of Lemma \ref{ref:cor:A} is that the generalization error of the cross entropy loss depends on the Frobenious norm of the optimal parameter matrix.
+We can therefore compare the convergence of the standard parameterization with the $U$/$V$-tree parameterizations by comparing these norms.
+
+Our next task is to recover the standard convergence rate of multi-class classification, and so we will now bound $\lF{\star W}$.
+We make the following assumption.
+\begin{assumption}
+    \label{ass:B}
+    For each class $i$, the optimal parameter vector $\star\w_i$ satisfies
+        $\ltwo{\star\w_i} \le B$
+        .
+\end{assumption}
+%Note that this assumption is not limiting because the value of $B$ need not be known during the optimization procedure.
+%
+It follows that
+\begin{equation}
+    \lF{\star W}^2 = \sum_{i=1}^k \ltwo{\star\w_i} \le kB^2.
+    \label{eq:starW}
+\end{equation}
+Substituting Eq \eqref{eq:starW} into \eqref{eq:Aconv} gives the following bound.
+\begin{corollary}
+\label{theorem:xentropy}
+    Under assumptions \ref{ass:lip} and \ref{ass:B},
+    then the generalization error of the standard cross entropy parameterization when trained with SGD is
+\begin{equation}
+    \E L_D(\bar W) - L_D(W^*)
+    \le \frac {\sqrt kB\rho}{\sqrt n}
+    .
+\end{equation}
+\end{corollary}
+
+\ignore{
+It is important to note that this result above is an upper bound and not a lower bound.
+This $O(\sqrt{k/n})$ convergence rate matches the convergence rate implied by the Nataranj dimension \citep{}.
+We are not aware of any lower bounds for SGD in the Lipschitz setting.
+\citet{nguyen2018tight,jentzen2020lower} study the strongly convex case and find that the upper bounds match the lower bounds.
+}
+
+\subsection{Bounding the Tree Loss}
+
+We now bound the Frobenius norm of $\star U$ in order to bound the generalization of the $U$-tree loss.
+By construction, $\lF{\star V} \le \lF{\star U}$,
+so this will also bound the convergence rates of the $V$-tree loss.
+
+The analysis is divided into two parts.
+First, we make no assumptions that the $U$-tree structure is good,
+and we show that even in the worst case $\lF{\star U} = O(\lF{\star W})$.
+This implies that using the tree loss cannot significantly hurt our performance.
+\begin{lemma}
+    \label{lemma:starU}
+    Under assumption \ref{ass:B},
+    the following bound holds for all $U$-tree structures:
+    \begin{equation}
+        \lF{\star U} \le 2\sqrt{k}B.
+    \end{equation}
+\end{lemma}
+\begin{proof}
+    We have
+    \begin{align}
+        \lF{\star U}^2 
+        &= \sum_{i=1}^k \ltwo{\star\uu_i}^2 \\
+        &= \sum_{i=1}^k \ltwo{\star\w_i - \star\w_{\parent{i}}}^2 \\
+        &\le \sum_{i=1}^k \left(\ltwo{\star\w_i} + \ltwo{\star\w_{\parent{i}}} \right)^2 \\
+        &\le \sum_{i=1}^k (2B)^2 \\
+        &\le k (2B)^2
+        .
+    \end{align}
+\end{proof}
+Now we consider the more important case of when we have a useful $U$-tree structure that meaningfully captures the similarity between classes.
+This idea is captured in the following assumption.
+\begin{assumption}
+    \label{ass:metric}
+    Let $\lambda >= 1$, and $d$ be a distance metric over the labels such that for all labels $i$ and $j$,
+\begin{equation}
+    \frac 1 \lambda d(i,j)
+    \le \ltwo{\star \w_i - \star \w_j}
+    \le \lambda d(i, j).
+\end{equation}
+We denote by $c$ the doubling dimension of the metric $d$,
+and we assume that the $U$-tree structure is built using a cover tree \citep{beygelzimer2006cover}.
+\end{assumption}
+
+The Cover Tree was originally designed for speeding up nearest neighbor queries in arbitrary metric spaces.
+The definition is rather technical, so we do not restate it here.
+Instead, we mention only two important properties of the cover tree.
+First, it can be constructed in time $O(k)$,
+so building the cover tree is a cheap operation that has no meaningful impact on training performance.
+It also only has to be done in the initialization step of the learning process, and not on every iteration.
+Second, the cover tree construction has a hyperparameter which we call \texttt{base}.
+This hyperparameter controls the fanout and depth of the tree because at any node $i$ at depth $\depth{i}$ in the tree,
+the cover tree maintains the invariant that $d(i, \parent{i}) \le \texttt{base}^{-\depth{i}}$.
+Increasing the $\texttt{base}$ hyperparameter results in shorter, fatter trees,
+and decreasing it results in taller, narrower trees.
+Our analysis follows the convention of setting $\texttt{base}=2$,
+but we show in the experiments below that good performance is achieved for a wide range of base values.
+
+The following Lemma uses Assumption \ref{ass:metric} and properties of the cover tree to bound the norm of $\lF{\star U}$.
+It is our main technical result and the proof is deferred to the appendix.
+
+\begin{lemma}
+    \label{lemma:main}
+    Under Assumptions \ref{ass:B} and \ref{ass:metric},
+    when $c\le1$, we have that
+    \begin{equation}
+        \lF{\star U} \le \tfrac{1}{\sqrt2}\lambda B \sqrt{\log_2 k},
+        \label{eq:c<=1}
+    \end{equation}
+    and when $c>1$, we have that
+    \begin{equation}
+        \lF{\star U} \le \sqrt{5}\lambda B \sqrt{k^{(1-1/c)}}.
+        \label{eq:c>1}
+    \end{equation}
+\end{lemma}
+
+\begin{proof}
+    First, we review some simple properties of the cover tree structure that will be needed in our proof.
+    Let $q$ denote the maximum number of children of any node in the cover tree.
+    A standard property of cover trees is that $q \le (4^c)$ \citep[Lemma 25]{izbickithesis}.
+    Let $Q_i$ denote the number of nodes at level $i$ in the cover tree.
+    Then we have that $|Q_i| \le q^i.$
+    Finally, let $r$ be the height of the cover tree.
+    Without loss of generality, we analyze the bound when the cover tree is perfectly balanced and so $r = \log_q k = \log_2 k / (2c)$.
+
+We have that
+\begin{align}
+    \lF{\star U}^2
+    &= \sum_{i=1}^k \ltwo{\star\uu_i}^2 \\
+    &= \sum_{i=0}^r \sum_{j\in Q_i} \ltwo{\star\uu_j}^2 \\
+    &= \sum_{i=0}^r \sum_{j\in Q_i} \ltwo{\star\w_j - \star\w_{\parent{j}}}^2 \\
+    &\le \sum_{i=0}^r \sum_{j\in Q_i} \lambda^2 d(j, \parent{j})^2 \\
+    &\le \sum_{i=0}^r \sum_{j\in Q_i} \lambda^2 (B/2^i)^2 \\
+    &\le \sum_{i=0}^r q^i \lambda^2 (B/2^i)^2 \\
+    &\le \sum_{i=0}^r \lambda^2 B^2 (q/4)^i 
+    \label{eq:precases}
+\end{align}
+We proceed by considering the case of $c\le1$ and $c>1$ separately.
+
+When $c\le1$, $q\le4$.
+Substituting into Eq \eqref{eq:precases}, we have
+\begin{align}
+    \lF{\star U}^2
+    &\le \sum_{i=0}^r \lambda^2 B^2 \\
+    &= (r+1) \lambda^2 B^2 \\
+    &= \frac{\log_2k}{2c} \lambda^2 B^2 \\
+    &\le \frac{\log_2k}{2} \lambda^2 B^2
+    .
+\end{align}
+This matches Eq \eqref{eq:c<=1} in the lemma's statement.
+
+When $c>$, then $q>4$.
+We first show the following equality.
+\begin{align}
+\left(\frac q 4\right)^r
+&=
+\left(\frac q 4\right)^{\log_q k}\\
+&=
+\frac{k}{4^{\log_q k}}\\
+&=
+\frac{k}{4^{{\log_4 k}/{\log_4 q}}}\\
+&=
+\frac{k}{k^{1/\log_4 q}}\\
+&=
+k^{\left(1 - {1}/{\log_4 q}\right)} \\
+&=
+k^{\left(1 - 1/c\right)}
+.
+\label{eq:lFU:frac}
+\end{align}
+Substituting into Eq \eqref{eq:precases}, we have
+\begin{align}
+    \lF{\star U}^2
+    &= \lambda^2B^2 \left(\frac{(q/4)^{r+1}-1}{q/4-1}\right) \\
+    \label{eq:lFU:4}
+    &= \lambda^2B^2 \left(\frac{(q/4)k^{(1-1/c)}-1}{q/4-1}\right) \\
+    &\le \lambda^2B^2 \left(\frac{(q/4)k^{(1-1/c)}}{q/4-1}\right) \\
+    &\le 5 \lambda^2B^2 k^{(1-1/c)}
+    \label{eq:lFU:5}
+\end{align}
+    Inequality \eqref{eq:lFU:5} follows because $\tfrac{q/4}{q/4-1} \le 5$ for integer values of $q>4$.
+\end{proof}
+We note that embedding techniques can be used to reduce the intrinsic dimension of the metric ($c$) at the expense of increasing the metric's distortion,
+but we make no attempt to optimize this tradeoff in this paper.
+
+We now state our main result.
+It is an immediate consequence of the fact that $\lF{\star V} \le \lF{\star U}$ and Lemmas \ref{ref:cor:A} and \ref{lemma:main}.
+\begin{corollary}
+    \label{cor:main}
+    Under assumptions \ref{ass:lip}, \ref{ass:B}, and \ref{ass:metric},
+    when $c\le1$, the generalization error of the tree loss is bounded by
+\begin{equation}
+    \E L_D(\bar V) - L_D(V^*)
+    \le \frac {\lambda B\rho \sqrt{\log_2 k}}{\sqrt 2n}
+    .
+\end{equation}
+    When $c>1$, the generalization error of the tree loss is bounded by
+\begin{equation}
+    \E L_D(\bar V) - L_D(V^*)
+    \le \frac {\lambda B\rho \sqrt{5 k^{(1-1/c)}}}{\sqrt n}
+    .
+\end{equation}
+\end{corollary}
+These convergence rates are asymptotically better than the convergence rates for the standard parameterization of the cross entropy loss.
+
 \end{document}
