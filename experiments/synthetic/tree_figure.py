@@ -1,14 +1,14 @@
 import argparse
 parser = argparse.ArgumentParser(description='create tree figures')
-parser.add_argument('--experiment', choices=['loss_vs_structure', 'base_experiment', 'para_norm'], required=True)
+parser.add_argument('--experiment', choices=['loss_vs_structure', 'base_experiment', 'para_norm', 'loss_vs_d_'], required=True)
 # parser.add_argument('--loss', choices=['xentropy', 'tree', 'simloss', 'HSM'], required=True)
 args = parser.parse_args()
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-f_tree = open(f'{args.experiment}_tree_50.txt', 'r')
-f_xentropy = open(f'{args.experiment}_xentropy_50.txt', 'r')
+f_tree = open(f'{args.experiment}_tree_100.txt', 'r')
+f_xentropy = open(f'{args.experiment}_xentropy_100.txt', 'r')
 # f_simloss = open(f'{args.experiment}_simloss.txt', 'r')
 # f_HSM = open(f'{args.experiment}_HSM.txt', 'r')
 
@@ -317,4 +317,34 @@ if args.experiment == 'base_experiment':
     plt.ylabel('Loss')
     plt.savefig('loss_vs_base.png', dpi=300)
 
-    
+if args.experiment == 'loss_vs_d_':
+    acc_tree = []
+    acc_xentropy = []
+    for line in f_tree:
+        line = line.strip()
+        if len(line)>1:
+            acc_start = line.find('Accuracy:')
+            acc_end  = acc_start + len('Accuracy:')
+
+            acc = float(line[acc_end:].strip())
+
+            acc_tree.append(acc)
+
+    for line in f_xentropy:
+        line = line.strip()
+        if len(line)>1:
+            acc_start = line.find('Accuracy:')
+            acc_end  = acc_start + len('Accuracy:')
+
+            acc = float(line[acc_end:].strip())
+
+            acc_xentropy.append(acc)
+
+    classes = np.arange(10,1001)
+    plt.figure(0, figsize=(10,5))
+    l1, = plt.plot(classes, acc_tree)
+    l2, = plt.plot(classes, acc_xentropy)
+    plt.legend(handles=[l1,l2],labels=['Tree Loss', 'Cross Entropy Loss'], fontsize=15)
+    plt.xlabel('$d$', fontsize=15)
+    plt.ylabel('Accuracy', fontsize=15)
+    plt.savefig('accuracy_vs_d__.png', dpi=300)

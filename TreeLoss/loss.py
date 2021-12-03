@@ -42,13 +42,13 @@ class CoverTreeLoss(torch.nn.Module):
         self.new2index = new2index
 
     @staticmethod
-    def tree_structure(c, m, base):
+    def tree_structure(c, m):
         '''
         m: embeddings of existed classes
         This function constructs cover tree structure.
         '''
         distance = cosine
-        tree = CoverTree(m, distance, leafsize=1, base=base)
+        tree = CoverTree(m, distance, leafsize=1)
         # _print(tree)
         new_index = path(tree)
 
@@ -70,7 +70,7 @@ class CoverTreeLoss(torch.nn.Module):
         new2index = dict()
         for i in range(len(new_index)):
             new2index[new_index[i][len(new_index[i])-1]] = new_index[i]
-        return new2index, length, tree
+        return new2index, length
 
     def forward(self,
                 weights: torch.Tensor,

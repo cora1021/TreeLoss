@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 
-f = open('norm.txt', 'r')
+f = open('norm_.txt', 'r')
 
 W = []
 V = []
@@ -28,4 +28,4 @@ l2, = plt.plot(classes, V)
 plt.legend(handles=[l1,l2],labels=[r'$|{W}|$', r'$|{V}|$'], fontsize=15)
 plt.xlabel('Number of Classes($k$)', fontsize=15)
 plt.ylabel('Norm of Vector', fontsize=15)
-plt.savefig('class_v_norm.png', dpi=300)
+plt.savefig('class_v_norm_.png', dpi=300)

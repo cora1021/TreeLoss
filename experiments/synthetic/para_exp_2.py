@@ -60,7 +60,7 @@ from TreeLoss.cover_tree import CoverTree
 from TreeLoss.utilities import set_seed, gen_sim, level
 from TreeLoss.loss import CoverTreeLoss, SimLoss, HSM
 import matplotlib.pyplot as plt
-
+from numpy import linalg as LA
 # set the seed
 logging.debug('set_seed('+str(args.seed)+')')
 set_seed(args.exp_num*10)
@@ -160,6 +160,8 @@ def para_figure(W_norm, height):
 
 
 W_norm = torch.norm(W)
-V_norm = torch.norm(V)
-with open('norm.txt', 'a') as f:
+V = V.detach().cpu().numpy()
+V_ = V @ f
+V_norm = LA.norm(V_)
+with open('norm_.txt', 'a') as f:
     f.write(f'W_norm: {W_norm} \t V_norm: {V_norm} \n')

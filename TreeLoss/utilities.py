@@ -7,7 +7,7 @@ import os
 import torch
 from sklearn.metrics.pairwise import cosine_similarity
 from .cover_tree import CoverTree
-from transformers import BertModel, BertTokenizer
+# from transformers import BertModel, BertTokenizer
 from tqdm import tqdm
 import math
 
@@ -221,37 +221,37 @@ def adjust_learning_rate(optimizer, epoch, init_lr):
         param_group['lr'] = lr
 
 
-class AttrEncoder(object):
-    def __init__(self, max_len, device) -> None:
-        super().__init__()
-        self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-        self.model = BertModel.from_pretrained('bert-base-uncased')
-        self.device = device
-        self.model.to(self.device)
-        self.model.eval()
-        self.max_len = max_len
-        self.batch_size = 128
+# class AttrEncoder(object):
+#     def __init__(self, max_len, device) -> None:
+#         super().__init__()
+#         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+#         self.model = BertModel.from_pretrained('bert-base-uncased')
+#         self.device = device
+#         self.model.to(self.device)
+#         self.model.eval()
+#         self.max_len = max_len
+#         self.batch_size = 128
 
-    def encoding(self, attr_list):
-        repr_matrix = []
+#     def encoding(self, attr_list):
+#         repr_matrix = []
 
-        with torch.no_grad():
+#         with torch.no_grad():
 
-            for i in tqdm(range(0, len(attr_list), self.batch_size), desc='Encoding Attributes ', ncols=150):
+#             for i in tqdm(range(0, len(attr_list), self.batch_size), desc='Encoding Attributes ', ncols=150):
 
-                attr_batch = attr_list[i: i+self.batch_size]
-                inputs = self.tokenizer(attr_batch, return_tensors="pt", padding=True, truncation=True, max_length=self.max_len)
+#                 attr_batch = attr_list[i: i+self.batch_size]
+#                 inputs = self.tokenizer(attr_batch, return_tensors="pt", padding=True, truncation=True, max_length=self.max_len)
 
-                for k, v in inputs.items():
-                    inputs[k] = v.to(self.device)
+#                 for k, v in inputs.items():
+#                     inputs[k] = v.to(self.device)
 
-                outputs = self.model(**inputs)
-                last_hidden_state = outputs[0]
-                attr_feature = last_hidden_state[:, 0]
+#                 outputs = self.model(**inputs)
+#                 last_hidden_state = outputs[0]
+#                 attr_feature = last_hidden_state[:, 0]
 
-                attr_feature = attr_feature.detach().cpu().tolist()
+#                 attr_feature = attr_feature.detach().cpu().tolist()
 
-                for j in range(len(attr_batch)):
-                    repr_matrix.append(attr_feature[j])
+#                 for j in range(len(attr_batch)):
+#                     repr_matrix.append(attr_feature[j])
 
-        return repr_matrix
+#         return repr_matrix

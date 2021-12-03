@@ -1,22 +1,9 @@
-#!/usr/bin/python3
 
-# this is a temporary hack to allow importing the files in the TreeLoss folder when the library is not yet installed
 import sys
 sys.path.append('../..')
 
 import logging
 import os
-LOGLEVEL = os.environ.get('LOGLEVEL', 'WARNING').upper()
-logging.basicConfig(
-    level=LOGLEVEL,
-    format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    )
-
-################################################################################
-# command line arguments
-################################################################################
-logging.info('processing command line arguments')
 import argparse
 parser = argparse.ArgumentParser(description='synthetic data experiment')
 
@@ -25,17 +12,16 @@ parser_data = parser.add_argument_group(
         description='the variable names for these arguments match exactly the variable names used in the paper'
         )
 parser_data.add_argument('--exp_num', type=int, default=1)
+parser_data.add_argument('--num', type=int, default=1)
 parser_data.add_argument('--a', type=int, default=5)
-parser_data.add_argument('--c', type=int, default=100)
+parser_data.add_argument('--k', type=int, default=100)
+parser_data.add_argument('--d_', type=int, default=5)
 parser_data.add_argument('--n', type=int, default=1000)
-parser_data.add_argument('--d', type=int, default=10)
+parser_data.add_argument('--d', type=int, default=1000)
 parser_data.add_argument('--sigma', type=float, default=1.0)
 parser_data.add_argument('--seed', type=int, default=666)
-parser_data.add_argument('--base', type=float, default=1.1)
-parser_data.add_argument('--batch', type=int, default=1000)
-parser_data.add_argument('--epoch', type=int, default=1)
-
-
+parser_data.add_argument('--test', type=int, default=10000)
+parser_data.add_argument('--batch', type=int, default=10000)
 
 parser_model = parser.add_argument_group(
         title='model hyperparameters',
@@ -48,15 +34,12 @@ parser_model.add_argument('--loss', choices=['tree','xentropy','simloss', 'HSM']
 parser.add_argument('--lower_bound', type=float, default=0.5)
 
 parser_debug = parser.add_argument_group(title='debug')
-parser_model.add_argument('--logdir', default='log')
+parser_model.add_argument('--experiment', choices=['loss_vs_n','loss_vs_d', 'loss_vs_sigma', 'loss_vs_c', 'loss_vs_d_'], required=True)
 args = parser.parse_args()
 
-# load imports;
-# we do this after parsing the command line arguments because it takes a long time,
-# and we want immediate feedback from the command line parser if we have an invalid argument or pass the --help option
-logging.info('load imports')
 import random
 import numpy as np
+from numpy.linalg import inv
 import math
 import os
 import torch
@@ -64,20 +47,25 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
-from TreeLoss.utilities import set_seed, gen_sim, level
+from TreeLoss.utilities import set_seed, gen_sim
 from TreeLoss.loss import CoverTreeLoss, SimLoss, HSM
 
-# set the seed
-logging.debug('set_seed('+str(args.seed)+')')
 set_seed(args.exp_num*10)
 
-U = np.random.normal(size=[args.c, args.a])
+U = np.random.normal(size=[args.k, args.a])
 V = np.random.normal(size=[args.a, args.d])
 W_star = U @ V
 
-# generate the data
-Y = np.random.choice(range(args.c), size=[args.n])
+# generating projection matrix
+A = np.random.normal(size=[args.d, args.d_])
+u, s, vh = np.linalg.svd(A, full_matrices=True)
+proj_matrix = u*u.T
+R = proj_matrix[:, :args.d_]
 
+W_proj = W_star @ R
+
+# training set
+Y = np.random.choice(range(args.k), size=[args.n])
 X = []
 for i in range(args.n):
     x_i = np.random.normal(W_star[Y[i],:], args.sigma)
@@ -86,6 +74,17 @@ X = np.array(X)
 
 Y = torch.LongTensor(Y)
 X = torch.Tensor(X)
+
+# testing set
+Y_ = np.random.choice(range(args.k), size=[args.test])
+X_ = []
+for i in range(args.test):
+    x_i = np.random.normal(W_star[Y_[i],:], args.sigma)
+    X_.append(x_i)
+X_ = np.array(X_)
+
+Y_ = torch.LongTensor(Y_)
+X_ = torch.Tensor(X_)
 
 class Mod(torch.nn.Module):
     def __init__(self, class_num, dimension, criterion, epsilon: float = 1e-8) -> None:
@@ -97,46 +96,45 @@ class Mod(torch.nn.Module):
     def forward(self,
                 x: torch.Tensor, #(batch_size, hidden_size)
                 y: torch.Tensor, loss_fun) -> torch.Tensor:
-        
+    
         if loss_fun == 'xentropy':
+            weights = self.fc.weight
             logits = self.fc(x)
             loss = self.criterion(logits, y)
         elif loss_fun == 'simloss':
+            weights = self.fc.weight
             logits = self.fc(x)
             prob = self.softmax(logits)
             loss = self.criterion(prob, y)
         elif loss_fun == 'tree':
-            weights = self.fc.weight
-            loss, logits, added_weights = self.criterion(weights, x, y)
+            weights_ = self.fc.weight
+            loss, logits, weights = self.criterion(weights_, x, y)
         elif loss_fun == 'HSM':
+            weights = self.fc.weight
             logits = self.fc(x)
             loss = self.criterion(logits, y)
         return loss, logits
 
 if args.loss == 'xentropy' :
     criterion = nn.CrossEntropyLoss().cuda()
-    model = Mod(args.c, args.d, criterion).cuda()
+    model = Mod(args.k, args.d, criterion).cuda()
 elif args.loss == 'simloss':
     sim_matrix = gen_sim(U)
     sim_matrix = (sim_matrix - args.lower_bound) / (1 - args.lower_bound)
     sim_matrix[sim_matrix < 0.0] = 0.0
     criterion = SimLoss(w=sim_matrix.cuda())
-    model = Mod(args.c, args.d, criterion).cuda()
+    model = Mod(args.k, args.d, criterion).cuda()
 elif args.loss == 'tree':
-    new2index, length, tree = CoverTreeLoss.tree_structure(args.c,U, args.base)
-    level_ = level(tree)
-    height = -level_
-    criterion = CoverTreeLoss(args.c, length, args.d, new2index)
+    new2index, length = CoverTreeLoss.tree_structure(args.k, W_proj)
+    criterion = CoverTreeLoss(args.k, length, args.d, new2index)
     model = Mod(length, args.d, criterion).cuda()
 elif args.loss == 'HSM':
-    new2index, index2brother, length = HSM.tree_structure(args.c,U)
-    criterion = HSM(args.c, args.d, new2index, index2brother, length)
-    model = Mod(args.c, args.d, criterion).cuda()
+    new2index, index2brother, length = HSM.tree_structure(args.k,U)
+    criterion = HSM(args.k, args.d, new2index, index2brother, length)
+    model = Mod(args.k, args.d, criterion).cuda()
 else:
     raise NotImplementedError
 
-
-logging.debug('create optimizer')
 optimizer = optim.SGD(
     model.parameters(),
     lr=args.lr,
@@ -144,51 +142,34 @@ optimizer = optim.SGD(
     weight_decay=args.weight_decay,
     )
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.n)
-# scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
-for ep in range(args.epoch):
-    loss_sum = 0
-    correct = 1e-10
-    train_pred = []
-    for start in range(0, args.n, args.batch):
-        train_X = torch.FloatTensor(X[start:start+args.batch].view(args.batch,args.d))
-        train_Y = torch.LongTensor(Y[start:start+args.batch].view(args.batch))
-        train_X, train_Y = train_X.cuda(), train_Y.cuda()
-        loss, logits = model(train_X, train_Y, args.loss)
+# training
+model.train()
+train_pred = []
+for start in range(0, args.n, 1):
+    train_X = torch.FloatTensor(X[start:start+1].view(1,args.d))
+    train_Y = torch.LongTensor(Y[start:start+1].view(1))
+    train_X, train_Y = train_X.cuda(), train_Y.cuda()
+    loss, logits = model(train_X, train_Y, args.loss)
+    prob = F.softmax(logits, dim=-1)
+    _, pred = torch.max(prob, dim=-1)
+    train_pred += pred.detach().cpu().tolist()
 
-        loss.backward()
-        optimizer.step()
-        optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    optimizer.zero_grad()
+correct = 0
+for i in range(len(Y)):
+    if train_pred[i] == Y[i]:
+        correct += 1
+accuracy = correct/len(Y)
 
-        prob = F.softmax(logits, dim=-1)
-        _, pred = torch.max(prob, dim=-1)
-        loss_sum += loss
-        train_pred += pred.detach().cpu().tolist()
+# testing
 
-    for i in range(len(Y)):
-        if train_pred[i] == Y[i]:
-            correct += 1
-            
-    accuracy = correct/len(Y)
-print(accuracy)
-
-
-# Test set
-Y_ = np.random.choice(range(args.c), size=[int(args.n*10)])
-
-X_ = []
-for i in range(int(args.n*10)):
-    x_i_ = np.random.normal(W_star[Y_[i],:], args.sigma)
-    X_.append(x_i_)
-X_ = np.array(X_)
-
-Y_ = torch.LongTensor(Y_)
-X_ = torch.Tensor(X_)
-model.eval()
 correct = 1e-10
-test_loss_sum = 0 
 test_pred = []
-for start in range(0, args.n*10, args.batch):
+model.eval()
+for start in range(0, args.test, args.batch):
     test_X = torch.FloatTensor(X_[start:start+args.batch].view(args.batch,args.d))
     test_Y = torch.LongTensor(Y_[start:start+args.batch].view(args.batch))
     test_X, test_Y = test_X.cuda(), test_Y.cuda()
@@ -196,18 +177,14 @@ for start in range(0, args.n*10, args.batch):
 
     prob = F.softmax(logits, dim=-1)
     _, pred = torch.max(prob, dim=-1)
-    test_loss_sum += loss
+    # W_err = torch.norm(torch.abs(W - torch.Tensor(W_star))) 
     test_pred += pred.detach().cpu().tolist()
-
 
 for i in range(len(Y_)):
     if test_pred[i] == Y_[i]:
         correct += 1
         
-test_accuracy = correct/len(Y_)
-print(test_accuracy)
-# loss_ = loss_sum
-# test_loss_ = test_loss_sum/10
-# with open(f'base_experiment_{args.loss}_50.txt', 'a') as f:
-#     f.write(f'Loss: {loss_} \t Accuracy: {accuracy} \t Generlization Loss: {test_loss_} \t Test Accuracy: {test_accuracy}\n')
-# # # # Height: {height} \t Training Loss: {training loss} Generlization Loss: {genarlization loss}
+accuracy = correct/len(Y_)
+print(accuracy)
+# with open(f'U_{args.loss}_{args.k}_{args.n}.txt', 'a') as f:
+#     f.write(f'Accuracy: {accuracy} \n')
