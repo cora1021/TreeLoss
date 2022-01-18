@@ -167,14 +167,14 @@ if args.experiment == 'loss_vs_structure':
 
     accuracy_xentropy.append(accuracy_xentropy[0])
     x = [0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
-    plt.figure(0)
+    plt.figure(0, figsize=(10,5))
     l1, = plt.plot(x, accuracy)
     l2, = plt.plot(x, accuracy_xentropy, linestyle='-.')
     # l3, = plt.plot(x, accuracy_simloss, linestyle='--')
     # l4, = plt.plot(x, accuracy_HSM, linestyle='dotted')
-    plt.legend(handles=[l1,l2],labels=['Tree Loss', 'Cross Entropy Loss'])
-    plt.xlabel('Randomness of Tree Structure')
-    plt.ylabel('Accuracy')
+    plt.legend(handles=[l1,l2],labels=['Tree Loss', 'Cross Entropy Loss'],fontsize=15)
+    plt.xlabel('Randomness of Tree Structure($\epsilon$)', fontsize=15)
+    plt.ylabel('Accuracy', fontsize=15)
     plt.savefig('loss_vs_structure.png', dpi=300)
 
 
@@ -287,26 +287,24 @@ if args.experiment == 'base_experiment':
     #     test_loss_xentropy.append(np.mean(test_loss_mid))
     #     test_accuracy_xentropy.append(np.mean(test_accuracy_mid))
 
-
-    plt.figure(0)
     # base = np.arange(1.1,3.1,0.1)
     base = [1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,3.0,4.0,5.0,6.0,7.0]
     l1, = plt.plot(base, train_accuracy_tree)
     # l2, = plt.plot(base, test_accuracy_tree, linestyle="-.")
     l2, = plt.plot(base, train_accuracy_xentropy, linestyle='--')
     # l4, = plt.plot(base, test_accuracy_xentropy, linestyle='dotted')
-    plt.legend(handles=[l1,l2],labels=['Tree Loss', 'Cross Entropy Loss'])
-    plt.xlabel('Base of Tree')
-    plt.ylabel('Accuracy')
+    plt.legend(handles=[l1,l2],labels=['Tree Loss', 'Cross Entropy Loss'],fontsize=15)
+    plt.xlabel('Base of Tree',fontsize=15)
+    plt.ylabel('Accuracy',fontsize=15)
     plt.savefig('accuracy_vs_base.png', dpi=300)
 
-    plt.figure(1)
+    plt.figure(1,figsize=(10,5))
     # base = np.arange(1.1,3.1,0.1)
     base = [1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,3.0,4.0,5.0,6.0,7.0]
     l1, = plt.plot(base, height_tree)
     # plt.legend(handles=[l1],labels=['Train Accuracy', 'Test Accuracy'])
-    plt.xlabel('Base of Tree')
-    plt.ylabel('Height')
+    plt.xlabel('Base of Tree',fontsize=15)
+    plt.ylabel('Height',fontsize=15)
     plt.savefig('height_vs_base.png', dpi=300)
 
     plt.figure(2)
