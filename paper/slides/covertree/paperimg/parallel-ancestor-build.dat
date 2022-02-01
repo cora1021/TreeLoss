@@ -1,0 +1,7 @@
+dataset                 z1proc      z2proc      z4proc      z8proc      z16proc     z32proc
+yearpredict\n(77sec)    77.6        56.37       25.7        18.16       15.6        26
+twitter\n(107sec)       107.1       84.0        33.7        27.2        13.8        13.1
+tinyImages\n(65sec)     64.8        39.29       20.83       12.35       10.38
+mnist\n(12sec)          12          9.1         4.9         4.3         4.2         5.9
+
+

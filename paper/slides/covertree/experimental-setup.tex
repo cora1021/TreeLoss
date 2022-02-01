@@ -1,0 +1,23 @@
+\begin{frame}{Experimental setup}
+\Large
+
+Three data sources:
+\begin{itemize}
+\item Protein dataset with the random walk graph distance
+\item Yahoo! 1.5 million creative common images with the earth movers distance
+\item MLPack benchmarks with Euclidean distance
+    %\begin{itemize}
+    %\item Selected the 8 largest datasets
+    %\item Maximum size
+    %\end{itemize}
+\end{itemize}
+
+\vspace{0.15in}
+Benchmarking procedure:
+\begin{itemize}
+\item Construct a cover tree on the dataset
+\item For each data point in the dataset, find the nearest neighbor
+\item AWS instance with 16 true cores
+\end{itemize}
+
+\end{frame}

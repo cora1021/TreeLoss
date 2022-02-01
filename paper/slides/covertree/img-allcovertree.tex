@@ -1,0 +1,128 @@
+\documentclass[tikz]{standalone}
+\usetikzlibrary{patterns}
+\begin{document}
+
+\definecolor{lightred}{RGB}{255,200,200}
+\definecolor{lightgreen}{RGB}{200,255,200}
+\definecolor{lightblue}{RGB}{200,200,255}
+\definecolor{darkred}{RGB}{127,0,0}
+\definecolor{darkgreen}{RGB}{0,127,0}
+\definecolor{darkblue}{RGB}{0,0,127}
+
+\definecolor{lightgray}{RGB}{205,210,255}
+\definecolor{lightgray2}{RGB}{235,240,255}
+
+\begin{tikzpicture}
+    [ draw
+    , every node/.style={line width=1pt, minimum size=10mm,fill=lightgray}
+    , level 1/.style={sibling distance = 30mm, level distance=20mm}
+    , level 2/.style={sibling distance = 24mm, level distance=12mm}
+    , level 3/.style={sibling distance = 12mm, level distance=12mm}
+    , level 4/.style={sibling distance = 12mm, level distance=20mm}
+    , dash/.style={edge from parent/.style={gray,thin,draw}}
+    , norm/.style={edge from parent/.style={black,very thick,draw}}
+    , funk/.style={preaction={fill=white},pattern=north west lines,pattern color=lightgray,draw=gray,circle,thin}
+    %,    level distance = 1.5cm}
+    , sibling distance=8mm
+    ]
+\draw (-4.3,  0mm) -- (18,  0mm)[dotted];
+\draw (-4.3,-20mm) -- (18,-20mm)[dotted];
+\draw (-4.3,-32mm) -- (18,-32mm)[dotted];
+\draw (-4.3,-44mm) -- (18,-44mm)[dotted];
+\draw (-4.3,-64mm) -- (18,-64mm)[dotted];
+%\node[circle,draw=gray,thin,pattern=north west lines,pattern color=lightgray] at (0,0) {10}
+\node[funk] at (0,0) {10}
+    child[dash] {
+        node[shape=circle,draw] (b1) {10}
+        child[norm] { node[circle,draw=black,very thick] {8}
+            child[norm] { node[circle,draw] {7}         child[dash] { node[funk] (a) {7} } }
+            child[dash] { node[funk] {8}  child[dash] { node[funk] {8} } }
+            child[opacity=0] { node[opacity=0] {} }
+            }
+        child[norm] { node[circle,draw=black] (b2) {10}
+            child[norm] { node[circle,draw,fill=lightred] {8.5}         child[dash] { node[funk] {8.5} } }
+            child[dash] { node[funk] {10} child[dash] { node[funk] {10}} }
+            child[norm] { node[circle,draw,fill=lightred] (c1) {11.5}        child[dash] { node[funk] {11.5}} }
+            }
+        child[norm] { node[circle,draw=black] {12}
+            child[opacity=0] { node[opacity=0] {} }
+            child[dash] { node[funk] {12} child[dash] { node[funk] {12}} }
+            child[norm] { node[circle,draw] {13}        child[dash] { node[funk] {13}} }
+            }
+        }
+    ;
+
+\node[opacity=0] at (8,0) {}
+    child[norm,opacity=0] { node[opacity=1,shape=circle,draw] {10}
+        child[opacity=1] { node[circle,draw] {8}
+            child { node[circle,draw] {7}  }
+            child { node[circle,draw,fill=lightred,line width=1pt] (c2) {11.5} }
+            }
+        child[opacity=1] { node[circle,draw] {12}
+            child { node[circle,draw,fill=lightred,line width=1pt] {8.5}  }
+            child { node[circle,draw] {13} }
+            }
+        }
+    ;
+
+\node[opacity=0] at (14.5,0) {}
+    child[norm,opacity=0] { node[opacity=1,shape=circle,draw] {10}
+        child[opacity=1] { node[circle,draw] {8}
+            child { node[circle,draw] {7}  }
+            child { node[circle,draw,fill=lightgreen,line width=1pt] {8.5} }
+            }
+        child[opacity=1] { node[circle,draw] {12}
+            child { node[circle,draw,fill=lightgreen,line width=1pt] (d1) {11.5}  }
+            child { node[circle,draw] {13} }
+            }
+        }
+    ;
+
+\node[fill=none] at (19,0mm) {level $\infty$};
+\node[fill=none] at (19,-10mm) {$\vdots$};
+\node[fill=none] at (19,-20mm) {level 2};
+\node[fill=none] at (19,-32mm) {level 1};
+\node[fill=none] at (19,-44mm) {level 0};
+\node[fill=none] at (19,-54mm) {$\vdots$};
+\node[fill=none] at (19,-64mm) {level $-\infty$};
+
+\node[fill=none] at (-2,-0.70) {\textbf{original}};
+\node[fill=none] at (-2,-1.05) {\textbf{cover tree}};
+
+\node[fill=none] at (8,-0.70) {\textbf{simplified}};
+\node[fill=none] at (8,-1.05) {\textbf{cover tree}};
+
+\node[fill=none] at (14.5,-0.70) {\textbf{nearest ancestor}};
+\node[fill=none] at (14.5,-1.05) {\textbf{cover tree}};
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\node[fill=none] at (0,-8) {\parbox{2.5in}{
+    these ``implicit'' nodes are needed to describe the original cover tree,
+    but they don't actually get implemented
+    }};
+\draw[->,out=180,in=270] (-3.5,-8) to (a);
+
+\node[fill=none] at (3.5,-1.5) {\parbox{2in}{
+    once a value appears in the tree, it must be in every lower level
+    }};
+\draw[->,out=180,in=45] (0.75,-1.5) to (b1);
+%\draw[->,out=225,in=45] (0.75,-1.65) to (b2);
+
+\node[fill=none] at (8,-5.75) {\parbox{2.3in}{
+    nodes can be placed suboptimally even in one dimension
+    }};
+\draw[->,out=180,in=315] (4.85,-5.75) to (c1);
+\draw[->,out=80,in=270] (7.25,-5.35) to (c2);
+
+\node[fill=none] at (14,-7.25) {\parbox{3in}{
+    in one dimension, nearest ancestor trees behave like balanced binary search trees
+    }};
+\draw[->,out=80,in=270] (14.25,-6.8) to (d1);
+
+
+\end{tikzpicture}
+\end{document}
+
+
+

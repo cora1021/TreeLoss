@@ -1,0 +1,47 @@
+\begin{frame}{Key Ideas}
+
+%That is,
+%\begin{equation}
+%\end{equation}
+
+\begin{block}{Lemma 1 (informal)}
+%Let $W^*$ denote the ``optimal parameter matrix'' with ``infinite data''.
+Stochastic Gradient Descent satisfies
+\begin{equation}
+\text{generalization error} = O\left( \frac{\lF{W^*}}{\sqrt{n}} \right)
+    %\E_{\x,y}\ell(W^*, (\x,y)) = O\left( \frac{\lF{W^*}}{\sqrt{n}} \right)
+\end{equation}
+\end{block}
+
+\uncover<1>{
+Immediate corrollary of standard properties of SGD \citep{shalev2014understanding}.
+}
+
+\uncover<2>{
+\vspace{-0.2in}
+Recall that 
+\begin{itemize}
+\item $\displaystyle \lF{W} = \sqrt{\sum_{i=1}^d\sum_{j=1}^kW_{ij}^2}$ is the Frobenius norm
+\item $W : \R^{k\times d}$
+\end{itemize}
+so under ``reasonable'' assumptions
+\begin{equation}
+\lF{W^*} = O(\sqrt{kd})
+\end{equation}
+recovering the known optimal bound.
+}
+
+\vspace{-1.3in}
+\uncover<3>{
+    \textbf{Algorithm Overview}
+    \begin{itemize}
+    \item introduce a new matrix $U$
+    \item rewrite $\ell$ in terms of $U$ instead of $W$
+    \item Lemma 1 $\Rightarrow$ generalization error = $O(\lF{U^*}/\sqrt{n})$
+    \item show $\lF{U^*} <\!\!< \lF{W^*}$
+    \end{itemize}
+}
+\vspace{1in}
+\end{frame}
+
+

@@ -1,0 +1,11 @@
+dataset         1proc       2proc       4proc       8proc       16proc      32proc
+mnist
+Twitter         46.283592               15.749112   11.986834   9.4         7.83638
+yearpredict                             11.862044   10.535257
+corel
+covtype
+tinyImages      4.85        4.85
+artificial4
+calhousing      0.94        0.53        0.50        0.39        0.35
+faces           0.23        0.2         0.13        0.1         0.094
+

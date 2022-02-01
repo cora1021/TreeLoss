@@ -1,0 +1,37 @@
+\begin{frame}[fragile]{Experiment: Flickr image data}
+
+
+%on small datasets with cheap metrics, parallel construction is less useful
+
+%\vspace{0.1in}
+%On large datasets with an expensive metric, parallelism is more useful
+
+\vspace{0.15in}
+Yahoo! Flickr dataset with 1.5 million images and earth mover distance
+
+\vspace{0.15in}
+Comparing the total runtime to construct the cover tree with parallelism
+
+%\vspace{0.2in}
+\vspace{0.15in}
+\begin{center}
+\Large
+\begin{tabular}{ccc}
+\hline
+num cores
+ %& \multicolumn{2}{c}{simplified cover tree} \\ %& \multicolumn{2}{c}{nearest ancestor tree} \\
+%& \multicolumn{2}{c}{construction} & \multicolumn{2}{c}{construction} \\ %\cline{2-5}
+& run time & speedup \\ %& time & speedup \\
+\hline
+\hline
+1  & 70.7 min & 1.0 \\%& 210.9 min& 1.0\\
+2  & 36.6 min & 1.9 \\%& 94.2 min & 2.2\\
+4  & 18.5 min & 3.8 \\%& 48.5 min & 4.3\\
+8  & 10.2 min & 6.9 \\%& 25.3 min & 8.3\\
+16 & 6.7 min & 10.5 \\%& 12.0 min & 17.6\\
+\hline
+\end{tabular}
+\end{center}
+
+\end{frame}
+

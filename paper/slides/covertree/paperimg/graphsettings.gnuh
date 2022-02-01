@@ -1,0 +1,17 @@
+#set terminal postscript enhanced "Times" 25
+#set terminal postscript enhanced "Times-Roman" 25
+set terminal epslatex size 3.5,2.62 color colortext
+set termoption enhanced
+
+set style data histogram
+#set style histogram rowstacked
+set style fill solid border -1
+set boxwidth 0.9
+unset key
+
+set xrange [0:]
+
+set xtics nomirror
+set xtic rotate by -45
+#set xtic rotate by -45
+#set bmargin 4

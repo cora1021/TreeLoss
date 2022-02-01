@@ -1,0 +1,10 @@
+#set terminal postscript enhanced "Times" 25
+set terminal epslatex size 3.5,2.62 color colortext
+set termoption enhanced
+
+unset key
+
+set xrange [0:]
+
+set xtics nomirror
+

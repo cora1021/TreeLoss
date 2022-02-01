@@ -1,0 +1,652 @@
+
+@inproceedings{hays2008im2gps,
+  title={IM2GPS: estimating geographic information from a single image},
+  author={Hays, James and Efros, Alexei A},
+  booktitle={CVPR},
+  year={2008},
+  organization={IEEE},
+  annotate={
+      Uses a $k$-nearest neighbors approach with a custom set of features.
+      Feature extraction took 3 days on a large cluster with 400 CPUs.
+  }
+}
+
+@inproceedings{kennedy2008generating,
+  title={Generating diverse and representative image search results for landmarks},
+  author={Kennedy, Lyndon S and Naaman, Mor},
+  booktitle={Proceedings of the 17th international conference on World Wide Web},
+  pages={297--306},
+  year={2008},
+  organization={ACM}
+}
+
+@inproceedings{li2009landmark,
+  title={Landmark classification in large-scale image collections},
+  author={Li, Yunpeng and Crandall, David J and Huttenlocher, Daniel P},
+  booktitle={ICCV},
+  year={2009},
+}
+
+@inproceedings{crandall2009mapping,
+  title={Mapping the world's photos},
+  author={Crandall, David J and Backstrom, Lars and Huttenlocher, Daniel and Kleinberg, Jon},
+  booktitle={Proceedings of the 18th international conference on World wide web},
+  pages={761--770},
+  year={2009},
+  organization={ACM}
+}
+
+@inproceedings{kalogerakis2009image,
+  title={Image sequence geolocation with human travel priors},
+  author={Kalogerakis, Evangelos and Vesselova, Olga and Hays, James and Efros, Alexei A and Hertzmann, Aaron},
+  booktitle={ICCV},
+  year={2009},
+  organization={IEEE}
+}
+
+@book{chen2011clues,
+  title={Clues from the beaten path: Location estimation with bursty sequences of tourist photos},
+  author={Chen, Chao-Yeh and Grauman, Kristen},
+  year={2011},
+  publisher={IEEE}
+}
+
+@inproceedings{tzeng2013user,
+  title={User-driven geolocation of untagged desert imagery using digital elevation models},
+  author={Tzeng, Eric and Zhai, Andrew and Clements, Matthew and Townshend, Raphael and Zakhor, Avideh},
+  booktitle={CVPR Workshops},
+  year={2013}
+}
+
+@inproceedings{lin2013cross,
+  title={Cross-view image geolocalization},
+  author={Lin, Tsung-Yi and Belongie, Serge and Hays, James},
+  booktitle={CVPR},
+  pages={891--898},
+  year={2013}
+}
+
+@inproceedings{mousselly2014world,
+author = {Mousselly-Sergieh, Hatem and Watzinger, Daniel and Huber, Bastian and D\"{o}ller, Mario and Egyed-Zsigmond, El\"{o}d and Kosch, Harald},
+title = {World-wide Scale Geotagged Image Dataset for Automatic Image Annotation and Reverse Geotagging},
+booktitle = {MMSys},
+year = {2014},
+} 
+
+@inproceedings{workman2015wide,
+  title={Wide-area image geolocalization with aerial reference imagery},
+  author={Workman, Scott and Souvenir, Richard and Jacobs, Nathan},
+  booktitle={CVPR},
+  year={2015}
+}
+
+@incollection{hays2015large,
+  title={Large-scale image geolocalization},
+  author={Hays, James and Efros, Alexei A},
+  booktitle={Multimodal Location Estimation of Videos and Images},
+  pages={41--62},
+  year={2015},
+  publisher={Springer}
+}
+
+@inproceedings{lin2015learning,
+  title={Learning deep representations for ground-to-aerial geolocalization},
+  author={Lin, Tsung-Yi and Cui, Yin and Belongie, Serge and Hays, James},
+  booktitle={CVPR},
+  year={2015}
+}
+
+@inproceedings{tang2015improving,
+  title={Improving image classification with location context},
+  author={Tang, Kevin and Paluri, Manohar and Fei-Fei, Li and Fergus, Rob and Bourdev, Lubomir},
+  booktitle={ICCV},
+  pages={1008--1016},
+  year={2015}
+}
+
+@InProceedings{arandjelovic2016netvlad,
+    author = {Arandjelovic, Relja and Gronat, Petr and Torii, Akihiko and Pajdla, Tomas and Sivic, Josef},
+    title = {{NetVLAD}: {CNN} Architecture for Weakly Supervised Place Recognition},
+    booktitle = {CVPR},
+    month = {June},
+    year = {2016},
+    annotate={
+        They propose the so-called VLAD layer for a CNN,
+        which creates a vector space representation of the image.
+        These features are then fed into standard image retreival algorithms.
+        They use Google Street Map data.
+        Many of the street map images are taken from the same location at different times/angles,
+        which they take advantage of.
+    }
+} 
+
+@article{mehta2016exploratory,
+  title={An exploratory study of human performance in image geolocation tasks},
+  author={Mehta, Sneha and North, Chris and Luther, Kurt},
+  year={2016},
+  annotate={
+      Has a number of examples of clues that the expert geolocaters used.
+      A good automated system should be able to use similar clues.
+  }
+}
+
+@inproceedings{weyand2016planet,
+  title={Planet-photo geolocation with convolutional neural networks},
+  author={Weyand, Tobias and Kostrikov, Ilya and Philbin, James},
+  booktitle={ECCV},
+  pages={37--55},
+  year={2016},
+  organization={Springer},
+  annotate={
+      Google paper on geolocation.
+      Divides the earth into grids using their S2 model,
+      and then uses InceptionNet V3 to train a multiclass classification problem.
+      They use a large custom dataset of 146 million images crawled from the web.
+  }
+}
+
+@article{johns2017multi,
+  title={Multi-modal Geolocation Estimation Using Deep Neural Networks},
+  author={Johns, Jesse M and Rounds, Jeremiah and Henry, Michael J},
+  journal={arXiv preprint arXiv:1712.09458},
+  year={2017},
+  annotate={
+      A minor improvement over \cite{weyand2016planet}.
+      They use the same basic architecture, 
+      but a different output layer based on Delauney triangulations rather than a kd-tree.
+      They also try an experiment taking advantage of time metadata and filtering the dataset to include only outdoor images to improve accuracy.
+      Uses the dataset in \cite{thomee2016yfcc100m}.
+
+      The paper was submited to ICLR2018, 
+      but rejected due to the contribution not being novel enough.
+      See \url{https://openreview.net/forum?id=rk1J969Xz}
+  }
+}
+
+@inproceedings{kim2017learned,
+  title={Learned contextual feature reweighting for image geo-localization},
+  author={Kim, Hyo Jin and Dunn, Enrique and Frahm, Jan-Michael},
+  booktitle={CVPR},
+  year={2017},
+  annotate={
+      Introduce the Contextual Reweighting Network (CRN), 
+      which is a CNN that uses attention to focus on locations in the image most relavent to geolocating.
+  }
+}
+
+@inproceedings{vo2017revisiting,
+  title={Revisiting IM2GPS in the deep learning era},
+  author={Vo, Nam and Jacobs, Nathan and Hays, James},
+  booktitle={ICCV},
+  pages={2640--2649},
+  year={2017},
+  organization={IEEE},
+  annotate={
+      A simple extension of \cite{hays2008im2gps} to use features generated by deep learning as the input to the $k$-nearest neighbor problem.
+      They report 47\% 200km classification accuracy on the im2gps test set, but they've modified the test set in an unspecified way.
+  }
+}
+
+
+@inproceedings{choi2017geo,
+  title={The Geo-Privacy Bonus of Popular Photo Enhancements},
+  author={Choi, Jaeyoung and Larson, Martha and Li, Xinchao and Li, Kevin and Friedland, Gerald and Hanjalic, Alan},
+  booktitle={Proceedings of the 2017 ACM on International Conference on Multimedia Retrieval},
+  pages={84--92},
+  year={2017},
+  organization={ACM},
+  annotate={
+      Shows that standard image filters, e.g. by instagram, can mask an image's location.
+      It seems like any content-aware algorithm has to be robust to these methods though.
+  }
+}
+
+@inproceedings{zhai2017predicting,
+  title={Predicting ground-level scene layout from aerial imagery},
+  author={Zhai, Menghua and Bessinger, Zachary and Workman, Scott and Jacobs, Nathan},
+  booktitle={CVPR},
+  pages={867--875},
+  year={2017}
+}
+
+
+@article{seo2018cplanet,
+  title={CPlaNet: Enhancing Image Geolocalization by Combinatorial Partitioning of Maps},
+  author={Seo, Paul Hongsuck and Weyand, Tobias and Sim, Jack and Han, Bohyung},
+  journal={arXiv preprint arXiv:1808.02130},
+  year={2018},
+  annotate={Extends \citet{weyand2016planet} to use a more advanced output layer involving overlapping classes.}
+}
+
+@inproceedings{muller2018geolocation,
+title={Geolocation estimation of photos using a hierarchical model and scene classification},
+author={Muller-Budack, Eric and Pustu-Iren, Kader and Ewerth, Ralph},
+booktitle={ECCV},
+year={2018}
+}
+
+@InProceedings{chen2018drone,
+author = {Chen, Chun-Wei and Kuo, Yin-Hsi and Lee, Tang and Lee, Cheng-Han and Hsu, Winston},
+title = {Drone-View Building Identification by Cross-View Visual Learning and Relative Spatial Estimation},
+booktitle = {CVPR},
+month = {June},
+year = {2018}
+} 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@article{lecun1998gradient,
+  title={Gradient-based learning applied to document recognition},
+  author={LeCun, Yann and Bottou, L{\'e}on and Bengio, Yoshua and Haffner, Patrick},
+  journal={Proceedings of the IEEE},
+  volume={86},
+  number={11},
+  pages={2278--2324},
+  year={1998},
+  publisher={IEEE}
+}
+
+@inproceedings{glorot2010understanding,
+title={Understanding the difficulty of training deep feedforward neural networks},
+author={Glorot, Xavier and Bengio, Yoshua},
+booktitle={AIStats},
+pages={249--256},
+year={2010}
+}
+
+@inproceedings{krizhevsky2012imagenet,
+  title={Imagenet classification with deep convolutional neural networks},
+  author={Krizhevsky, Alex and Sutskever, Ilya and Hinton, Geoffrey E},
+  booktitle={Advances in neural information processing systems},
+  pages={1097--1105},
+  year={2012}
+}
+
+@inproceedings{hazan2014logistic,
+title={Logistic regression: Tight bounds for stochastic and online optimization},
+author={Hazan, Elad and Koren, Tomer and Levy, Kfir Y},
+booktitle={COLT},
+year={2014}
+}
+
+@inproceedings{bachrach2014speeding,
+  title={Speeding up the xbox recommender system using a euclidean transformation for inner-product spaces},
+  author={Bachrach, Yoram and Finkelstein, Yehuda and Gilad-Bachrach, Ran and Katzir, Liran and Koenigstein, Noam and Nice, Nir and Paquet, Ulrich},
+  booktitle={Proceedings of the 8th ACM Conference on Recommender systems},
+  pages={257--264},
+  year={2014},
+  organization={ACM}
+}
+
+@article{kingma2014adam,
+title={Adam: A method for stochastic optimization},
+author={Kingma, Diederik P and Ba, Jimmy},
+journal={arXiv preprint arXiv:1412.6980},
+year={2014}
+}
+
+@article{simonyan2014very,
+  title={Very deep convolutional networks for large-scale image recognition},
+  author={Simonyan, Karen and Zisserman, Andrew},
+  journal={arXiv preprint arXiv:1409.1556},
+  year={2014}
+}
+
+@article{hardt2015train,
+  title={Train faster, generalize better: Stability of stochastic gradient descent},
+  author={Hardt, Moritz and Recht, Benjamin and Singer, Yoram},
+  journal={arXiv preprint arXiv:1509.01240},
+  year={2015}
+}
+
+@inproceedings{szegedy2015going,
+  title={Going deeper with convolutions},
+  author={Szegedy, Christian and Liu, Wei and Jia, Yangqing and Sermanet, Pierre and Reed, Scott and Anguelov, Dragomir and Erhan, Dumitru and Vanhoucke, Vincent and Rabinovich, Andrew},
+  booktitle={CVPR},
+  year={2015}
+}
+@article{ioffe2015batch,
+  title={Batch normalization: Accelerating deep network training by reducing internal covariate shift},
+  author={Ioffe, Sergey and Szegedy, Christian},
+  journal={arXiv preprint arXiv:1502.03167},
+  year={2015}
+}
+@inproceedings{szegedy2016rethinking,
+  title={Rethinking the inception architecture for computer vision},
+  author={Szegedy, Christian and Vanhoucke, Vincent and Ioffe, Sergey and Shlens, Jon and Wojna, Zbigniew},
+  booktitle={CVPR},
+  year={2016}
+}
+
+@inproceedings{he2016identity,
+  title={Identity mappings in deep residual networks},
+  author={He, Kaiming and Zhang, Xiangyu and Ren, Shaoqing and Sun, Jian},
+  booktitle={ECCV},
+  pages={630--645},
+  year={2016},
+  organization={Springer}
+}
+@article{iandola2016squeezenet,
+  title={Squeezenet: Alexnet-level accuracy with 50x fewer parameters and< 0.5 mb model size},
+  author={Iandola, Forrest N and Han, Song and Moskewicz, Matthew W and Ashraf, Khalid and Dally, William J and Keutzer, Kurt},
+  journal={arXiv preprint arXiv:1602.07360},
+  year={2016}
+}
+
+
+@article{kornblith2018better,
+  title={Do better imagenet models transfer better?},
+  author={Kornblith, Simon and Shlens, Jonathon and Le, Quoc V},
+  journal={arXiv preprint arXiv:1805.08974},
+  year={2018}
+}
+
+@inproceedings{liu2018progressive,
+  title={Progressive neural architecture search},
+  author={Liu, Chenxi and Zoph, Barret and Neumann, Maxim and Shlens, Jonathon and Hua, Wei and Li, Li-Jia and Fei-Fei, Li and Yuille, Alan and Huang, Jonathan and Murphy, Kevin},
+  booktitle={ECCV},
+  pages={19--34},
+  year={2018}
+}
+@inproceedings{zoph2018learning,
+  title={Learning transferable architectures for scalable image recognition},
+  author={Zoph, Barret and Vasudevan, Vijay and Shlens, Jonathon and Le, Quoc V},
+  booktitle={CVPR},
+  year={2018}
+}
+@inproceedings{hu2018squeeze,
+  title={Squeeze-and-excitation networks},
+  author={Hu, Jie and Shen, Li and Sun, Gang},
+  booktitle={CVPR},
+  year={2018}
+}
+
+@article{sandler2018mobilenetv2,
+  title={MobileNetV2: Inverted Residuals and Linear Bottlenecks},
+  author={Sandler, Mark and Howard, Andrew and Zhu, Menglong and Zhmoginov, Andrey and Chen, Liang-Chieh},
+  journal={arXiv preprint arXiv:1801.04381},
+  year={2018}
+}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+@article{zagoruyko2016wide,
+  title={Wide residual networks},
+  author={Zagoruyko, Sergey and Komodakis, Nikos},
+  journal={arXiv preprint arXiv:1605.07146},
+  year={2016}
+}
+
+@inproceedings{bootkrajang2012label,
+  title={Label-noise robust logistic regression and its applications},
+  author={Bootkrajang, Jakramate and Kab{\'a}n, Ata},
+  booktitle={Joint European conference on machine learning and knowledge discovery in databases},
+  pages={143--158},
+  year={2012},
+  organization={Springer}
+}
+
+@article{sukhbaatar2014training,
+  title={Training convolutional networks with noisy labels},
+  author={Sukhbaatar, Sainbayar and Bruna, Joan and Paluri, Manohar and Bourdev, Lubomir and Fergus, Rob},
+  journal={ICLR Workshop},
+  year={2015}
+}
+
+@article{rakhlin2011making,
+  title={Making gradient descent optimal for strongly convex stochastic optimization},
+  author={Rakhlin, Alexander and Shamir, Ohad and Sridharan, Karthik},
+  journal={arXiv preprint arXiv:1109.5647},
+  year={2011}
+}
+
+
+@book{mardia2009directional,
+  title={Directional Statistics},
+  author={Mardia, K.V. and Jupp, P.E.},
+  year={2009},
+}
+
+@inproceedings{gopal2014mises,
+  title={{Von Mises-Fisher} clustering models},
+  author={Gopal, Siddharth and Yang, Yiming},
+  booktitle={ICML},
+  pages={154--162},
+  year={2014}
+}
+
+@article{hasnat2017mises,
+  title={von Mises-Fisher Mixture Model-based Deep learning: Application to Face Verification},
+  author={Hasnat, Md and Bohn{\'e}, Julien and Milgram, Jonathan and Gentric, St{\'e}phane and Chen, Liming and others},
+  journal={arXiv preprint arXiv:1706.04264},
+  year={2017}
+}
+
+@article{nemirovski2009robust,
+  title={Robust stochastic approximation approach to stochastic programming},
+  author={Nemirovski, Arkadi and Juditsky, Anatoli and Lan, Guanghui and Shapiro, Alexander},
+  journal={SIAM Journal on optimization},
+  volume={19},
+  number={4},
+  pages={1574--1609},
+  year={2009},
+  publisher={SIAM}
+}
+
+@article{daniely2015multiclass,
+  title={Multiclass learnability and the erm principle},
+  author={Daniely, Amit and Sabato, Sivan and Ben-David, Shai and Shalev-Shwartz, Shai},
+  journal={The Journal of Machine Learning Research},
+  volume={16},
+  number={1},
+  pages={2377--2404},
+  year={2015},
+  publisher={JMLR. org}
+}
+
+@inproceedings{gai2011gis,
+  title={GIS-based forest fire risk assessment and mapping},
+  author={Gai, Chengcheng and Weng, Wenguo and Yuan, Hongyong},
+  booktitle={Computational Sciences and Optimization (CSO)},
+  pages={1240--1244},
+  year={2011},
+  organization={IEEE}
+}
+
+@article{truelove2017identifying,
+  title={Identifying Witness Accounts from Social Media Using Imagery},
+  author={Truelove, Marie and Khoshelham, Kourosh and McLean, Simon and Winter, Stephan and Vasardani, Maria},
+  journal={ISPRS International Journal of Geo-Information},
+  volume={6},
+  number={4},
+  pages={120},
+  year={2017},
+  publisher={Multidisciplinary Digital Publishing Institute}
+}
+
+@inproceedings{nguyen2017damage,
+  title={Damage assessment from social media imagery data during disasters},
+  author={Nguyen, Dat T and Ofli, Ferda and Imran, Muhammad and Mitra, Prasenjit},
+  booktitle={International Conference on Advances in Social Networks Analysis and Mining},
+  pages={569--576},
+  year={2017},
+  organization={ACM}
+}
+
+@inproceedings{daly2016mining,
+  title={Mining and Classifying Image Posts on Social Media to Analyse Fires.},
+  author={Daly, Shannon and Thom, James A},
+  journal={International Conference on Information Systems for Crisis Response and Management},
+  year={2016}
+}
+
+@incollection{okuyama2013travel,
+  title={A travel planning system based on travel trajectories extracted from a large number of geotagged photos on the web},
+  author={Okuyama, Kohya and Yanai, Keiji},
+  booktitle={The era of interactive media},
+  pages={657--670},
+  year={2013},
+  publisher={Springer}
+}
+
+@article{rudinac2013generating,
+  title={Generating visual summaries of geographic areas using community-contributed images},
+  author={Rudinac, Stevan and Hanjalic, Alan and Larson, Martha and others},
+  journal={IEEE Transactions on Multimedia},
+  volume={15},
+  number={4},
+  pages={921--932},
+  year={2013},
+  publisher={Institute of Electrical and Electronics Engineers, Inc., 3 Park Avenue, 17~…}
+}
+
+@inproceedings{cao2010worldwide,
+  title={A worldwide tourism recommendation system based on geotaggedweb photos.},
+  author={Cao, Liangliang and Luo, Jiebo and Gallagher, Andrew C and Jin, Xin and Han, Jiawei and Huang, Thomas S},
+  journal={International Conference on Acoustics, Speech, and Signal Processing (ICASSP)},
+  year={2010},
+  organization={Citeseer}
+}
+
+@inproceedings{oba2014towards,
+  title={Towards Better Land Cover Classification Using Geo-tagged Photographs},
+  author={Oba, Hirotaka and Hirota, Masaharu and Chbeir, Richard and Ishikawa, Hiroshi and Yokoyama, Shohei},
+  booktitle={Multimedia (ISM), 2014 IEEE International Symposium on},
+  pages={320--327},
+  year={2014},
+  organization={IEEE}
+}
+
+@inproceedings{zhu2015land,
+  title={Land use classification using convolutional neural networks applied to ground-level images},
+  author={Zhu, Yi and Newsam, Shawn},
+  booktitle={SIGSPATIAL},
+  pages={61},
+  year={2015},
+  organization={ACM}
+}
+
+@article{antoniou2016investigating,
+  title={Investigating the feasibility of geo-tagged photographs as sources of land cover input data},
+  author={Antoniou, Vyron and Fonte, Cid{\'a}lia Costa and See, Linda and Estima, Jacinto and Arsanjani, Jamal Jokar and Lupia, Flavio and Minghini, Marco and Foody, Giles and Fritz, Steffen},
+  journal={ISPRS International Journal of Geo-Information},
+  volume={5},
+  number={5},
+  pages={64},
+  year={2016},
+  publisher={Multidisciplinary Digital Publishing Institute}
+}
+
+@article{wentz2014supporting,
+  title={Supporting global environmental change research: A review of trends and knowledge gaps in urban remote sensing},
+  author={Wentz, Elizabeth A and Anderson, Sharolyn and Fragkias, Michail and Netzband, Maik and Mesev, Victor and Myint, Soe W and Quattrochi, Dale and Rahman, Atiqur and Seto, Karen C},
+  journal={Remote Sensing},
+  volume={6},
+  number={5},
+  pages={3879--3905},
+  year={2014},
+  publisher={Multidisciplinary Digital Publishing Institute}
+}
+
+@inproceedings{leung2012exploring,
+  title={Exploring geotagged images for land-use classification},
+  author={Leung, Daniel and Newsam, Shawn},
+  booktitle={Proceedings of the ACM multimedia 2012 workshop on Geotagging and its applications in multimedia},
+  pages={3--8},
+  year={2012},
+  organization={ACM}
+}
+
+@inproceedings{pratama2017automatic,
+  title={Automatic land cover classification of geotagged images using ID3, Na{\"\i}ve Bayes and Random Forest},
+  author={Pratama, M Octaviano and Arymurthy, Aniati Murni},
+  booktitle={Advanced Computer Science and Information Systems (ICACSIS)},
+  pages={245--250},
+  year={2017},
+  organization={IEEE}
+}
+
+@article{xing2018exploring,
+  title={Exploring geo-tagged photos for land cover validation with deep learning},
+  author={Xing, Hanfa and Meng, Yuan and Wang, Zixuan and Fan, Kaixuan and Hou, Dongyang},
+  journal={ISPRS Journal of Photogrammetry and Remote Sensing},
+  volume={141},
+  pages={237--251},
+  year={2018},
+  publisher={Elsevier}
+}
+
+@article{xing2017employing,
+  title={Employing crowdsourced geographic information to classify land cover with spatial clustering and topic model},
+  author={Xing, Hanfa and Meng, Yuan and Hou, Dongyang and Song, Jie and Xu, Haibin},
+  journal={Remote Sensing},
+  volume={9},
+  number={6},
+  pages={602},
+  year={2017},
+  publisher={Multidisciplinary Digital Publishing Institute}
+}
+
+@article{sitthi2016exploring,
+  title={Exploring land use and land cover of geotagged social-sensing images using naive bayes classifier},
+  author={Sitthi, Asamaporn and Nagai, Masahiko and Dailey, Matthew and Ninsawat, Sarawut},
+  journal={Sustainability},
+  volume={8},
+  number={9},
+  pages={921},
+  year={2016},
+  publisher={Multidisciplinary Digital Publishing Institute}
+}
+
+@article{carreira2000mode,
+  title={Mode-finding for mixtures of Gaussian distributions},
+  author={Carreira-Perpinan, Miguel A.},
+  journal={TPAMI},
+  volume={22},
+  number={11},
+  pages={1318--1323},
+  year={2000},
+  publisher={IEEE}
+}
+
+@article{vincenty1975direct,
+  title={Direct and inverse solutions of geodesics on the ellipsoid with application of nested equations},
+  author={Vincenty, Thaddeus},
+  journal={Survey Review},
+  year={1975},
+}
+@article{lin2018focal,
+  title={Focal loss for dense object detection},
+  author={Lin, Tsung-Yi and Goyal, Priyal and Girshick, Ross and He, Kaiming and Doll{\'a}r, Piotr},
+  journal={IEEE transactions on pattern analysis and machine intelligence},
+  year={2018},
+  publisher={IEEE}
+}
+@book{witten2016data,
+  title={Data Mining: Practical machine learning tools and techniques},
+  author={Witten, Ian H and Frank, Eibe and Hall, Mark A and Pal, Christopher J},
+  year={2016},
+  publisher={Morgan Kaufmann}
+}
+
+@article{nelder1972generalized,
+  title={Generalized linear models},
+  author={Nelder, John Ashworth and Wedderburn, Robert WM},
+  journal={Journal of the Royal Statistical Society: Series A (General)},
+  volume={135},
+  number={3},
+  pages={370--384},
+  year={1972},
+  publisher={Wiley Online Library}
+}
+
+@article{izbicki2019exploiting,
+  title={Exploiting the Earth's Spherical Geometry to Geolocate Images},
+  author={Mike Izbicki and Vagelis Papalexakis and Vassilis Tsotras},
+  year={2019},
+  journal={ECMLPKDD},
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+

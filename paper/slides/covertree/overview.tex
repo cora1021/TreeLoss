@@ -1,0 +1,129 @@
+\newcommand{\cexp}{c_\textnormal{exp}}
+\newcommand{\cdoub}{c_\textnormal{doub}}
+\newcommand{\cdoubstar}{c_{\textnormal{doub}^*}}
+\newcommand{\chole}{c_\textnormal{hole}}
+
+%\newcommand{\poly}[1]{\text{poly}(#1)}
+\newcommand{\poly}[1]{#1^{O(1)}}
+
+
+\newcommand{\nn}[1]{\ensuremath{\ensuremath{{{#1}}_{nn}}}}
+\newcommand{\dist}[2]{\ensuremath{\ensuremath{d}({{#1}},{{#2}})}}
+\newcommand{\exprad}[1]{\ensuremath{\ensuremath{2}}}
+\newcommand{\pack}{\ensuremath{\text{\ttfamily pack}}}
+\newcommand{\rmNodes}{\ensuremath{\text{\ttfamily rmNodes}}}
+\newcommand{\findnn}{\ensuremath{\text{\ttfamily findNearestNeighbor}}}
+\newcommand{\ctmerge}{\ensuremath{\text{\ttfamily merge}}}
+\newcommand{\ctinsert}{\ensuremath{\text{\ttfamily insert}}}
+\newcommand{\ctinsertHelper}{\ensuremath{\text{\ttfamily insert\_}}}
+\newcommand{\rebalance}{\ensuremath{\text{\ttfamily rebalance}}}
+\newcommand{\rebalanceHelper}{\ensuremath{\text{\ttfamily rebalance\_}}}
+\newcommand{\mkfunction}[1]{\ensuremath{\text{\ttfamily {#1}}}}
+\newcommand{\mkvar}[1]{\ensuremath{\text{\emph{{#1}}}}}
+\newcommand{\nullvar}{\ensuremath{\text{\ttfamily null}}}
+\newcommand{\datapoint}[1]{\ensuremath{\text{\ttfamily dp}({#1})}}
+\newcommand{\level}[1]{\ensuremath{\text{\ttfamily level}({#1})}}
+\newcommand{\sepdist}[1]{\ensuremath{\text{\ttfamily sepdist}({#1})}}
+\newcommand{\covdist}[1]{\ensuremath{\text{\ttfamily covdist}({#1})}}
+\newcommand{\children}[1]{\ensuremath{\text{\ttfamily children}({#1})}}
+\newcommand{\descendants}[1]{\ensuremath{\text{\ttfamily descendants}({#1})}}
+\newcommand{\maxdist}[1]{\ensuremath{\text{\ttfamily maxdist}({#1})}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}{Cover tree overview}
+
+    %\Large
+
+%Cover trees are a data structure for faster nearest neighbor queries in non-metric spaces.
+    The cover tree data structure (Beygelzimer, et al. 2006) is used for:
+\begin{itemize}
+    \item $k$-nearest neighbor classification
+    \item kernel support vector machines
+    \item gaussian processes
+    \item other non-parametric learning algorithms
+    \item arbitrary metric spaces, not just Euclidean space
+\end{itemize}
+
+\vspace{0.15in}
+Contibutions that I'll present
+    \begin{itemize}
+        \item simplified cover tree definition
+        \item provided merge algorithm
+        \item improved run time bounds
+        \item new notion of intrinsic dimension
+        \item experiments on large scale protein and image data
+    \end{itemize}
+%\vspace{0.1in}
+%\hrule
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\ignore{
+\begin{frame}{Cover tree outline}
+    \Large
+\begin{itemize}
+        \Large
+    \item metric spaces
+        \begin{itemize}
+                \Large
+            \item for protein data
+            \item for image data
+        \end{itemize}
+        \vspace{0.1in}
+    \item contibutions that I'll present
+        \begin{itemize}
+                \Large
+            \item simplified cover tree definition
+            \item provided merge algorithm
+            \item improved run time bounds
+            \item new notion of intrinsic dimension
+            \item experiments on large scale protein and image data
+        \end{itemize}
+        \vspace{0.1in}
+    \item other contributions
+
+\end{itemize}
+
+%\begin{itemize}
+%
+%\item
+%Cover trees are a data structure for nearest neighbor queries in arbitrary metric spaces
+%\begin{itemize}
+%\item
+%makes $k$-nearest neighbor classification faster
+%\item
+%other algorithms that can be sped up include SVMs, and kernelized algorithm, and dimensionality reduction
+%\item
+%non-Euclidean metrics provide state-of-the-art performance on many learning problems
+%\end{itemize}
+%
+%\item
+%My original paper, 
+%\begin{itemize}
+%\item 
+%simplifies the definition of the cover tree
+%
+%\item
+%introduces the nearest ancestor invariant
+%
+%\item
+%provides a cache-efficient memory layout for the tree
+%
+%\item
+%shows how to merge two cover trees together
+%
+%\end{itemize}
+%
+%\item
+%These contributions made the cover tree faster in practice, but did not improve the theoretical guarantees
+%
+%\item
+%My goal for the dissertation is to also improve the theoretical guarantees
+%
+%\end{itemize}
+
+\end{frame}
+}
+

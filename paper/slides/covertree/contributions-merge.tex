@@ -1,0 +1,187 @@
+\begin{frame}[fragile]{Merging cover trees}
+
+Merging cover trees gives us a parallel tree construction algorithm
+
+\vspace{0.15in}
+
+Sometimes, merging cover trees is \textbf{easy}:
+
+\begin{center}
+\begin{tikzpicture}
+    [ draw
+    , every node/.style={minimum size=10mm,fill=white}
+    , level/.style={sibling distance = 23mm/#1, level distance=12mm}
+    %,    level distance = 1.5cm}
+    , sibling distance=8mm
+    ]
+\draw (-2.3,0) -- (8.6,0)[dotted];
+\draw (-2.3,-12mm) -- (8.6,-12mm)[dotted];
+\draw (-2.3,-24mm) -- (8.6,-24mm)[dotted];
+\node[shape=circle,draw] at (0,0) {10}
+    child { node[circle,draw] {8}
+        child { node[circle,draw] {7}  }
+        child { node[circle,draw] {9} }
+        }
+    child [color=white] {}
+    %child { node[circle,draw] {12}
+        %child { node[circle,draw] {9}  }
+        %child { node[circle,draw] {13} }
+        %}
+    ;
+\node[shape=circle,draw,fill=lightgreen] at (5,-12mm) {12}
+    %child { node[circle,draw] {8}
+        %child { node[circle,draw] {7}  }
+        %child { node[circle,draw,fill=lightgreen,line width=1pt] {9} }
+        %}
+    %child { node[circle,draw] {12}
+        child { node[circle,draw] {11}  }
+        child { node[circle,draw] {13} }
+        %}
+    ;
+\node[fill=none] at (8,3mm) {level 3};
+\node[fill=none] at (8,-9mm) {level 2};
+\node[fill=none] at (8,-21mm) {level 1};
+\end{tikzpicture}
+\end{center}
+
+\vspace{0.1in}
+No runtime bound on the merge operation, but it is fast in practice
+
+%\vspace{0.1in}
+%But, if the runtime is $o(n)$, then we get an algorithm for tree construction that takes time $O(n)$
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{Merging cover trees}
+
+Merging cover trees gives us a parallel tree construction algorithm
+
+\vspace{0.15in}
+
+Sometimes, merging cover trees is \textbf{hard}:
+
+\begin{center}
+\begin{tikzpicture}
+    [ draw
+    , every node/.style={minimum size=10mm,fill=white}
+    , level/.style={sibling distance = 23mm/#1, level distance=12mm}
+    %,    level distance = 1.5cm}
+    , sibling distance=8mm
+    ]
+\draw (-2.3,0) -- (8.6,0)[dotted];
+\draw (-2.3,-12mm) -- (8.6,-12mm)[dotted];
+\draw (-2.3,-24mm) -- (8.6,-24mm)[dotted];
+\node[shape=circle,draw] at (0,0) {10}
+    child { node[circle,draw] {8}
+        child { node[circle,draw] {7}  }
+        child { node[circle,draw] {9} }
+        }
+    child [color=white] {}
+    %child { node[circle,draw] {12}
+        %child { node[circle,draw] {9}  }
+        %child { node[circle,draw] {13} }
+        %}
+    ;
+\node[shape=circle,draw,fill=lightred] at (5,-12mm) {11.5}
+    %child { node[circle,draw] {8}
+        %child { node[circle,draw] {7}  }
+        %child { node[circle,draw,fill=lightgreen,line width=1pt] {9} }
+        %}
+    %child { node[circle,draw] {12}
+        child { node[circle,draw] {11}  }
+        child { node[circle,draw] {13} }
+        %}
+    ;
+\node[fill=none] at (8,3mm) {level 3};
+\node[fill=none] at (8,-9mm) {level 2};
+\node[fill=none] at (8,-21mm) {level 1};
+\end{tikzpicture}
+\end{center}
+
+\vspace{0.1in}
+No runtime bound on the merge operation, but it is fast in practice
+
+%\vspace{0.1in}
+%But, if the runtime is $o(n)$, then we get an algorithm for tree construction that takes time $O(n)$
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{The effect of parallel tree \emph{construction} on small datasets}
+\begin{center}
+\graphicspath{{slides/covertree/paperimg/}}
+\input{slides/covertree/paperimg/parallel-ancestor-build}
+\begin{tikzpicture}
+    \node[draw,fill=blue,minimum width=0.05in,minimum height=0.3in] at (0.3in,0) {};
+    \node at (0.3in,0.63in) {\small\rotatebox{90}{Our cover tree}};
+    \node[minimum width=0.05in,minimum height=0.3in] at (0.45in,0) {};
+    \node at (0.45in,0.61in) {\small\rotatebox{90}{}};
+    \node at (0,-0.475in) {};
+\end{tikzpicture}
+\end{center}
+
+\vspace{0.1in}
+Experiments run on an Amazon AWS instance with 16 true cores
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{Parallel tree construction really matters on larger data sets}
+
+
+%on small datasets with cheap metrics, parallel construction is less useful
+
+\vspace{0.1in}
+On large datasets with an expensive metric, parallelism is more useful
+
+\vspace{0.15in}
+Yahoo! Flickr dataset with 1.5 million images and earth mover distance
+
+%\vspace{0.2in}
+\vspace{0.15in}
+\begin{center}
+\Large
+\begin{tabular}{ccccc}
+\hline
+num cores
+ & \multicolumn{2}{c}{simplified tree} & \multicolumn{2}{c}{nearest ancestor tree} \\
+%& \multicolumn{2}{c}{construction} & \multicolumn{2}{c}{construction} \\ %\cline{2-5}
+& time & speedup & time & speedup \\
+\hline
+\hline
+1  & 70.7 min & 1.0 & 210.9 min& 1.0\\
+2  & 36.6 min & 1.9 & 94.2 min & 2.2\\
+4  & 18.5 min & 3.8 & 48.5 min & 4.3\\
+8  & 10.2 min & 6.9 & 25.3 min & 8.3\\
+16 & 6.7 min & 10.5 & 12.0 min & 17.6\\
+\hline
+\end{tabular}
+\end{center}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{The effect of parallel tree \emph{construction and query}}
+\begin{center}
+\graphicspath{{slides/covertree/paperimg/}}
+\input{slides/covertree/paperimg/parallel}
+\definecolor{colorOrig}{RGB}{102,51,0}
+\definecolor{colorMlpack}{RGB}{204,153,0}
+\begin{tikzpicture}
+    \node[draw,fill=colorOrig,minimum width=0.05in,minimum height=0.3in] at (0,0) {};
+    \node at (0,0.79in) {\small\rotatebox{90}{Reference cover tree}};
+    \node[draw,fill=colorMlpack,minimum width=0.05in,minimum height=0.3in] at (0.15in,0) {};
+    \node at (0.15in,0.80in) {\small\rotatebox{90}{MLPack's cover tree}};
+    \node[draw,fill=blue,minimum width=0.05in,minimum height=0.3in] at (0.3in,0) {};
+    \node at (0.3in,0.63in) {\small\rotatebox{90}{Our cover tree}};
+    \node[minimum width=0.05in,minimum height=0.3in] at (0.45in,0) {};
+    \node at (0.45in,0.61in) {\small\rotatebox{90}{}};
+    \node at (0,-0.475in) {};
+\end{tikzpicture}
+\end{center}
+
+\vspace{0.1in}
+Experiments run on an Amazon AWS instance with 16 true cores
+\end{frame}

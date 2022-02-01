@@ -1,0 +1,30 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{Experiment: protein data bank data}
+
+%This experiment uses the protein data and the random walk graph kernel.
+\vspace{0.1in}
+Protein distance measured using the random walk graph kernel
+\vspace{0.1in}
+
+{
+\begin{center}
+\graphicspath{{slides/covertree/paperimg/}}
+\input{slides/covertree/paperimg/protein-pres}
+\begin{tikzpicture}
+    \node[draw,fill=darkred,minimum width=0.03in,minimum height=0.3in] at (0,0) {};
+    \node at (0,0.77in) {\small\rotatebox{90}{Original cover tree}};
+    \node[draw,fill=darkgreen,minimum width=0.03in,minimum height=0.3in] at (0.15in,0) {};
+    \node at (0.15in,0.82in) {\small\rotatebox{90}{Simplified cover tree}};
+    %\node[draw,fill=blue,minimum width=0.03in,minimum height=0.3in] at (0.3in,0) {};
+    %\node at (0.3in,1.01in) {\small\rotatebox{90}{Nearest ancestor cover tree}};
+    %\node[minimum width=0.05in,minimum height=0.5in] at (0.45in,0) {};
+    %\node at (0.6in,0.7in) {\small\rotatebox{90}{ dotted lines: construction only}};
+    %\node at (0.75in,0.81in) {\small\rotatebox{90}{ solid lines: construction and query}};
+    \node at (0,-0.5in) {};
+\end{tikzpicture}
+\end{center}
+}
+
+\end{frame}
+

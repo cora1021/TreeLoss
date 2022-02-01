@@ -1,0 +1,46 @@
+\documentclass[tikz]{standalone}
+\begin{document}
+
+\definecolor{lightred}{RGB}{255,200,200}
+\definecolor{lightgreen}{RGB}{200,255,200}
+\definecolor{lightblue}{RGB}{200,200,255}
+\definecolor{darkred}{RGB}{127,0,0}
+\definecolor{darkgreen}{RGB}{0,127,0}
+\definecolor{darkblue}{RGB}{0,0,127}
+
+\begin{tikzpicture}
+    [ draw
+    , every node/.style={minimum size=10mm,fill=white}
+    , level/.style={sibling distance = 23mm/#1, level distance=12mm}
+    %,    level distance = 1.5cm}
+    , sibling distance=8mm
+    ]
+\draw (-2.3,0) -- (8.6,0)[dotted];
+\draw (-2.3,-12mm) -- (8.6,-12mm)[dotted];
+\draw (-2.3,-24mm) -- (8.6,-24mm)[dotted];
+\node[shape=circle,draw] at (0,0) {10}
+    child { node[circle,draw] {8}
+        child { node[circle,draw] {7}  }
+        child { node[circle,draw,fill=lightred,line width=1pt] {11} }
+        }
+    child { node[circle,draw] {12}
+        child { node[circle,draw,fill=lightred,line width=1pt] {9}  }
+        child { node[circle,draw] {13} }
+        }
+    ;
+\node[shape=circle,draw] at (5,0) {10}
+    child { node[circle,draw] {8}
+        child { node[circle,draw] {7}  }
+        child { node[circle,draw,fill=lightgreen,line width=1pt] {9} }
+        }
+    child { node[circle,draw] {12}
+        child { node[circle,draw,fill=lightgreen,line width=1pt] {11}  }
+        child { node[circle,draw] {13} }
+        }
+    ;
+\node[fill=none] at (8,3mm) {level 3};
+\node[fill=none] at (8,-9mm) {level 2};
+\node[fill=none] at (8,-21mm) {level 1};
+\end{tikzpicture}
+\end{document}
+

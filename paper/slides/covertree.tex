@@ -1,0 +1,98 @@
+\begin{frame}
+\frametitle{How to build the tree structure? (II)}
+
+Use the \textbf{cover tree} data structure
+\begin{itemize}
+%\item Build tree over arbitrary metric spaces
+\item Good theoretical guarantees
+\item I have prior experience with cover trees \citep{izbicki2015faster}
+\end{itemize}
+
+%We use the \textbf{cover tree} data structure.
+
+%\begin{block}{Assumption (informal)}
+%There exists a distance metric $d$ over the classes that accurately represents
+%\end{block}
+
+\vspace{0.1in}
+\textbf{Problem:}
+\begin{itemize}
+\item The tree should be built over the optimal $\w_i^*$ to minimize $\lF{U^*}$/$\lF{V^*}$
+\item We don't know $w_i^*$
+\end{itemize}
+
+\vspace{0.1in}
+\begin{block}{Assumption 3}
+    \label{ass:metric}
+    Let $\lambda \ge 1$, and $d$ be a distance metric over the labels such that for all labels $i$ and $j$,
+\begin{equation}
+    \frac 1 \lambda d(i,j)
+    \le \ltwo{\star \w_i - \star \w_j}
+    \le \lambda d(i, j).
+\end{equation}
+\end{block}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Main Result!!!}
+
+%\begin{block}{Old Result}
+    %\begin{equation}
+    %\lF{\star W} \le \sqrt{dk}
+    %\end{equation}
+%\end{block}
+
+
+\begin{block}{Lemma 3 (informal)}
+Let $c$ be the doubling dimension of the metric in Assumption 3.
+Then,
+    %Let $c$ be the doubling dimension of the metric in Assumption 3.
+    %Then when $c\le1$, we have that
+    %\begin{equation}
+        %\lF{\star V} \le \lF{\star U} \le \tfrac{1}{\sqrt2}\lambda \sqrt{d\log_2 k} \le \lF{\star W} \le \sqrt{dk},
+        %\label{eq:c<=1}
+    %\end{equation}
+    %and when $c>1$, we have that
+    %\begin{equation}
+        %\lF{\star V} \le \lF{\star U} \le \sqrt{5}\lambda \sqrt{dk^{(1-1/c)}} \le \lF{\star W} \le \sqrt{dk}.
+        %\label{eq:c>1}
+    %\end{equation}
+\begin{equation}
+\lF{\star V} \le \lF{\star U} \le 
+O\left(
+\begin{cases}
+\sqrt{\frac{d \log k}{n}} & c \le 1\\
+\sqrt{\frac{d k^{1-1/c}}{n}} & c > 1
+\end{cases}
+\right)
+\le \lF{\star W} \le \sqrt{dk}
+\end{equation}
+\end{block}
+
+\vspace{0.1in}
+Lemmas 1 and 3 immediately imply
+
+\vspace{0.1in}
+\begin{block}{Theorem 1 (informal)}
+The tree loss satisfies
+\begin{equation}
+\text{generalization error} \le
+O\left(
+\begin{cases}
+\sqrt{\frac{d \log k}{n}} & c \le 1\\
+\sqrt{\frac{d k^{1-1/c}}{n}} & c > 1
+\end{cases}
+\right)
+\le
+O\left(\sqrt{\frac{dk}{n}}\right)
+\end{equation}
+\end{block}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\begin{frame}
+%\frametitle{What's the doubling dimension $c$?}
+%\end{frame}

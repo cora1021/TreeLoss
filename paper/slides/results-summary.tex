@@ -1,0 +1,42 @@
+\begin{frame}{(Informal) Main Result}
+
+Let
+\begin{itemize}
+%\item $d$ features
+\item $k$ be the number of classes, and%\uncover<2>{\textcolor{red}{, doubling dimension $c$}}
+\item $n$ be the number of data points.
+\end{itemize}
+
+%The generalization error of the standard cross entropy loss decays as
+%\begin{equation}
+    %O(\sqrt{dk/n}).
+%\end{equation}
+
+Then almost all classification problems have
+\begin{equation}
+    \text{generalization error} = \Theta(\sqrt{k/n})
+\end{equation}
+in the PAC framework.
+
+\uncover<2>{
+    \textcolor{red}{(\emph{new})}
+    Let
+    \begin{itemize}
+        \item $c$ be the doubling dimensionality of the classes.
+    \end{itemize}
+    Then we probide a simple algorithm with
+    \begin{equation}
+        \text{generalization error} = 
+        \begin{cases}
+            O(\sqrt{\log k/n}) & c \le 1 \\
+            O(\sqrt{k^{1-c}/n}) & c > 1 \\
+        \end{cases}
+    \end{equation}
+    and we conjecture that $\Theta(\sqrt{c/n})$ is optimal.
+        %We provide a simple algorithm with generalization error
+    %\begin{equation}
+        %O(\sqrt{d\log k}/n)
+    %\end{equation}
+    }
+
+\end{frame}

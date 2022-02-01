@@ -1,0 +1,30 @@
+\begin{frame}{Summary}
+
+Theory predicts the following generalization errors:
+\begin{itemize}
+\item cross entropy is $O(\sqrt{k/n})$
+\item tree loss is $\begin{cases}O(\sqrt{\log k/n})&c<=1\\O(\sqrt{k^{1-1/c}/n})&c>1\end{cases}$% if $c<=1$ else $O(\sqrt{k^{1-1/c}/n})$
+\end{itemize}
+
+\vspace{0.1in}
+We hypothesize the optimal is $O(\sqrt{c/n})$
+
+\vspace{0.1in}
+Experiments:
+\begin{itemize}
+\item tree loss outperforms cross entropy loss:
+\begin{itemize}
+\item in all regimes of ablation study
+\item even for bad trees! (lemma proves this is always true)
+\end{itemize}
+\item good performance on real world problems
+\begin{itemize}
+\item still working on gettint SOTA on ImageNet...
+\end{itemize}
+\end{itemize}
+
+\vspace{0.1in}
+\textbf{Tree Loss is easy to implement! Code available!}
+
+\url{https://github.com/cora1021/TreeLoss}
+\end{frame}

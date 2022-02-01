@@ -1,0 +1,103 @@
+\begin{frame}[fragile]{Cache oblivious cover tree}
+
+%RAM model is a lie
+%
+%\vspace{0.1in}
+Need to consider cache accesses for fast, modern data structures
+
+%\vspace{0.1in}
+%In a \emph{cache oblivious} data structure, the programmer doesn't need to know any details about the underlying hardware
+%
+\begin{center}
+\includegraphics[width=10cm]{slides/covertree/cpu_cache_structure}
+\end{center}
+
+{\tiny image from: \url{http://1024cores.net} }
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{Cache oblivious cover tree}
+
+%The trick: use the van Emde Boas tree layout
+Arrange nodes in memory according to a preorder traversal of the tree
+
+(van Emde Boas \emph{et al.}, 1966; Demaine, 2002)
+\vspace{0.1in}
+
+\begin{center}
+\includegraphics[width=6cm]{slides/covertree/preorder.png}
+\end{center}
+
+{\tiny image from: Wikipedia}
+%(nodes arranged in memory according to a pre-order depth first traversal)
+%
+%\vspace{-0.1in}
+%%{
+%%\centering
+%\begin{center}
+%\includegraphics[width=8cm]{covertree/cache_oblivious_divide}
+%\end{center}
+%%}
+%
+%\vspace{-0.1in}
+%Optimal cache performance without any knowledge of the architecture
+%\vspace{0.15in}
+
+%source: 1024cores.net
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{The cache efficiency of three cover tree implementations}
+
+\centering
+\graphicspath{{slides/covertree/paperimg/}}
+\input{slides/covertree/paperimg/cache-hlearn}
+\definecolor{colorOrig}{RGB}{102,51,0}
+\definecolor{colorMlpack}{RGB}{204,153,0}
+\begin{tikzpicture}
+    %\node[draw,fill=colorOrig,minimum width=0.05in,minimum height=0.3in] at (0,0) {};
+    %\node at (0,0.79in) {\small\rotatebox{90}{Reference cover tree}};
+    %\node[draw,fill=colorMlpack,minimum width=0.05in,minimum height=0.3in] at (0.15in,0) {};
+    %\node at (0.15in,0.79in) {\small\rotatebox{90}{MLPack's cover tree}};
+    %\node[draw,fill=blue,minimum width=0.05in,minimum height=0.3in] at (0.3in,0) {};
+    %\node at (0.3in,0.98in) {\small\rotatebox{90}{Our cover tree (unpacked)}};
+    %\node[draw,fill=lightblue,minimum width=0.05in,minimum height=0.3in] at (0.45in,0) {};
+    %\node at (0.45in,0.91in) {\small\rotatebox{90}{Our cover tree (packed)}};
+    \node[draw,fill=blue,minimum width=0.05in,minimum height=0.3in] at (0.3in,0) {};
+    \node at (0.3in,0.98in) {\small\rotatebox{90}{Without van embde boas }};
+    \node[draw,fill=lightblue,minimum width=0.05in,minimum height=0.3in] at (0.45in,0) {};
+    \node at (0.45in,0.88in) {\small\rotatebox{90}{With van embde boas }};
+    \node at (0,-0.475in) {};
+\end{tikzpicture}
+
+\vspace{0.15in}
+Measured using Linux's \lstinline{perf stat} utility on an Amazon AWS instance
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%\begin{frame}[fragile]{The cache efficiency of three cover tree implementations}
+%
+%\centering
+%\graphicspath{{slides/covertree/paperimg/}}
+%\input{slides/covertree/paperimg/stalled-front}
+%\definecolor{colorOrig}{RGB}{102,51,0}
+%\definecolor{colorMlpack}{RGB}{204,153,0}
+%\begin{tikzpicture}
+    %\node[draw,fill=colorOrig,minimum width=0.05in,minimum height=0.3in] at (0,0) {};
+    %\node at (0,0.79in) {\small\rotatebox{90}{Reference cover tree}};
+    %\node[draw,fill=colorMlpack,minimum width=0.05in,minimum height=0.3in] at (0.15in,0) {};
+    %\node at (0.15in,0.79in) {\small\rotatebox{90}{MLPack's cover tree}};
+    %\node[draw,fill=blue,minimum width=0.05in,minimum height=0.3in] at (0.3in,0) {};
+    %\node at (0.3in,0.98in) {\small\rotatebox{90}{Our cover tree (unpacked)}};
+    %\node[draw,fill=lightblue,minimum width=0.05in,minimum height=0.3in] at (0.45in,0) {};
+    %\node at (0.45in,0.91in) {\small\rotatebox{90}{Our cover tree (packed)}};
+    %\node at (0,-0.475in) {};
+%\end{tikzpicture}
+%
+%\vspace{0.15in}
+%Measured using Linux's \lstinline{perf stat} utility on an Amazon AWS instance
+%\end{frame}

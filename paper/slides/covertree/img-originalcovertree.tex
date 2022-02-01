@@ -1,0 +1,58 @@
+\documentclass[tikz]{standalone}
+\begin{document}
+
+\definecolor{lightred}{RGB}{255,200,200}
+\definecolor{lightgreen}{RGB}{200,255,200}
+\definecolor{lightblue}{RGB}{200,200,255}
+\definecolor{darkred}{RGB}{127,0,0}
+\definecolor{darkgreen}{RGB}{0,127,0}
+\definecolor{darkblue}{RGB}{0,0,127}
+
+\definecolor{lightgray}{RGB}{205,210,255}
+
+\begin{tikzpicture}
+    [ draw
+    , every node/.style={line width=1pt, minimum size=10mm,fill=lightgray}
+    , level 1/.style={sibling distance = 30mm, level distance=20mm}
+    , level 2/.style={sibling distance = 30mm, level distance=12mm}
+    , level 3/.style={sibling distance = 12mm, level distance=12mm}
+    , level 4/.style={sibling distance = 12mm, level distance=20mm}
+    , dash/.style={edge from parent/.style={gray,thin,draw}}
+    , norm/.style={edge from parent/.style={black,very thick,draw}}
+    %,    level distance = 1.5cm}
+    , sibling distance=8mm
+    ]
+\draw (-4.3,0mm) -- (5,0mm)[dotted];
+\draw (-4.3,-20mm) -- (5,-20mm)[dotted];
+\draw (-4.3,-32mm) -- (5,-32mm)[dotted];
+\draw (-4.3,-44mm) -- (5,-44mm)[dotted];
+\draw (-4.3,-64mm) -- (5,-64mm)[dotted];
+\node[circle,draw=gray,thin] at (0,0) {10}
+    child[dash] {
+        node[shape=circle,draw] {10}
+        child[norm] { node[circle,draw=black,very thick] {8}
+            child[norm] { node[circle,draw] {7}         child[dash] { node[circle,draw=gray,thin] {7} } }
+            child[dash] { node[circle,draw=gray,thin] {8}  child[dash] { node[circle,draw=gray,thin] {8} } }
+            }
+        child[norm] { node[circle,draw=black] {10}
+            child[norm] { node[circle,draw] {9}         child[dash] { node[circle,draw=gray,thin] {9} } }
+            child[dash] { node[circle,draw=gray,thin] {10} child[dash] { node[circle,draw=gray,thin] {10}} }
+            child[norm] { node[circle,draw] {11}        child[dash] { node[circle,draw=gray,thin] {11}} }
+            }
+        child[norm] { node[circle,draw=black] {12}
+            child[dash] { node[circle,draw=gray,thin] {12} child[dash] { node[circle,draw=gray,thin] {12}} }
+            child[norm] { node[circle,draw] {13}        child[dash] { node[circle,draw=gray,thin] {13}} }
+            }
+        }
+    ;
+\node[fill=none] at (6,0mm) {level $\infty$};
+\node[fill=none] at (6,-10mm) {$\vdots$};
+\node[fill=none] at (6,-20mm) {level 2};
+\node[fill=none] at (6,-32mm) {level 1};
+\node[fill=none] at (6,-44mm) {level 0};
+\node[fill=none] at (6,-54mm) {$\vdots$};
+\node[fill=none] at (6,-64mm) {level $-\infty$};
+\end{tikzpicture}
+\end{document}
+
+
