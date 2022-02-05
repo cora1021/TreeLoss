@@ -4,8 +4,9 @@
 Use the \textbf{cover tree} data structure
 \begin{itemize}
 %\item Build tree over arbitrary metric spaces
-\item Good theoretical guarantees
-\item I have prior experience with cover trees \citep{izbicki2015faster}
+\item Good theoretical guarantees, fast to build
+\pause
+\item I invented the ``simplified cover tree'' \citep{izbicki2015faster}
 \end{itemize}
 
 %We use the \textbf{cover tree} data structure.
@@ -14,13 +15,15 @@ Use the \textbf{cover tree} data structure
 %There exists a distance metric $d$ over the classes that accurately represents
 %\end{block}
 
+\pause
 \vspace{0.1in}
 \textbf{Problem:}
 \begin{itemize}
-\item The tree should be built over the optimal $\w_i^*$ to minimize $\lF{U^*}$/$\lF{V^*}$
-\item We don't know $w_i^*$
+\item Tree should be built over optimal $\w_i^*$ to minimize $\lF{U^*}$/$\lF{V^*}$
+\item We don't know $\w_i^*$
 \end{itemize}
 
+\pause
 \vspace{0.1in}
 \begin{block}{Assumption 3}
     \label{ass:metric}
@@ -30,9 +33,70 @@ Use the \textbf{cover tree} data structure
     \le \ltwo{\star \w_i - \star \w_j}
     \le \lambda d(i, j).
 \end{equation}
+Let $c$ be the doubling dimension of this metric.
 \end{block}
 
 \end{frame}
+
+%\begin{frame}
+%\frametitle{Main Result!!!}
+
+%%\begin{block}{Old Result}
+    %%\begin{equation}
+    %%\lF{\star W} \le \sqrt{dk}
+    %%\end{equation}
+%%\end{block}
+
+
+%\begin{block}{Lemma 3 (informal)}
+    %Under Assumptions 1-2 (highly technical) and 3, we have that
+%%Let $c$ be the doubling dimension of the metric in Assumption 3.
+%%Then,
+    %%Let $c$ be the doubling dimension of the metric in Assumption 3.
+    %%Then when $c\le1$, we have that
+    %%\begin{equation}
+        %%\lF{\star V} \le \lF{\star U} \le \tfrac{1}{\sqrt2}\lambda \sqrt{d\log_2 k} \le \lF{\star W} \le \sqrt{dk},
+        %%\label{eq:c<=1}
+    %%\end{equation}
+    %%and when $c>1$, we have that
+    %%\begin{equation}
+        %%\lF{\star V} \le \lF{\star U} \le \sqrt{5}\lambda \sqrt{dk^{(1-1/c)}} \le \lF{\star W} \le \sqrt{dk}.
+        %%\label{eq:c>1}
+    %%\end{equation}
+%\begin{equation}
+%\lF{\star V} \le \lF{\star U} \le 
+%O\left(
+%\begin{cases}
+%\lambda\sqrt{\frac{d \log k}{n}} & c \le 1\\
+%\lambda\sqrt{\frac{d k^{1-1/c}}{n}} & c > 1
+%\end{cases}
+%\right)
+%\le \lF{\star W} \le \sqrt{dk}
+%\end{equation}
+%\end{block}
+
+%\vspace{0.1in}
+%Lemmas 1 and 3 immediately imply
+
+%\vspace{0.1in}
+%\begin{block}{Theorem 1 (informal)}
+%The tree loss satisfies
+%\begin{equation}
+%\text{generalization error} \le
+%O\left(
+%\begin{cases}
+%\lambda\sqrt{\frac{d \log k}{n}} & c \le 1\\
+%\lambda\sqrt{\frac{d k^{1-1/c}}{n}} & c > 1
+%\end{cases}
+%\right)
+%\le
+%O\left(\sqrt{\frac{dk}{n}}\right)
+%\end{equation}
+%\end{block}
+
+%\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}
 \frametitle{Main Result!!!}
@@ -45,8 +109,9 @@ Use the \textbf{cover tree} data structure
 
 
 \begin{block}{Lemma 3 (informal)}
-Let $c$ be the doubling dimension of the metric in Assumption 3.
-Then,
+    Under Assumptions 1-2 (highly technical) and 3, we have that
+%Let $c$ be the doubling dimension of the metric in Assumption 3.
+%Then,
     %Let $c$ be the doubling dimension of the metric in Assumption 3.
     %Then when $c\le1$, we have that
     %\begin{equation}
@@ -70,12 +135,13 @@ O\left(
 \end{equation}
 \end{block}
 
+\pause
 \vspace{0.1in}
 Lemmas 1 and 3 immediately imply
 
 \vspace{0.1in}
 \begin{block}{Theorem 1 (informal)}
-The tree loss satisfies
+The $U$ and $V$ parameterizations of the cross entropy loss when trained with SGD satisfy
 \begin{equation}
 \text{generalization error} \le
 O\left(

@@ -13,7 +13,6 @@
 \usepackage{graphicx}
 \usepackage{subcaption}
 \usepackage{mwe}
-\usepackage{ulem}
 
 \usepackage{tikz}
 \usetikzlibrary{decorations.pathreplacing}
@@ -116,9 +115,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \author {Mike Izbicki}
-\institute{Claremont McKenna College}
-\title[Highly Multiclass Classification]{}
-\date{August 23, 2017}
+\institute{Claremont McKenna}
+\title[Better Multiclass Classification]{}
+\date{2 Feb 2022}
 
 \begin{document}
 
@@ -128,30 +127,38 @@
 
 \input{slides/title}
 \input{slides/motivation}
+\input{slides/imagenet}
+\input{slides/outline1}
 
-%\input{slides/background-ml}
-%\input{slides/background-ml2}
-%\input{slides/motivation-not}
-%\input{slides/results-summary}
-%
-%\input{slides/sgd-xentropy}
-%\input{slides/keyidea.tex}
-%\input{slides/U-matrix}
-%\input{slides/tree}
-%\input{slides/covertree}
+\input{slides/background-ml}
+\input{slides/background-ml2}
 
-%\input{slides/metricspace-short}
-%\input{slides/intrinsic}
+\input{slides/outline2}
+\input{slides/metricspace-short}
+\input{slides/intrinsic}
+\input{slides/conjecture}
 
-%\input{slides/knuth}
-%\input{slides/experiments-synthetic}
-%\input{slides/experiments-image}
-%
+\input{slides/outline3}
+\input{slides/sgd-xentropy}
+\input{slides/keyidea.tex}
+\input{slides/U-matrix}
+\input{slides/intuition}
+\input{slides/tree}
+\input{slides/covertree}
+
+\input{slides/outline4}
+\input{slides/knuth}
+\input{slides/outline5}
+\input{slides/experiments-synthetic}
+\input{slides/experiments-image}
+
+\input{slides/outline6}
+
+
+
+
 %\input{slides/conclusion}
-
-
-
-
+%\input{slides/results-summary}
 %\input{slides/sgd-lemma}
 %\input{slides/ass1}
 %\input{slides/sgd-picture}
@@ -169,6 +176,8 @@
 %\bibliography{main}
 \bibliography{paper,images}
 \end{frame}
+
+\setcounter{framenumber}{\value{finalframe}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

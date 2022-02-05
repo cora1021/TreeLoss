@@ -1,0 +1,27 @@
+\begin{frame}
+\frametitle{Optimal Generalization Error}
+
+\textbf{Recall:} standard generalization error bound is $\Theta(\sqrt{kd/n})$
+
+\pause
+\begin{block}{Conjecture}
+If the classes have metric structure with doubling dimension $c$,
+then 
+\begin{equation}
+\text{the optimal generalization error} = \Theta\left(\sqrt{cd/n}\right)
+\end{equation}
+\end{block}
+
+\pause
+Why?
+\pause
+\begin{itemize}
+    \item if the metric is discrete (no assumptions), then $c=\Theta(k)$ recovering known bound
+    \pause
+\item if the metric is $\mathbb Z$, $k=\infty, c=\Theta(1)$ and the known bound is $O(\sqrt{d/n})$ via Poisson regression
+    \pause
+\item if the metric is $m$-sphere, then $c=\Theta(m)$ and prior work shows the bound is $O(\sqrt{md/n})$
+via MvMF regression \citep{izbicki2019exploiting}
+\end{itemize}
+
+\end{frame}

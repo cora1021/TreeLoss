@@ -1,5 +1,5 @@
 \newtheorem{defn}{Definition}
-\begin{frame}[fragile]{Metric spaces generalize euclidean space}
+\begin{frame}[fragile]{Metric spaces encode structure}
 \centering
 \resizebox{!}{4.5cm}{
 \begin{tikzpicture}[dot/.style={circle,inner sep=2pt,fill,name=#1},
@@ -7,7 +7,7 @@
     extended line/.default=1cm]
 
 % draw the grid
-\uncover<1-3> {
+\uncover<1-2> {
     \draw[->] (0,-0.25) -- (0,5.25) ;
     \draw[->] (-0.25,0) -- (5.25,0) ;
     \foreach \i in {1,...,5} {
@@ -17,7 +17,7 @@
 }
 
 % draw the points
-\uncover<1-3> {
+\uncover<1-2> {
     \node [dot=a,label=above left:a] at (1,1) {};
     \node [dot=b,label=above:b] at (2,4) {};
     \node [dot=c,label=above right:c] at (4,2) {};
@@ -35,15 +35,17 @@
     \node at (9,2.5) {
 
         $\begin{aligned}
-        \mathcal{X}& = \mathbb{R}^p \\
+        {X}& = \mathbb{R}^p \\
         \displaystyle
         d(x,y)
+        &=
+        \ltwo{x-y}
         &=
         \displaystyle
         \left(\sum_{i=1}^p (x_i-y_i)^2\right)^{\frac 1 2} \\
         \end{aligned}$
         };
-    \node at (9, 0.5) { Runtime to calculate distance: $O(p)$ };
+    %\node at (9, 0.5) { Runtime to calculate distance: $O(p)$ };
 }
 
 % draw the L1 metric
@@ -57,40 +59,52 @@
         };
     \node at (9,2.5) {
         $\begin{aligned}
-        \mathcal{X}& = \mathbb{R}^p \\
+        {X}& = \mathbb{R}^p \\
         \displaystyle
         d(x,y)
         &=
+            \lone{x-y}
+        =
         \displaystyle
         \sum_{i=1}^p |x_i-y_i| \\
         \end{aligned}$
         };
-    \node at (9, 0.5) { Runtime to calculate distance: $O(p)$ };
+    %\node at (9, 0.5) { Runtime to calculate distance: $O(p)$ };
 }
 
-% draw the Linf metric
-\uncover<3> {
-    \draw (a) -- (1,4);
-    \draw (4,4) -- (c);
-    \draw (a) -- (4,1);
-    \node at (2.5,1.25) {$3$};
-    \node at (1.25,2.75) {$3$};
-    \node at (3.5,3.5) {$2$};
-    \node at (8, 4.5) {
-        $L_\infty$ (sup) distance:
-        };
-    \node at (9,2.5) {
-        $\begin{aligned}
-        \mathcal{X}& = \mathbb{R}^p \\
-        \displaystyle
-        d(x,y)
-        &=
-        \displaystyle
-        \sup_{i\in\{1..p\}} |x_i-y_i| \\
-        \end{aligned}$
-        };
-    \node at (9, 0.5) { Runtime to calculate distance: $O(p)$ };
+\uncover<3-> {
+    %\node[anchor=west] at (0,5) {Easy to define a metric from the class hierarchy/confusion matrix};
+    \node at (1,2) {\includegraphics[height=1.8in]{img/imagent-hierarchy}};
+    \node at (8,2) {\includegraphics[height=1.8in]{img/teaser}};
 }
+
+%\uncover<3> {
+    %\node at (0,0) {\includegraphics[height=3in]{img/encyclopedia}};
+%}
+
+% draw the Linf metric
+%\uncover<3> {
+    %\draw (a) -- (1,4);
+    %\draw (4,4) -- (c);
+    %\draw (a) -- (4,1);
+    %\node at (2.5,1.25) {$3$};
+    %\node at (1.25,2.75) {$3$};
+    %\node at (3.5,3.5) {$2$};
+    %\node at (8, 4.5) {
+        %$L_\infty$ (sup) distance:
+        %};
+    %\node at (9,2.5) {
+        %$\begin{aligned}
+        %{X}& = \mathbb{R}^p \\
+        %\displaystyle
+        %d(x,y)
+        %&=
+        %\displaystyle
+        %\sup_{i\in\{1..p\}} |x_i-y_i| \\
+        %\end{aligned}$
+        %};
+    %\node at (9, 0.5) { Runtime to calculate distance: $O(p)$ };
+%}
 
 %% draw the Lebesgue metric
 %\uncover<4> {
@@ -99,7 +113,7 @@
         %};
     %\node at (9,2.5) {
         %$\begin{aligned}
-        %\mathcal{X}& = \mathbb{R}^n \\
+        %{X}& = \mathbb{R}^n \\
         %\displaystyle
         %d(x,y)
         %&=
@@ -129,7 +143,7 @@
         %};
     %\node at (9,2.5) {
         %$\begin{aligned}
-        %\mathcal{X}& = \{a,b,c\} \\
+        %{X}& = \{a,b,c\} \\
         %\displaystyle
         %d(x,y)
         %&=
@@ -150,7 +164,7 @@
         %};
     %\node at (9,2.5) {
         %$\begin{aligned}
-        %\mathcal{X}& = \{a,b,c\} \\
+        %{X}& = \{a,b,c\} \\
         %\displaystyle
         %d(x,y)
         %&=
@@ -171,7 +185,7 @@
         %};
     %\node at (9,2.5) {
         %$\begin{aligned}
-        %\mathcal{X}& = \{a,b,c\} \\
+        %{X}& = \{a,b,c\} \\
         %\displaystyle
         %d(x,y)
         %&=
@@ -190,7 +204,7 @@
         %};
     %\node at (9,2.5) {
         %$\begin{aligned}
-        %\mathcal{X}& = \{a,b,c\} \\
+        %{X}& = \{a,b,c\} \\
         %\displaystyle
         %d(x,y)
         %&=
@@ -207,7 +221,7 @@
         %};
     %\node at (9,2.5) {
         %$\begin{aligned}
-        %\mathcal{X}& = \{a,b,c\} \\
+        %{X}& = \{a,b,c\} \\
         %\displaystyle
         %d(x,y)
         %&=
@@ -246,7 +260,7 @@
         %};
     %\node at (9,2.5) {
         %$\begin{aligned}
-        %\mathcal{X}& = \text{set of all graphs} \\
+        %{X}& = \text{set of all graphs} \\
         %\displaystyle
         %d(x,y)
         %&=
@@ -259,7 +273,7 @@
 \end{tikzpicture}
 }
 \begin{defn}
-A \emph{metric space} is a set $\mathcal{X}$ equiped with a distance function $d : \mathcal{X} \times \mathcal{X} \rightarrow \mathbb{R}$ such that:
+A \emph{metric space} is a set ${X}$ equiped with a distance function $d : {X} \times {X} \rightarrow \mathbb{R}$ such that:
 \begin{center}
 \begin{tabular}{ll}
 $d(x,y) \ge 0$ & $d(x,y) = 0$ iff $x=y$ \\
@@ -267,6 +281,15 @@ $d(x,y) = d(y,x)$ & $d(x,z) \le d(x,y) + d(y,z)$ \\
 \end{tabular}
 \end{center}
 \end{defn}
+
+\uncover<4>{
+\vspace{-3.2in}
+\begin{center}
+\setlength{\fboxsep}{0pt}%
+\setlength{\fboxrule}{1pt}%
+\includegraphics[height=3in]{img/encyclopedia}
+\end{center}
+}
 \end{frame}
 
 

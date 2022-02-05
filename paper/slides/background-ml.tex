@@ -12,7 +12,7 @@
     ] (img) 
     {\includegraphics[width=3in]{img/Lakeland_Terrier}};
 
-\uncover<1-3>{
+\uncover<1>{
 \node
     [ below = of img
     , anchor=north
@@ -26,7 +26,7 @@
     { \color{white} Machine Learning Model };
 }
 
-\uncover<4->{
+\uncover<2->{
 \node 
     [ below = of img
     , anchor=north
@@ -48,7 +48,7 @@
     , inner sep=0
     , outer sep=0
     ](xentropy)
-    {\parbox{\textwidth}{\centering Logistic Regression}};
+    {\parbox{\textwidth}{\centering Cross Entropy Loss}};
 \draw[->,line width=2pt] (features) -- (xentropy);
 }
 
@@ -84,7 +84,7 @@
 %%%%%%%%%%%%%%%%%%%%
 
 
-\uncover<5,6>{
+\uncover<3>{
 \node
     [right = 0.25in of features
     , text width = 5in
@@ -139,13 +139,15 @@
     %};
     %}
 
-\uncover<8->{
+\uncover<4->{
 \node
     [ right = 0.25in of xentropy
     , text width = 6in
     ] (deep) {
         \baselineskip=16pt
         ~\\
+        AKA Logistic Regression\\
+        \vspace{0.15in}
         Known since the 1800s, good theoretical properties\\
         \vspace{0.15in}
         Let $d$ be number of features,\\
@@ -153,10 +155,17 @@
         \hspace{0.33in}$n$ be number of data points,\\
         then the generalization error = $\Theta\left(\sqrt{\frac{kd}{n}}\right)$
         \\
+        %\vspace{0.15in}
+        %Known since at least \citet{nelder1972generalized} \\
+        %\\
         \vspace{0.15in}
-        \textbf{So more classes requires more data}
-        ~\\
-        %Known since at least \citet{nelder1972generalized}
+        \textbf{Summary:} more classes requires more data\\
+        %~\\
+        %~\\
+        %\uncover<9>{
+        \vspace{0.15in}
+        \textbf{Our Goal:} add more classes without more data
+    %}
     };
     \draw [decorate,decoration={brace,mirror,amplitude=10pt,raise=4pt},yshift=0pt]
         (deep.north west) -- (deep.south west) node [black,midway,anchor = west,xshift=0.8cm] {};

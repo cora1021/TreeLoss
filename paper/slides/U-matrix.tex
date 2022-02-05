@@ -23,9 +23,9 @@
         \parbox{2in}{
         \small
         \begin{align*}
-            \ell(U, (\x,y))
+            \ell(W, (\x,y))
             &= 
-    -\log \frac {\exp(-\trans\w_y \x)}{\sum_{j=1}^k \exp(-\trans \w_j \x)}
+    -\log \frac {\exp\bigg(-\trans\w_y \x\bigg)}{\sum_{j=1}^k \exp\bigg(-\trans \w_j \x\bigg)}
     \\
     \lF{\nabla_W\ell} &= \lF{W}
     \end{align*}
@@ -56,9 +56,9 @@
         \parbox{2in}{
         \small
         \begin{align*}
-            \ell(W, (\x,y))
+            \ell(\rlap{$U$}\hphantom{W}, (\x,y))
             &= 
-            -\log \frac {\exp(-\sum_{i\in\ancestor(y)}\trans\uu_i \x)}{\sum_{j=1}^k \exp(-\sum_{i\in\ancestor(j)}\trans\uu_i \x)}
+            -\log \frac {\exp\bigg(-\sum_{i\in\ancestor(y)}\trans\uu_i \x\bigg)}{\sum_{j=1}^k \exp\bigg(-\sum_{i\in\ancestor(j)}\trans\uu_i \x\bigg)}
     \\
         \lF{\nabla_U\ell} &= \lF{U} \le \lF{W}
     \end{align*}
@@ -96,9 +96,9 @@
         \parbox{2in}{
         \small
         \begin{align*}
-            \ell(V, (\x,y))
+            \ell(\rlap{$V$}\hphantom{W}, (\x,y))
             &= 
-            -\log \frac {\exp(-\sum_{i\in\ancestor(y)}\trans\uu_i \x)}{\sum_{j=1}^k \exp(-\sum_{i\in\ancestor(j)}\trans\uu_i \x)}
+            -\log \frac {\exp\bigg(-\sum_{i\in\ancestor(y)}\trans\vv_i \x\bigg)}{\sum_{j=1}^k \exp\bigg(-\sum_{i\in\ancestor(j)}\trans\vv_i \x\bigg)}
     \\
         \lF{\nabla_V\ell} &= \lF{V} \le \lF{U} \le \lF{W}
     \end{align*}

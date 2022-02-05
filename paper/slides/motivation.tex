@@ -80,81 +80,62 @@
     %\node at (0,-5) {\Large generalization error = $O(\sqrt{k/n})$};
 }
 
-\ignore{
-\uncover<5>{
-\node (image) at (0,0.25) {\includegraphics[height=2.25in]{img/Lakeland_Terrier}};
-\node at (0,-4) {\Large more classes $\Rightarrow$ harder problem};
-    %\node at (0,-5) {\Large generalization error = $O(\sqrt{k/n})$};
-}
-
-\uncover<5>{
-\node (image) at (0,0) {\includegraphics[height=2.5in]{img/Lakeland_Terrier}};
-\node[maybe] at (1.6875,-4) {Car};
-\node[maybe] at (5,-4) {Tree};
-\node[maybe] at (1.6875,-5) {House};
-\node[maybe] at (5,-5) {Hat};
-}
-
 \uncover<6>{
-\node (image) at (0,0) {\includegraphics[height=2.5in]{img/Lakeland_Terrier}};
+\node (image) at (0,0.25) {\includegraphics[height=2.25in]{img/Lakeland_Terrier}};
 \node[maybe] at (-5,-4) {Irish Terrier};
 \node[maybe] at (-1.6875,-4) {Airedale};
-\node[maybe] at (1.6875,-4) {Horse};
-\node[maybe] at (5,-4) {Human};
+%\node[maybe] at (1.6875,-4) {Horse};
+%\node[maybe] at (5,-4) {Human};
 \node[maybe] at (-5,-5) {Lakeland Terrier};
 \node[maybe] at (-1.6875,-5) {Irish Spaniel};
-\node[maybe] at (1.6875,-5) {House};
-\node[maybe] at (5,-5) {Hat};
+%\node[maybe] at (1.6875,-5) {House};
+%\node[maybe] at (5,-5) {Hat};
+\node at (3.5,-4.5) {Note shown: 996 other classes};
 }
 
 \uncover<7>{
-\node (image) at (0,0) {\includegraphics[height=2.5in]{img/Lakeland_Terrier}};
+\node (image) at (0,0.25) {\includegraphics[height=2.25in]{img/Lakeland_Terrier}};
 \node[maybe] at (-5,-4) {Irish Terrier};
 \node[maybe] at (-1.6875,-4) {Airedale};
-\node[maybe] at (1.6875,-4) {Horse};
-\node[maybe] at (5,-4) {Human};
 \node[yes] at (-5,-5) {Lakeland Terrier};
 \node[maybe] at (-1.6875,-5) {Irish Spaniel};
-\node[maybe] at (1.6875,-5) {House};
-\node[maybe] at (5,-5) {Hat};
+\node at (3.5,-4.5) {Note shown: 996 other classes};
 }
 
 \uncover<8>{
-\node (image) at (0,0) {\includegraphics[height=2.5in]{img/Airedale}};
+\node (image) at (0,0.25) {\includegraphics[height=2.25in]{img/Airedale}};
 \node[maybe] at (-5,-4) {Irish Terrier};
 \node[yes] at (-1.6875,-4) {Airedale};
-\node[maybe] at (1.6875,-4) {Horse};
-\node[maybe] at (5,-4) {Human};
 \node[maybe] at (-5,-5) {Lakeland Terrier};
 \node[maybe] at (-1.6875,-5) {Irish Spaniel};
-\node[maybe] at (1.6875,-5) {House};
-\node[maybe] at (5,-5) {Hat};
+\node at (3.5,-4.5) {Note shown: 996 other classes};
 }
 
 \uncover<9>{
-\node (image) at (0,0) {\includegraphics[height=2.5in]{img/Irish-Terrier}};
+\node (image) at (0,0.25) {\includegraphics[height=2.25in]{img/Irish-Terrier}};
 \node[yes] at (-5,-4) {Irish Terrier};
 \node[maybe] at (-1.6875,-4) {Airedale};
-\node[maybe] at (1.6875,-4) {Horse};
-\node[maybe] at (5,-4) {Human};
 \node[maybe] at (-5,-5) {Lakeland Terrier};
 \node[maybe] at (-1.6875,-5) {Irish Spaniel};
-\node[maybe] at (1.6875,-5) {House};
-\node[maybe] at (5,-5) {Hat};
+\node at (3.5,-4.5) {Note shown: 996 other classes};
 }
 
 \uncover<10>{
-\node (image) at (0,0) {\includegraphics[height=2.5in]{img/water_spaniel}};
+\node (image) at (0,0.25) {\includegraphics[height=2.25in]{img/water_spaniel}};
 \node[maybe] at (-5,-4) {Irish Terrier};
 \node[maybe] at (-1.6875,-4) {Airedale};
-\node[maybe] at (1.6875,-4) {Horse};
-\node[maybe] at (5,-4) {Human};
 \node[maybe] at (-5,-5) {Lakeland Terrier};
 \node[yes] at (-1.6875,-5) {Irish Spaniel};
-\node[maybe] at (1.6875,-5) {House};
-\node[maybe] at (5,-5) {Hat};
+\node at (3.5,-4.5) {Note shown: 996 other classes};
 }
-}
+
+%\uncover<11> {
+    %\node at (0, 2) {\Large more classes $\Rightarrow$ harder problem};
+%
+    %\node at (0, 0) {\Large real world problems are highly structured };
+%
+    %\node at (0, -2) {\Large \textbf{This talk:} exploit class structure to make the problem easier};
+%}
 
 \end{tikzpicture}
 }
@@ -162,6 +143,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\ignore{
 \begin{frame}
 \frametitle{(Informal) Main Idea}
 
@@ -182,3 +164,4 @@ This talk:
 \end{itemize}
 
 \end{frame}
+}

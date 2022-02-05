@@ -1,4 +1,4 @@
-\begin{frame}{Key Idea}
+\begin{frame}{Key Observation}
 
 \begin{block}{Lemma 1 (informal)}
 SGD satisfies
@@ -14,22 +14,26 @@ Immediate corrollary of standard properties of SGD
 \citep{shalev2014understanding}
 
 \vspace{0.2in}
+\uncover<2->{
+\item
+Painful notation to formalize this
+}
+
+        \uncover<4->{
+\vspace{0.2in}
 \item Recover known bounds:
 \begin{equation*}
 \lF{\nabla\ell} = \lF{W^*} = O(\sqrt{kd})
-\quad\Rightarrow\quad
+\quad\Rightarrow
 \text{generalization error} = O(\sqrt{kd/n})
 \end{equation*}
-
-\vspace{0.2in}
-\item
-Painful notation to formalize this
+}
 
 %(IMNSO: most important skill for new mathematician to learn
 
-\uncover<4>{
-\vspace{0.2in}
-\item \textbf{Key idea:} 
+\uncover<5>{
+%\vspace{0.2in}
+\item \textbf{Idea:} 
 Rewrite the cross entropy loss so that $\lF{\nabla\ell}$ is smaller
 \begin{itemize}
 \vspace{0.1in}
@@ -38,7 +42,7 @@ Rewrite the cross entropy loss so that $\lF{\nabla\ell}$ is smaller
 }
 \end{itemize}
 
-\uncover<2> {
+\uncover<3> {
     \begin{center}
     \vspace{-3.45in}
     \setlength{\fboxsep}{0pt}%
@@ -46,7 +50,7 @@ Rewrite the cross entropy loss so that $\lF{\nabla\ell}$ is smaller
     \fbox{\includegraphics[height=3.5in]{img/lemma1-paper}}
     \end{center}
 }
-\uncover<3> {~}
+\uncover<5> {~}
 
 \end{frame}
 
