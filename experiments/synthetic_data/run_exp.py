@@ -44,7 +44,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 from TreeLoss.utilities import set_seed, gen_sim
-from TreeLoss.loss import CoverTreeLoss, SimLoss, HSM
+from TreeLoss.loss import CoverTreeLoss
 
 set_seed(args.exp_num*10)
 

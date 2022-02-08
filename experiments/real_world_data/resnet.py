@@ -8,7 +8,7 @@ import os
 import torch
 import torch.nn as nn
 import math
-
+import torch.nn.functional as F
 models_dir = os.path.expanduser('~/.torch/models')
 model_name = {
     'resnet18': 'resnet18-5c106cde.pth',
@@ -174,7 +174,7 @@ class ResNet_Cifar(nn.Module):
         self.inplanes = 16
         self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(16)
-        self.relu = nn.ReLU(inplace=True)
+        self.relu = nn.LeakyReLU(inplace=True)
         self.layer1 = self._make_layer(block, 16, layers[0])
         self.layer2 = self._make_layer(block, 32, layers[1], stride=2)
         self.layer3 = self._make_layer(block, 64, layers[2], stride=2)
@@ -208,7 +208,7 @@ class ResNet_Cifar(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x, y, loss):
+    def forward(self, x, y, loss_fun):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -219,70 +219,20 @@ class ResNet_Cifar(nn.Module):
 
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
-        
-        if loss == 'xentropy':
+        if loss_fun == 'xentropy':
             logits = self.fc(x)
             loss = self.criterion(logits, y)
-        elif loss == 'simloss':
+        elif loss_fun == 'simloss':
             logits = self.fc(x)
             prob = self.softmax(logits)
             loss = self.criterion(prob, y)
-        elif loss == 'covertreeloss':
-            loss, logits = self.criterion(x, y)
+        elif loss_fun == 'covertreeloss':
+            weights = self.fc.weight
+            loss, logits, added_weights = self.criterion(weights, x, y)
+        elif loss_fun == 'HSM':
+            logits = self.fc(x)
+            loss = self.criterion(logits, y)
         return loss, logits
-
-
-class PreAct_ResNet_Cifar(nn.Module):
-
-    def __init__(self, block, layers, c):
-        super(PreAct_ResNet_Cifar, self).__init__()
-        self.inplanes = 16
-        self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, bias=False)
-        self.layer1 = self._make_layer(block, 16, layers[0])
-        self.layer2 = self._make_layer(block, 32, layers[1], stride=2)
-        self.layer3 = self._make_layer(block, 64, layers[2], stride=2)
-        self.bn = nn.BatchNorm2d(64*block.expansion)
-        self.relu = nn.ReLU(inplace=True)
-        self.avgpool = nn.AvgPool2d(8, stride=1)
-        self.fc = nn.Linear(64*block.expansion, c)
-        self.dropout = nn.Dropout(p=0.5)
-
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
-            elif isinstance(m, nn.BatchNorm2d):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
-
-    def _make_layer(self, block, planes, blocks, stride=1):
-        downsample = None
-        if stride != 1 or self.inplanes != planes*block.expansion:
-            downsample = nn.Sequential(
-                nn.Conv2d(self.inplanes, planes*block.expansion, kernel_size=1, stride=stride, bias=False)
-            )
-
-        layers = []
-        layers.append(block(self.inplanes, planes, stride, downsample))
-        self.inplanes = planes*block.expansion
-        for _ in range(1, blocks):
-            layers.append(block(self.inplanes, planes))
-        return nn.Sequential(*layers)
-
-    def forward(self, x):
-        x = self.conv1(x)
-
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
-
-        x = self.bn(x)
-        x = self.relu(x)
-        x = self.avgpool(x)
-        x = x.view(x.size(0), -1)
-        x = self.fc(x)
-        
-        return x
 
 
 
@@ -325,21 +275,37 @@ def resnet1001_cifar(**kwargs):
     model = ResNet_Cifar(Bottleneck, [111, 111, 111], **kwargs)
     return model
 
+class Net(nn.Module):
+    """ConvNet -> Max_Pool -> RELU -> ConvNet -> Max_Pool -> RELU -> FC -> RELU -> FC -> SOFTMAX"""
+    def __init__(self,criterion,c):
+        super(Net, self).__init__()
+        self.conv1 = nn.Conv2d(1, 20, 5, 1)
+        self.conv2 = nn.Conv2d(20, 50, 5, 1)
+        self.fc1 = nn.Linear(4*4*50, 500)
+        self.fc2 = nn.Linear(500, c)
+        self.criterion = criterion
+        self.softmax = nn.Softmax(dim=-1)
 
-def preact_resnet110_cifar(**kwargs):
-    model = PreAct_ResNet_Cifar(PreActBasicBlock, [18, 18, 18], **kwargs)
-    return model
+    def forward(self, x, y, loss_fun):
+        x = F.relu(self.conv1(x))
+        x = F.max_pool2d(x, 2, 2)
+        x = F.relu(self.conv2(x))
+        x = F.max_pool2d(x, 2, 2)
+        x = x.view(-1, 4*4*50)
+        x = F.relu(self.fc1(x))
+        # x = self.fc2(x)
+        if loss_fun == 'xentropy':
+            logits = self.fc2(x)
+            loss = self.criterion(logits, y)
+        elif loss_fun == 'simloss':
+            logits = self.fc2(x)
+            prob = self.softmax(logits)
+            loss = self.criterion(prob, y)
+        elif loss_fun == 'covertreeloss':
+            weights = self.fc2.weight
+            loss, logits, added_weights = self.criterion(weights, x, y)
 
-
-def preact_resnet164_cifar(**kwargs):
-    model = PreAct_ResNet_Cifar(PreActBottleneck, [18, 18, 18], **kwargs)
-    return model
-
-
-def preact_resnet1001_cifar(**kwargs):
-    model = PreAct_ResNet_Cifar(PreActBottleneck, [111, 111, 111], **kwargs)
-    return model
- 
+        return loss, logits
 
 
 # if __name__ == '__main__':
