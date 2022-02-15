@@ -1,3 +1,5 @@
+# Credits: https://github.com/patvarilly/CoverTree/blob/master/covertree.py
+
 
 from __future__ import division
 

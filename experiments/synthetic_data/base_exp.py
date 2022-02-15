@@ -170,7 +170,7 @@ for ep in range(args.epoch):
             correct += 1
             
     accuracy = correct/len(Y)
-
+print(accuracy)
 
 
 # Test set
@@ -191,11 +191,8 @@ test_pred = []
 for start in range(0, args.n*10, args.batch):
     test_X = torch.FloatTensor(X_[start:start+args.batch].view(args.batch,args.d))
     test_Y = torch.LongTensor(Y_[start:start+args.batch].view(args.batch))
-    test_X, test_Y = train_X.cuda(), train_Y.cuda()
+    test_X, test_Y = test_X.cuda(), test_Y.cuda()
     loss, logits = model(test_X, test_Y, args.loss)
-
-    loss.backward()
-    optimizer.step()
 
     prob = F.softmax(logits, dim=-1)
     _, pred = torch.max(prob, dim=-1)
@@ -208,9 +205,9 @@ for i in range(len(Y_)):
         correct += 1
         
 test_accuracy = correct/len(Y_)
-
-loss_ = loss_sum
-test_loss_ = test_loss_sum/10
-with open(f'base_experiment_{args.loss}_50.txt', 'a') as f:
-    f.write(f'Loss: {loss_} \t Accuracy: {accuracy} \t Generlization Loss: {test_loss_} \t Test Accuracy: {test_accuracy}\n')
-# # # Height: {height} \t Training Loss: {training loss} Generlization Loss: {genarlization loss}
+print(test_accuracy)
+# loss_ = loss_sum
+# test_loss_ = test_loss_sum/10
+# with open(f'base_experiment_{args.loss}_50.txt', 'a') as f:
+#     f.write(f'Loss: {loss_} \t Accuracy: {accuracy} \t Generlization Loss: {test_loss_} \t Test Accuracy: {test_accuracy}\n')
+# # # # Height: {height} \t Training Loss: {training loss} Generlization Loss: {genarlization loss}

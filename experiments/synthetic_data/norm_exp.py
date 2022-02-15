@@ -60,14 +60,18 @@ from TreeLoss.cover_tree import CoverTree
 from TreeLoss.utilities import set_seed, gen_sim, level
 from TreeLoss.loss import CoverTreeLoss, SimLoss, HSM
 import matplotlib.pyplot as plt
-
+from numpy import linalg as LA
 # set the seed
 logging.debug('set_seed('+str(args.seed)+')')
 set_seed(args.exp_num*10)
 
-U = np.random.normal(size=[args.c, args.a])
-V = np.random.normal(size=[args.a, args.d])
-W_star = U @ V
+# U = np.random.normal(size=[args.c, args.a])
+# V = np.random.normal(size=[args.a, args.d])
+# W_star = U @ V
+
+W_star = np.random.normal(size=[args.c, args.d])
+f = np.random.normal(size=[args.d, args.a])
+U = W_star @ f
 
 
 # generate the data
@@ -125,8 +129,8 @@ optimizer = optim.SGD(
     momentum=args.momentum,
     weight_decay=args.weight_decay,
     )
-# scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.n)
-scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.n)
+# scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
 correct = 1e-10
 
@@ -154,71 +158,10 @@ def para_figure(W_norm, height):
     plt.ylabel('|W|')
     plt.savefig('W_vs_level.png', dpi=300)
 
-# W_norm = []
-# for i in level_list:
-#     leng = len(i)
-#     node = torch.LongTensor(list(i))
-#     # W_norm.append(torch.mean(torch.norm(W[node,:])))
-#     W_norm.append(torch.norm(torch.mean(W[node,:])).item())
-
-
-# W_norm = []
-# for i in level_list:
-#     leng = len(i)
-#     node = torch.LongTensor(list(i))
-#     temp = 0
-#     for j in node:
-#         temp += torch.norm(V[j,:])
-#     W_norm.append(temp/leng)
-
-# para_figure(W_norm, height)
-
-# x = []
-# y = []
-# num = 0
-# for i in level_list:
-#     leng = len(i)
-#     node = torch.LongTensor(list(i))
-#     for j in node:
-#         x.append(num)
-#         y.append(torch.norm(V[j,:]).item())
-#     num += 1
-# plt.scatter(x, y)
-# plt.savefig('W_vs_level_scatter.png', dpi=300)
-
-# x = []
-# y = []
-# for i in range(args.c):
-#     x.append(torch.norm(W[i,:]).item())
-
-# for i in range(length):
-#     y.append(torch.norm(V[i,:]).item())
-
-# import pickle as pkl
-# with open('x.pickle', 'wb') as f1:
-#     pkl.dump(x,f1)
-
-# with open('y.pickle', 'wb') as f2:
-#     pkl.dump(y,f2)
-
-# import matplotlib
-# matplotlib.rcParams['text.usetex'] = True
-# fig, axs = plt.subplots()
-# axs[0].hist(x, bins=20)
-# axs[0].set_xlabel('|w|')
-# axs[0].set_ylabel('Number of Classes')
-# axs[1].hist(y, bins=20)
-# axs[1].set_xlabel('|v|')
-# plt.savefig('distri.png', dpi=300)
-
-# axs.hist(x, bins=20, range=[0.0,5.0])
-# axs.hist(y, bins=20, range=[0.0,5.0])
-# axs.set_ylabel('Number of Classes')
-# labels= [r'$|\mathbb{w}_i|$', r'$|\mathbb{v}_i|$']
-# plt.legend(labels)
-# plt.savefig('distri.png', dpi=300)
 
 W_norm = torch.norm(W)
-V_norm = torch.norm(V)
-with open('norm.txt', 'a') as f:
+V = V.detach().cpu().numpy()
+V_ = V @ f
+V_norm = LA.norm(V_)
+with open('norm_.txt', 'a') as f:
     f.write(f'W_norm: {W_norm} \t V_norm: {V_norm} \n')
