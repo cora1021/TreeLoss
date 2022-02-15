@@ -1,10 +1,10 @@
 \documentclass[twoside]{article}
 
-\usepackage{aistats2022}
+%\usepackage{aistats2022}
 % If your paper is accepted, change the options for the package
 % aistats2022 as follows:
 %
-%\usepackage[accepted]{aistats2022}
+\usepackage[accepted]{aistats2022}
 %
 % This option will print headings for the title of your paper and
 % headings for the authors names, plus a copyright note at the end of
@@ -144,7 +144,7 @@
 
 \aistatstitle{The Tree Loss: Improving Generalization with Many Classes}
 
-\aistatsauthor{ Yujie Wang \And Michael Izbicki  }
+\aistatsauthor{ Yujie Wang \And Mike Izbicki  }
 
 \aistatsaddress{ Claremont Graduate University \And  Claremont McKenna College } ]
 
@@ -295,12 +295,13 @@ We show that in practice, the tree loss essentially always outperforms other mul
 \label{sec:related}
 
 Previous work on multi-class loss functions has focused on improving either the statistical or computational performance.
-Statistical work includes loss functions designed for hierarchichally structured labels \citep{cesa2006incremental,wu2017hierarchical},
+Statistical work includes loss functions designed for hierarchichally structured labels \citep{cesa2006incremental,wu2017hierarchical,bertinetto2020making},
 loss functions for improving top-$k$ accuracy \citep{lapin2016loss},
 or focusing on noisy labels \citep{sukhbaatar2014training,zhang2018generalized}.
-The work most similar to ours is the simloss \citep{Kobs2020SimLossCS},
+The work most similar to ours is the SimLoss \citep{Kobs2020SimLossCS},
 which also makes a metric assumption about the class label structure.
 Our work improves on all of this statistical work by being the first to provide convergence bounds that improve on the bounds of the cross entropy loss.
+
 
 Other work focuses on improving the speed of multiclass classification.
 The hierarchical softmax \citep{morin2005hierarchical} is a particularly well studied modification of the cross entropy loss with many variations \citep[e.g.][]{Peng2017IncrementallyLT,Jiang2017ExplorationOT,Yang2017OptimizeHS,Mohammed2018EffectivenessOH}.
@@ -371,7 +372,7 @@ Explaining our new $U$-tree parameterization requires introducing some notation.
 We define a $U$-tree over the class labels to be a tree where each leaf node is represented by a label,
 and each internal node shares a label with a child node.
 Figure \ref{fig:labeltree} (left) shows an example $U$-tree structure.
-The definition of a $U$-tree is motivated by the cover tree data structure \citep{beygelzimer2006cover},
+The definition of a $U$-tree is motivated by the cover tree data structure \citep{beygelzimer2006cover,izbicki2015faster},
 which generates $U$-tree structures given a metric over the class labels.
 
 %In a $U$-tree, every node is a class and the class of all internal nodes matches the class of one of its children.
@@ -487,7 +488,7 @@ Both the $U$-tree and $V$-tree losses are easy to implement in practice using th
 %The only change needed is to pass in a variable representing the $U$/$V$ parameter matrices to the cross entropy loss function
 The only change needed is to represent the $W$ parameter matrix in your code as an appropriate sum over the $U$ or $V$ parameter matrices.
 The magic of automatic differentiation will then take care of the rest and ensure that the underlying $U$ or $V$ matrix is optimized.
-Our TreeLoss library\footnote{URL blinded for peer review.} provides easy-to-use functions for generating these matrices,
+Our TreeLoss library\footnote{\url{https://github.com/cora1021/TreeLoss}} provides easy-to-use functions for generating these matrices,
 and so modifying code to work with the tree loss is a 1 line code change.
 
 In practice, the tree loss is slightly slower than the standard cross entropy loss due to the additional summation over the paths.
@@ -521,7 +522,6 @@ Our goal is to bound the generalization error
 \begin{equation}
     \E L_D(\bar A) - L_D(\star A).
 \end{equation}
-
 In order to bound this error, we make the following standard assumption about our data.
 \begin{assumption}
     \label{ass:lip}
@@ -606,7 +606,8 @@ when $\lambda$ is large, the metric $d$ is bad.
 The Cover Tree was originally designed for speeding up nearest neighbor queries in arbitrary metric spaces.
 The definition is rather technical, so we do not restate it here.
 Instead, we mention only two important properties of the cover tree.
-First, it can be constructed in time $O(k)$,
+First, it can be constructed in time $O(k)$.
+This is independent of the number of training examples $n$,
 so building the $U$-tree structure is a cheap operation that has no meaningful impact on training performance.
 %It also only has to be done once when initializing the optimization,
 %and not on every iteration.
@@ -681,7 +682,7 @@ These convergence rates are asymptotically better than the convergence rates for
 \label{sec:experiment}
 
 We evaluate the tree loss on 4 synthetic and 3 real world experiments.
-We compare the tree loss to the standard cross entropy loss, the recently proposed simloss \citep{Kobs2020SimLossCS}, and the hierarchical softmax \citep{morin2005hierarchical}.
+We compare the tree loss to the standard cross entropy loss, the recently proposed SimLoss \citep{Kobs2020SimLossCS}, and the hierarchical softmax \citep{morin2005hierarchical}.
 The results confirm our theoretical findings from Section \ref{sec:theory} and demonstrate that the tree loss significantly improves the performance of these baseline losses in a wide range of scenarios.
 
 \subsection{Synthetic data}
@@ -759,22 +760,12 @@ A similar effect explain's our model's observed improved performance in the bott
 Now consider the top-right plot.
 The bayes error of our problem setup is inversely related to the problem dimension $d$ (see observations in Section \ref{sec:exp:synth:problem}),
 so this plot compares performance on different problem difficulties.
-On maximally easy (large $d$) and hard (small $d$) problems,
-then the tree loss performs similarly to the other loss functions because the performance is dominated by the bayes error and no improvement is possible.
+On maximally easy (large $d$) and maximally hard (small $d$) problems,
+the tree loss performs similarly to the other loss functions because the performance is dominated by the bayes error and no improvement is possible.
 The main advantage of the tree loss is in the mid-difficulty problems.
 In this regime, performance is dominated by the generalization ability of the different losses,
 and the tree loss's improved generalization results in noticeable improvements.
 The bottom-right plot tells a similar story but controls the difficulty of the problem directly by tuning the randomness $\sigma$.
-
-\ignore{
-From figure \ref{fig.1}, it is clear that the tree loss achieves the best performance. 
-The tree loss converges at a faster rate as number of data points and dimension of parameter matrix increase.
-If we increase the number of classes, the tree loss can keep a higher accuracy and the accuracy of SimLoss is higher than cross entropy loss and hierarchical softmax.
-It is as our expected, the tree loss can improve performance on large classes tasks.
-Besides, when we increase the noise in the dataset, the accuracy of all loss functions decrease, yet the tree loss decreases slower.
-Among the four loss functions, hierarchical softmax hurts the performance obviously. 
-We would not apply hierarchical softmax on real world data experiment in terms of computation.
-}
 
 \subsubsection{Experiment II: Parameter Norms}
 
@@ -841,6 +832,7 @@ We do not know of a good theoretical explanation for this phenomenon.
 \label{sec:synth:eps}
 
 Recall that our theoretical results state that the convergence rate of SGD depends on a factor $\lambda$ that measures how well our metric over the class labels is able to predict the distances between the true parameter vectors.
+(See Assumption \ref{ass:metric}.)
 In this experiment, we study the effect of this $\lambda$ parameter on prediction accuracy.
 
 We fix the following problem hyperparameters:
@@ -904,11 +896,11 @@ The tree loss still outperforms the cross entropy loss in this worst-case scenar
 We now validate the tree loss on real world image (CIFAR100, ImageNet) and text (Twitter) data.
 For each dataset, we report standard top-1 accuracy scores,
 and the less well known \emph{superclass accuracy} (SA) score.
-SA is a generalization of the top-1 accuracy proposed by the simloss paper \citep{Kobs2020SimLossCS}.
+SA is a generalization of the top-1 accuracy proposed by the SimLoss paper \citep{Kobs2020SimLossCS}.
 The idea is that misclassifying a \texttt{sheepdog} as a \texttt{husky} should be penalized less than misclassifying a \texttt{sheepdog} as a \texttt{bus} because the \texttt{sheepdog} and \texttt{husky} classes are more similar to each other.
 
 Table \ref{table:results} shows that on each of these datasets and for each metric,
-the tree loss outperforms the baseline cross entropy loss and simloss.\footnote{We do not evaluate against the hierarchical softmax due to limited computational resources.  The results on the synthetic data, however, suggest that the hierarchical softmax would have performed poorly.}
+the tree loss outperforms the baseline cross entropy loss and SimLoss.\footnote{We do not evaluate against the hierarchical softmax due to limited computational resources.  The results on the synthetic data, however, suggest that the hierarchical softmax would have performed poorly.}
 The remainder of this section describes the experimental procedures for each dataset in detail.
 
 \subsubsection{CIFAR100}
@@ -923,11 +915,11 @@ the tree loss has the best performance.
 First, we generate our distance metric over the class labels using a word2vec model \citep{Mikolov2013EfficientEO} pretrained on GoogleNews.
 The distance between class labels is defined to be the distance between their corresponding word2vec embeddings.
 There are 4 class labels with no corresponding word2vec embedding,
-and so following the simloss paper we discard these classes.
+and so following the SimLoss paper we discard these classes.
 
 We train 3 ResNet20 models on CIFAR100 \citep{He2016DeepRL} using hyperparameters specified in the original paper.
 The only difference between the three models is the final layer:
-one model uses the standard cross entropy loss, one uses the tree loss, and one uses the simloss.
+one model uses the standard cross entropy loss, one uses the tree loss, and one uses the SimLoss.
 The results shown in Table \ref{table:results} shows that the tree loss significantly outperforms the other losses.
 
 \subsubsection{ImageNet}
@@ -953,7 +945,7 @@ replacing the cross entropy loss with the tree loss results in improved performa
 
 \subsubsection{Twitter Data}
 
-We now consider the problem of predicting the emotions of twitter text.
+We now consider the problem of predicting the emotions of Twitter text.
 This is a very different domain than the image problems considered above,
 and demonstrates that the tree loss works across many domains.
 We use the dataset collected by \citet{stoikos2020multilingual} for analyzing emotional response to Covid19 on Twitter.
@@ -983,7 +975,7 @@ but potentially large advantages.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newpage
+%\newpage
 \bibliographystyle{plainnat}
 \bibliography{paper}
 
