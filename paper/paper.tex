@@ -896,7 +896,7 @@ The tree loss still outperforms the cross entropy loss in this worst-case scenar
 We now validate the tree loss on real world image (CIFAR100, ImageNet) and text (Twitter) data.
 For each dataset, we report standard top-1 accuracy scores,
 and the less well known \emph{similarity accuracy} (SA) score.
-SA measures the classification by similarity.
+SA is a top-1 accuracy considering similarity.
 The idea is that misclassifying a \texttt{sheepdog} as a \texttt{husky} should be penalized less than misclassifying a \texttt{sheepdog} as a \texttt{bus} because the \texttt{sheepdog} and \texttt{husky} classes are more similar to each other.
 
 Table \ref{table:results} shows that on each of these datasets and for each metric,
