@@ -1,6 +1,7 @@
 % File:  aistats2022.sty
 
-% Modified by Francisco Ruiz, 2022: changed venue, year, and volume number.
+% Modified by Francisco Ruiz and Matthias Bauer 2022: changed venue,
+% year, and volume number. Added Supplementary Material macros.
 %
 % Modified by Robert Giaquinto and Krikamol Muandet 2021: changed
 % venue, year, and volume number. Adjust spacing in the copyright box.
@@ -123,7 +124,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%     Definition of maketitle (includes title and author)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \RequirePackage{fancyhdr}
 
@@ -167,6 +168,8 @@
    \fi
    }
    \fi
+
+   \gdef\@supplementtitle{#1}
 
    \ifnum\@runningheadingerrortitle=0
          {
@@ -315,8 +318,6 @@
    \fi
 }
 
-
-
 \long\def\aistatsaddress#1{
      \ifnum\statePaper=0
     {
@@ -361,6 +362,11 @@
     }
    \fi
 }
+
+\newcommand{\makesupplementtitle}[0]{\hsize\textwidth
+    \linewidth\hsize \toptitlebar {\centering
+        {\Large\bfseries Supplementary Material:\\\@supplementtitle \par}}
+    \bottomtitlebar}
 
 \renewcommand{\headrulewidth}{0.5pt}
 

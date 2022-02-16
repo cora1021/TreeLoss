@@ -895,8 +895,8 @@ The tree loss still outperforms the cross entropy loss in this worst-case scenar
 
 We now validate the tree loss on real world image (CIFAR100, ImageNet) and text (Twitter) data.
 For each dataset, we report standard top-1 accuracy scores,
-and the less well known \emph{superclass accuracy} (SA) score.
-SA is a generalization of the top-1 accuracy proposed by the SimLoss paper \citep{Kobs2020SimLossCS}.
+and the less well known \emph{similarity accuracy} (SA) score.
+SA measures the classification by similarity.
 The idea is that misclassifying a \texttt{sheepdog} as a \texttt{husky} should be penalized less than misclassifying a \texttt{sheepdog} as a \texttt{bus} because the \texttt{sheepdog} and \texttt{husky} classes are more similar to each other.
 
 Table \ref{table:results} shows that on each of these datasets and for each metric,
@@ -948,8 +948,8 @@ replacing the cross entropy loss with the tree loss results in improved performa
 We now consider the problem of predicting the emotions of Twitter text.
 This is a very different domain than the image problems considered above,
 and demonstrates that the tree loss works across many domains.
-We use the dataset collected by \citet{stoikos2020multilingual} for analyzing emotional response to Covid19 on Twitter.
-This dataset contains all geolocated tweets written in any language sent over the 6 month period between 1 January 2020 and 1 July 2020 that mention certain Covid19 keywords.
+We use the dataset collected by \citet{izbicki2019geolocating}.
+This dataset contains all geolocated tweets written in more than 100 language sent over the 4 year period between October 2017 and October 2021.
 Tweets in the dataset are preprocessed to have all emojis, usernames, and urls removed from the text,
 and then the goal is to predict the emoji given only the remaining text.
 Since most emojis represent emotions,
@@ -983,6 +983,18 @@ but potentially large advantages.
 
 \clearpage
 \appendix
+
+\thispagestyle{empty}
+
+\setcounter{lemma}{0}
+\setcounter{assumption}{0}
+\setcounter{corollary}{0}
+\setcounter{theorem}{0}
+
+% For one-column format, uncomment the following:
+% \onecolumn \makesupplementtitle
+% For two-column format, uncomment the following:
+\twocolumn[ \makesupplementtitle ]
 
 \setcounter{lemma}{0}
 \setcounter{assumption}{0}
